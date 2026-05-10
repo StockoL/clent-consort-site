@@ -59,8 +59,17 @@
           <span class="brand-name">The Clent Consort</span>
         </a>
         <!-- NAVIGATIONAL LANDMARKS: Uses a specialised .nav-list--dashboard variant. This allows for clear internal anchor-link navigation, essential for a dense, resource-heavy single-page dashboard layout. -->
-        <nav aria-label="Main Navigation">
-          <ul class="nav-list nav-list-dashboard">
+        <nav class="main-nav" aria-label="Members Dashboard Navigation">
+          <button
+            class="menu-toggle"
+            aria-expanded="false"
+            aria-controls="members-nav-list"
+          >
+            <span class="sr-only">Menu</span>
+            <div class="hamburger" aria-hidden="true"></div>
+          </button>
+
+          <ul id="members-nav-list" class="nav-list nav-list-dashboard">
             <li><a href="#schedule" class="nav-link">Schedule</a></li>
             <li><a href="#logistics" class="nav-link">Logistics</a></li>
             <li><a href="#library" class="nav-link">Library</a></li>

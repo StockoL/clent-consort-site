@@ -289,6 +289,173 @@ header nav a:hover {
   color: var(--color-gold);
   text-decoration: underline;
 }
+/* Hamburger Menu */
+/* The middle bar */
+.hamburger {
+  width: 1.5rem;
+  height: 2px;
+  background: var(--color-gold);
+  position: relative;
+  transition: all 0.3s ease-in-out;
+}
+
+/* The top and bottom bars */
+.hamburger::before,
+.hamburger::after {
+  content: "";
+  position: absolute;
+  width: 1.5rem;
+  height: 2px;
+  background: var(--color-gold);
+  transition: all 0.3s ease-in-out;
+}
+
+.hamburger::before {
+  transform: translateY(-6px);
+}
+.hamburger::after {
+  transform: translateY(6px);
+}
+.menu-toggle {
+  background: transparent;
+  border: none;
+  padding: 10px;
+  /* This ensures it doesn't have that 'grey box' look */
+}
+
+.sr-only {
+  /* This hides the word 'Menu' visually but keeps it for screen readers */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+/* The 'Whimsy': Animate to an X when open */
+.menu-toggle[aria-expanded="true"] .hamburger {
+  background: transparent; /* Hide middle bar */
+}
+
+.menu-toggle[aria-expanded="true"] .hamburger::before {
+  /* Move back to center (0) then rotate */
+  transform: translateY(0) rotate(45deg);
+}
+
+.menu-toggle[aria-expanded="true"] .hamburger::after {
+  /* Move back to center (0) then rotate */
+  transform: translateY(0) rotate(-45deg);
+}
+/* 1. Hide the Toggle Button by default (Desktop) */
+.menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+}
+
+/* 2. Media Query for Mobile (e.g., smaller than 768px) */
+@media (max-width: 768px) {
+  /* Show the button */
+  .menu-toggle {
+    display: block;
+    position: relative;
+    z-index: 9999;
+  }
+
+  /* Hide the list by default on mobile */
+  .nav-list {
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+    position: absolute;
+    top: 70px;
+    width: calc(60vw - 2rem);
+    background-color: var(--color-dark);
+    padding: 2rem;
+    padding-top: 4rem; /* Gives the X plenty of 'breathing room' */
+    /* text-align: center; */
+    z-index: 5000;
+    list-style: none; /* Professional safety net */
+    /* Rounded and deliberate border */
+    border: 2px solid var(--color-gold);
+    border-radius: 20px; /* Adjust this: 8px for subtle, 20px for 'pill' style */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  }
+  .nav-list a {
+    color: #ffffff; /* Pure white for maximum clarity */
+    text-decoration: none;
+    font-weight: 500;
+    opacity: 1;
+    transition: color 0.3s ease;
+    display: block;
+    padding: 0.5rem 0; /* Creates a large 'hit area' for fingers */
+    width: 100%;
+  }
+  .nav-list a:hover {
+    color: var(--color-gold-light); /* A lighter gold for hover feedback */
+  }
+  /* 3. The Magic: Show the list ONLY when aria-expanded is true */
+  .menu-toggle[aria-expanded="true"] + .nav-list {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+  .menu-toggle {
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Remove the blue background and boxy outline */
+  .menu-toggle:focus {
+    outline: none;
+    background: transparent;
+  }
+
+  /* Optional: Add a subtle gold glow instead so it's still accessible */
+  .menu-toggle:focus-visible {
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.5); /* Gold glow */
+    border-radius: 4px;
+  }
+  .menu-toggle:active {
+    background: transparent;
+  }
+}
+.nav-list--simple {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-list--simple .nav-link {
+  display: flex;
+  align-items: center;
+  font-weight: 505;
+  color: var(--color-dark); /* Or #444 to match your main nav */
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+/* The Whimsical Arrow Animation */
+.nav-link__arrow {
+  display: inline-block;
+  margin-right: 8px;
+  transition: transform 0.3s ease;
+}
+
+.nav-list--simple .nav-link:hover {
+  color: var(--color-gold);
+}
+
+.nav-list--simple .nav-link:hover .nav-link__arrow {
+  transform: translateX(-5px); /* Arrow nudges left on hover */
+}
 
 /* CTA Button */
 .cta-button {

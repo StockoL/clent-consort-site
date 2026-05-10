@@ -61,8 +61,17 @@
           <span class="brand-name">The Clent Consort</span>
         </a>
         <!-- Main Navigation -->
-        <nav aria-label="Main Navigation">
-          <ul>
+        <nav class="main-nav" aria-label="Main Navigation">
+          <button
+            class="menu-toggle"
+            aria-expanded="false"
+            aria-controls="nav-list"
+          >
+            <span class="sr-only">Menu</span>
+            <div class="hamburger" aria-hidden="true"></div>
+          </button>
+
+          <ul id="nav-list" class="nav-list">
             <li><a href="index.html">Home</a></li>
             <li><a href="about.html">About</a></li>
             <li><a href="events.html" aria-current="page">Events</a></li>
