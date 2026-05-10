@@ -457,6 +457,55 @@ header nav a:hover {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-gold-light); /* Brighter gold on hover */
 }
+
+/* Back to Top Button */
+.back-to-top {
+  /* The 'Fixed' position pulls it out of the flat layout */
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+
+  /* Give it a defined shape so it isn't 'flat' */
+  width: 50px;
+  height: 50px;
+  border-radius: 50%; /* Makes it a circle */
+
+  /* Make sure it's actually hidden by default */
+  opacity: 0;
+  visibility: hidden;
+
+  /* Bring it to the front of the choir */
+  z-index: 1000;
+
+  /* Aesthetics */
+  background-color: var(--color-gold);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+/* This is the class the JavaScript will 'toggle' */
+.back-to-top.is-visible {
+  opacity: 1;
+  visibility: visible;
+}
+.back-to-top .arrow {
+  font-family: sans-serif; /* Use a clean font for symbols */
+  font-size: 2rem; /* Make it larger or smaller */
+  font-weight: bold; /* Make it thicker */
+  line-height: 1; /* Ensures it stays centered */
+
+  /* You can even move it slightly if it looks off-center */
+  transform: translateY(-2px);
+  transition: transform 0.3s ease;
+}
+.back-to-top:hover .arrow {
+  transform: translateY(-5px); /* Arrow physically points 'up' more on hover */
+}
 /* ==========================================================================
    4. PAGE-SPECIFIC SECTIONS
    ========================================================================== */

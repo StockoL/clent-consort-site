@@ -1,3 +1,9 @@
+/*  ===================================================================
+  CONTACT FORM HANDLER
+  This script handles the submission of both the general contact form and the audition application form.
+  Since we don't have a backend to process the form submissions, we prevent the default form submission behavior and instead display a success message directly on the page.
+    ==================================================================
+  */
 // 1. Grab ALL forms on the page
 const contactForms = document.querySelectorAll(".contact-form-container form");
 
@@ -34,3 +40,36 @@ contactForms.forEach((form) => {
     });
   });
 });
+
+/* ==========================================================================
+  BACK TO TOP FUNCTIONALITY
+  ========================================================================== 
+*/
+
+const initBackToTop = () => {
+  const backToTopButton = document.querySelector("#backToTop");
+
+  if (!backToTopButton) return; // Guard clause: avoid errors if button is missing
+
+  // Toggle visibility based on scroll position
+  window.addEventListener("scroll", () => {
+    if (window.scrollY > 300) {
+      backToTopButton.classList.add("is-visible");
+      backToTopButton.setAttribute("aria-hidden", "false");
+    } else {
+      backToTopButton.classList.remove("is-visible");
+      backToTopButton.setAttribute("aria-hidden", "true");
+    }
+  });
+
+  // Smooth scroll logic
+  backToTopButton.addEventListener("click", () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  });
+};
+
+// Initialize when the DOM is fully loaded
+document.addEventListener("DOMContentLoaded", initBackToTop);
