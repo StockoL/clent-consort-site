@@ -18,12 +18,16 @@
   --font-body: "Inter", sans-serif;
 
   /* ACCESSIBILITY TUNED COLORS */
-  --color-gold: #8a6d3b; /* Darkened for 4.5:1 contrast */
-  --color-gold-rgb: 138 109 59; /* For rgba() usage */
-  --color-gold-light: #dcb97a; /* Kept for hover states on dark backgrounds */
-  --color-dark: #1a1a1a;
+  --color-gold: #aa843f; /* Darkened for 4.5:1 contrast */
+  --color-gold-rgb: 170 132 63; /* For rgba() usage */
+  --color-gold-light: #dfba73; /* Kept for hover states on dark backgrounds */
+  --color-dark: #121212; /* Deepened for better contrast */
   --color-white: #ffffff;
-  --color-muted: #666666;
+  --color-muted: #595959;
+
+  /* Text specifically for inside .box.invert containers */
+  --color-text-light: #f4f4f4;
+  --color-text-light-muted: #b3b3b3;
 }
 
 *,
@@ -35,7 +39,7 @@
 body {
   font-family: var(--font-body);
   line-height: 1.5;
-  color: #333;
+  color: var(--color-text-dark);
   margin: 0;
   display: flex;
   flex-direction: column;
@@ -159,8 +163,8 @@ main > .l-stack > :last-child {
 
 /* Unified Invert: The "Card" standard for the whole site */
 .box.invert {
-  background-color: #1a1a1a;
-  color: #ffffff;
+  background-color: var(--color-dark);
+  color: var(--color-text-light);
   border-radius: 20px;
   border: 1px solid rgba(201, 164, 94, 0.3);
   overflow: hidden;
@@ -1722,4 +1726,82 @@ header nav a:hover {
 
 .u-margin-inline-auto {
   margin-inline: auto;
+}
+
+/* ==========================================================================
+   7. GIFT AID FORM UTILITIES
+   ========================================================================== */
+
+.form-page-wrapper {
+  margin-block: var(--s3);
+}
+
+/* Remove default browser fieldset borders and padding */
+.form-section {
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Custom styling for the dropdown selection menu */
+.form-section select {
+  min-height: 3.5rem;
+  font-size: 1.1rem;
+  padding: var(--s0);
+  border-radius: 8px;
+  width: 100%;
+  border: 1px solid #ccc;
+  background-color: var(--color-white);
+  font-family: var(--font-body);
+}
+
+/* Style options inside dropdown so they don't inherit invert themes unexpectedly */
+.form-section select option {
+  color: var(--color-dark);
+}
+
+/* Form Section Dividers */
+.form-divider {
+  border: 0;
+  border-top: 1px solid rgba(201, 164, 94, 0.2);
+  margin-block: var(--s0);
+}
+
+/* Layout logic for alignment of the Gift Aid checkbox label */
+.form-checkbox-container {
+  gap: var(--s0);
+  margin-top: var(--s0);
+}
+
+/* Override global fat-finger min-height for just this small checkbox */
+.form-checkbox-container input[type="checkbox"] {
+  min-height: auto !important;
+  width: auto !important;
+  margin-top: 0.35rem;
+  cursor: pointer;
+}
+
+.form-checkbox-container label {
+  margin-top: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--color-white);
+  cursor: pointer;
+}
+/* Expand the layout container specifically for large-scale dashboard cards */
+.u-measure--large-card {
+  max-width: 70rem; /* Boosts the width significantly to give elements breathing room */
+  width: 100%;
+}
+
+/* Add descriptive breathing room inside the fieldset boundaries */
+.form-section {
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Space out form rows cleanly using your existing layout variables */
+.form-group + .form-group {
+  margin-top: var(--s1);
 }

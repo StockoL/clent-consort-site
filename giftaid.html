@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Alto Learning Hub for The Clent Consort members."
+      content="The Clent Consort Member Area. Access your personalised choral resources, project foundations, and upcoming residency details in one central portal."
     />
     <title>Member Dashboard - The Clent Consort</title>
-    <!-- SEO & SOCIAL METADATA: Optimised for OpenGraph/Twitter protocols to ensure professional link previews and search indexing. -->
+    <!-- SEO & SOCIAL METADATA: Strategic tagging for a private portal context. While indexable, the metadata is tailored to provide a professional, utility-focused preview for members accessing the hub via mobile devices. -->
     <meta property="og:type" content="website" />
     <meta
       property="og:url"
@@ -17,26 +17,26 @@
     <meta property="og:title" content="The Clent Consort" />
     <meta
       property="og:description"
-      content="Alto Learning Hub for The Clent Consort members."
+      content="The Clent Consort Member Area. Access your personalised choral resources, project foundations, and upcoming residency details in one central portal."
     />
-    <!-- Sharing icon -->
     <meta
       property="og:image"
       content="https://stockol.github.io/clent-consort-project-ms1/assets/images/logo_share_preview.jpg"
     />
-    <!-- Twitter Card -->
+
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:title" content="The Clent Consort" />
     <meta
       property="twitter:description"
-      content="Alto Learning Hub for The Clent Consort members."
+      content="The Clent Consort Member Area. Access your personalised choral resources, project foundations, and upcoming residency details in one central portal."
     />
     <meta
       property="twitter:image"
       content="https://stockol.github.io/clent-consort-project-ms1/assets/images/logo_share_preview.jpg"
     />
-    <!-- ASSET OPTIMISATION: Pre-connecting to external origins to minimise First Contentful Paint (FCP) and network latency. -->
+    <!-- Favicon -->
     <link rel="icon" type="image/png" href="assets/images/favicon-clent.png" />
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -45,12 +45,10 @@
     />
     <link rel="stylesheet" href="assets/css/style.css" />
   </head>
-  <!-- Body with ID for top of page -->
-  <body id="top">
-    <!-- SITE HEADER: Implements .site-header for sticky positioning and .l-center for consistent horizontal containment. -->
+  <!-- Body with ID for back-to-top anchor link and unique member dashboard -->
+  <body id="top" class="dashboard-page">
     <header class="site-header">
       <div class="l-center header-inner">
-        <!-- Logo details -->
         <a href="index.html" class="logo-link">
           <img
             src="assets/images/clent-consort-logo.webp"
@@ -70,57 +68,136 @@
               </a>
             </li>
           </ul>
+        </nav>
       </div>
     </header>
-    <main class="l-center">
-      <!-- CONTENT ARCHITECTURE: Utilises the .l-stack primitive to manage macro-spacing and vertical rhythm between sections. -->
-      <div class="l-stack l-stack--large">
-        <header>
-          <h1>Alto Learning Hub</h1>
-          <p class="u-muted">Current Project: Mozart Requiem</p>
+
+    <main>
+      <div class="l-center l-stack l-stack--large form-page-wrapper">
+        <header class="u-text-center l-stack l-stack--small">
+          <h1>Member Registration</h1>
+          <p class="u-measure u-margin-inline-auto u-muted">
+            Please register your details with the Clent Consort. Completing this
+            declaration allows us to claim Gift Aid and maximize our collective
+            resources.
+          </p>
         </header>
 
-        <!-- Rehearsal Video Player Module / Copy and adjust for additional rehearsal tracks -->
-        <!-- COMPONENT: .box.invert creates a high-contrast 'well' for focus, utilising solid hex codes for WCAG 2.1 AA compliance. -->
-        <div class="video-wrapper box invert l-stack l-stack--small">
-          <div class="l-stack l-stack--small">
-            <h2>Mozart: Requiem (Alto)</h2>
-            <p>
-              Focus on the 'Lacrimosa' phrasing and the breath marks at bar 12.
-            </p>
-          </div>
-          <details class="video-accordion" name="mozart-alto">
-            <summary class="cta-button">Open Practice Player</summary>
+        <div class="box invert u-measure--large-card u-margin-inline-auto">
+          <form id="giftaid-form" class="l-stack">
+            <fieldset class="form-section l-stack l-stack--small">
+              <div class="form-group l-stack l-stack--small">
+                <label for="first-name">First Name</label>
+                <input
+                  type="text"
+                  id="first-name"
+                  name="first_name"
+                  placeholder="John"
+                  required
+                />
+              </div>
 
-            <div class="video-responsive u-margin-top">
-              <!-- PROGRESSIVE DISCLOSURE: Using HTML5 details to defer iframe loading; this optimises performance by reducing initial page weight. -->
-              <iframe
-                class="external-embed"
-                src="https://www.youtube.com/embed/D9_umh6CCs0"
-                title="Alto Practice Track for Mozart Requiem"
-                allow="
-                  accelerometer;
-                  autoplay;
-                  clipboard-write;
-                  encrypted-media;
-                  gyroscope;
-                  picture-in-picture;
-                "
-                loading="lazy"
-                allowfullscreen
-              >
-              </iframe>
+              <div class="form-group l-stack l-stack--small">
+                <label for="last-name">Last Name</label>
+                <input
+                  type="text"
+                  id="last-name"
+                  name="last_name"
+                  placeholder="Smith"
+                  required
+                />
+              </div>
+
+              <div class="form-group l-stack l-stack--small">
+                <label for="voice-part">Voice Section</label>
+                <select id="voice-part" name="voice_part" required>
+                  <option value="">-- Select Section --</option>
+                  <option value="S">Soprano</option>
+                  <option value="A">Alto</option>
+                  <option value="T">Tenor</option>
+                  <option value="B">Bass</option>
+                </select>
+              </div>
+            </fieldset>
+
+            <hr class="form-divider" />
+
+            <fieldset class="form-section l-stack l-stack--small">
+              <div class="form-group l-stack l-stack--small">
+                <label for="address-1">Home Address (Line 1)</label>
+                <input
+                  type="text"
+                  id="address-1"
+                  name="address_1"
+                  placeholder="123 Church Lane"
+                  required
+                />
+              </div>
+
+              <div class="form-group l-stack l-stack--small">
+                <label for="town-city">Town or City</label>
+                <input
+                  type="text"
+                  id="town-city"
+                  name="town_city"
+                  placeholder="Evesham"
+                  required
+                />
+              </div>
+
+              <div class="form-group l-stack l-stack--small">
+                <label for="postcode">Postcode</label>
+                <input
+                  type="text"
+                  id="postcode"
+                  name="postcode"
+                  placeholder="WR11 4AB"
+                  required
+                />
+                <p class="form-hint">
+                  <strong>Hint:</strong> HMRC requires your official residential
+                  address to process claims.
+                </p>
+              </div>
+            </fieldset>
+
+            <hr class="form-divider" />
+
+            <div class="form-checkbox-container">
+              <p class="form-hint">
+                <strong>Note:</strong> If you are not a UK taxpayer, please
+                leave this section blank.
+              </p>
+              <input
+                type="checkbox"
+                id="gift-aid-consent"
+                name="gift_aid_consent"
+              />
+              <label for="gift-aid-consent">
+                <strong>Yes, I want to Gift Aid.</strong> I want the Clent
+                Consort to treat all subscriptions and donations I make from
+                this date forward, and any I have made in the past 4 years, as
+                Gift Aid donations. I am a UK taxpayer and understand that if I
+                pay less Income Tax and/or Capital Gains Tax than the amount of
+                Gift Aid claimed on all my donations in that tax year, it is my
+                responsibility to pay any difference.
+              </label>
             </div>
-          </details>
+
+            <button type="submit" class="cta-button">
+              Submit Registration
+            </button>
+          </form>
         </div>
-        <!-- End Rehearsal Video Player Module -->
       </div>
     </main>
+
     <!-- GLOBAL FOOTER: Features a 3-column .footer-grid with mobile-first stacking logic and a #top skip-link for keyboard efficiency. -->
     <footer class="invert footer-slim">
       <div class="l-center">
         <div class="footer-grid">
           <div class="footer-col-left">
+            <!-- Members Logout Link -->
             <a href="login.html" class="footer-btn">Logout</a>
           </div>
 
