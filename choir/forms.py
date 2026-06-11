@@ -1,6 +1,7 @@
 from django import forms
+from django.contrib.auth.models import User
 
-from .models import AuditionApplication, Enquiry, GiftAidDeclaration
+from .models import AuditionApplication, Enquiry, GiftAidDeclaration, MemberProfile
 
 
 class EnquiryForm(forms.ModelForm):
@@ -60,3 +61,21 @@ class GiftAidForm(forms.ModelForm):
             "town_city": "Town / City",
             "consent_given": "I confirm I am a UK taxpayer and want Clent Consort to claim Gift Aid on my subscriptions.",
         }
+
+
+class UserUpdateForm(forms.ModelForm):
+    """Allows members to update their core account details."""
+
+    email = forms.EmailField(required=True)  # Forces email to be required
+
+    class Meta:
+        model = User
+        fields = ["first_name", "last_name", "email"]
+
+
+class ProfileUpdateForm(forms.ModelForm):
+    """Allows members to update their choir-specific details."""
+
+    class Meta:
+        model = MemberProfile
+        fields = ["phone_number", "voice_part"]

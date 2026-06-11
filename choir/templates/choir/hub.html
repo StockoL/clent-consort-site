@@ -1,47 +1,43 @@
-{% extends 'choir/base.html' %}{% block content %} {% block title %}Learning Hub - Clent Consort{% endblock %} {% block extra_head %}
-<div class="l-stack" style="padding-top: var(--s3); padding-bottom: var(--s4)">
-  <div style="text-align: center">
+{% extends 'choir/base.html' %}
+
+{% block title %}Learning Hub - Clent Consort{% endblock title %}
+
+{% block extra_head %}{% endblock extra_head %}
+
+{% block content %}
+<div class="l-stack section-padding">
+  <div class="text-center">
     <h1>{{ voice_part_name }} Learning Hub</h1>
     <p>Access your rehearsal tracks and sheet music below.</p>
   </div>
 
-  <div class="l-switcher" style="margin-top: var(--s2)">
+  <div class="l-switcher mt-s2">
     {% for asset in assets %}
-    <article class="box invert l-stack">
-      <h3 style="color: var(--primary)">{{ asset.repertoire.title }}</h3>
+    <article class="box invert l-stack card-flex">
+      <h3 class="text-primary">{{ asset.repertoire.title }}</h3>
+      
       {% if asset.repertoire.composer %}
-      <p><em>{{ asset.repertoire.composer }}</em></p>
+        <p><em>{{ asset.repertoire.composer }}</em></p>
       {% endif %}
 
-      <hr />
+      <hr class="divider" />
+      
       <p><strong>Resource:</strong> {{ asset.asset_name }}</p>
       <p><strong>Part:</strong> {{ asset.get_voice_part_display }}</p>
 
-      <div style="margin-top: auto; padding-top: var(--s1)">
+      <div class="card-footer">
         {% if asset.file_upload %}
-        <a
-          href="{{ asset.file_upload.url }}"
-          target="_blank"
-          class="cta-button"
-          style="display: block; text-align: center"
-          >Download File</a
-        >
+          <a href="{{ asset.file_upload.url }}" target="_blank" class="cta-button btn-block">Download File</a>
         {% elif asset.external_url %}
-        <a
-          href="{{ asset.external_url }}"
-          target="_blank"
-          class="cta-button"
-          style="display: block; text-align: center"
-          >External Link</a
-        >
+          <a href="{{ asset.external_url }}" target="_blank" class="cta-button btn-block">External Link</a>
         {% else %}
-        <p style="color: #ff4d4d"><em>Link currently unavailable</em></p>
+          <p class="text-error"><em>Link currently unavailable</em></p>
         {% endif %}
       </div>
     </article>
 
     {% empty %}
-    <div class="box invert" style="grid-column: 1 / -1; text-align: center">
+    <div class="box invert full-width text-center">
       <p>No rehearsal materials have been uploaded for this section yet.</p>
     </div>
     {% endfor %}

@@ -7,7 +7,13 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
-from .forms import AuditionForm, EnquiryForm, GiftAidForm
+from .forms import (
+    AuditionForm,
+    EnquiryForm,
+    GiftAidForm,
+    ProfileUpdateForm,
+    UserUpdateForm,
+)
 from .models import Event, GiftAidDeclaration, LearningAsset
 
 # ==============================================================================
@@ -193,6 +199,35 @@ def custom_logout_view(request):
     logout(request)
     messages.info(request, "You have been securely logged out.")
     return redirect("home")
+
+
+@login_required
+def settings_view(request):
+    """Allows members to update their personal details."""
+    if request.method == "POST":
+        # We pass the POST data AND the specific user instance to update
+        user_form = UserUpdateForm(request.POST, instance=request.user)
+        profile_form = ProfileUpdateForm(request.POST, instance=request.user.profile)
+
+        # If BOTH forms pass validation, save them both to the database
+        if user_form.is_valid() and profile_form.is_valid():
+            user_form.save()
+            profile_form.save()
+            messages.success(request, "Your profile has been updated successfully.")
+            return redirect(
+                "settings"
+            )  # Reload the page to show the green success message
+
+    else:
+        # GET request: Load the forms pre-filled with the user's current data
+        user_form = UserUpdateForm(instance=request.user)
+        profile_form = ProfileUpdateForm(instance=request.user.profile)
+
+    context = {
+        "user_form": user_form,
+        "profile_form": profile_form,
+    }
+    return render(request, "choir/settings.html", context)
 
 
 # ==============================================================================

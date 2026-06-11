@@ -776,6 +776,49 @@ footer a:hover,
   transform: translateY(-2px); /* Physical lift on hover */
   box-shadow: 0 5px 15px rgba(201, 164, 94, 0.4); /* Gold glow */
 }
+
+/* FORM UTILITIES & SETTINGS */
+
+/* Alerts and Messages */
+.alert {
+  padding: var(--s-1);
+  text-align: center;
+  margin-bottom: var(--s1);
+  border-radius: 4px;
+}
+
+.alert--success {
+  border: 2px solid #4caf50;
+  color: #4caf50;
+}
+
+.alert--error {
+  border: 2px solid #ff4d4d;
+  color: #ff4d4d;
+}
+
+/* Form Typography & Structure */
+.section-heading {
+  color: #c9a45e;
+  border-bottom: 1px solid #333;
+  padding-bottom: 0.5rem;
+}
+
+.form-error {
+  color: #ff4d4d;
+  font-size: 0.85em;
+}
+
+/* Layout Utilities */
+.divider {
+  border: 0;
+  border-top: 1px solid #333;
+  margin: var(--s2) 0;
+}
+
+.align-start {
+  align-self: flex-start;
+}
 /* ==========================================================================
    5. ANIMATIONS
    ========================================================================== */
@@ -1090,6 +1133,53 @@ footer a:hover,
   font-size: 0.8rem;
 }
 
+/* Layout & Spacing */
+.section-padding {
+  padding-top: var(--s3);
+  padding-bottom: var(--s4);
+}
+
+.mt-s2 {
+  margin-top: var(--s2);
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
+/* Typography & Alignment */
+.text-center {
+  text-align: center;
+}
+
+.text-primary {
+  color: var(
+    --primary
+  ); /* Assumes you have a CSS variable for your brand color */
+}
+
+.text-error {
+  color: #ff4d4d;
+}
+
+/* Card Specific Styling */
+.card-flex {
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Ensures all cards in a row stretch to the same height */
+}
+
+.card-footer {
+  margin-top: auto; /* Pushes the button to the bottom of the card */
+  padding-top: var(--s1);
+}
+
+.btn-block {
+  display: block;
+  text-align: center;
+  width: 100%;
+}
+
 /* --- General Utilities --- */
 .u-measure {
   max-width: 65ch;
@@ -1105,6 +1195,81 @@ footer a:hover,
   padding-top: var(--s2);
 }
 
+/* Container & Margin Utilities */
+.container-narrow {
+  max-width: 500px;
+}
+
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.mt-s-1 {
+  margin-top: var(--s-1);
+}
+/* Event Cards */
+.event-card-highlight {
+  border-left: 3px solid var(--primary);
+  padding-left: var(--s0);
+}
+
+.event-date {
+  margin-bottom: 0;
+  font-size: var(--s1);
+}
+
+.event-meta {
+  margin-top: 0;
+  color: #ccc;
+  font-size: 0.9em;
+}
+
+/* Repertoire List */
+.list-unstyled {
+  padding-left: 0;
+  list-style-type: none;
+}
+
+.repertoire-item {
+  background: rgba(255, 255, 255, 0.05);
+  padding: var(--s-1);
+  border-radius: 4px;
+}
+
+/* Typography & Layout Tweaks */
+.text-warning {
+  color: #ffb74d;
+  font-size: 0.85em;
+}
+
+.subtitle-faded {
+  font-size: 0.9em;
+  margin-top: -1rem;
+  color: #ccc;
+}
+
+.text-muted {
+  font-size: 0.85em;
+  color: #aaa;
+}
+
+.mb-s-1 {
+  margin-bottom: var(--s-1);
+}
+
+/* Button Grouping */
+.flex-center-wrap {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn-small {
+  padding: 5px 15px;
+  font-size: 0.85em;
+}
 /* ==========================================================================
    8. RESTORED ARCHITECTURE CLASSES
    ========================================================================== */

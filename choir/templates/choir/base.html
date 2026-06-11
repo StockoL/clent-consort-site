@@ -69,102 +69,38 @@
         </a>
 
         <nav class="main-nav" aria-label="Main Navigation">
-          <button
-            class="menu-toggle"
-            aria-expanded="false"
-            aria-controls="nav-list"
-          >
-            <span class="sr-only">Menu</span>
-            <div class="hamburger" aria-hidden="true"></div>
-          </button>
+  <button
+    class="menu-toggle"
+    aria-expanded="false"
+    aria-controls="nav-list"
+  >
+    <span class="sr-only">Menu</span>
+    <div class="hamburger" aria-hidden="true"></div>
+  </button>
 
-          {% if not user.is_authenticated %}
-          <ul id="nav-list" class="nav-list">
-            <li>
-              <a
-                href="{% url 'home' %}"
-                {%
-                if
-                request.resolver_match.url_name=""
-                ="home"
-                %}aria-current="page"
-                {%
-                endif
-                %}
-                >Home</a
-              >
-            </li>
-            <li>
-              <a
-                href="{% url 'about' %}"
-                {%
-                if
-                request.resolver_match.url_name=""
-                ="about"
-                %}aria-current="page"
-                {%
-                endif
-                %}
-                >About</a
-              >
-            </li>
-            <li>
-              <a
-                href="{% url 'events' %}"
-                {%
-                if
-                request.resolver_match.url_name=""
-                ="events"
-                %}aria-current="page"
-                {%
-                endif
-                %}
-                >Events</a
-              >
-            </li>
-            <li>
-              <a
-                href="{% url 'contact' %}"
-                {%
-                if
-                request.resolver_match.url_name=""
-                ="contact"
-                %}aria-current="page"
-                {%
-                endif
-                %}
-                >Contact</a
-              >
-            </li>
-          </ul>
-          {% else %}
-          <ul id="nav-list" class="nav-list nav-list-dashboard">
-            <li>
-              <a href="{% url 'dashboard' %}#schedule" class="nav-link"
-                >Schedule</a
-              >
-            </li>
-            <li>
-              <a href="{% url 'dashboard' %}#logistics" class="nav-link"
-                >Logistics</a
-              >
-            </li>
-            <li>
-              <a href="{% url 'dashboard' %}#library" class="nav-link"
-                >Library</a
-              >
-            </li>
-            <li>
-              <a href="{% url 'dashboard' %}#hub" class="nav-link">Learning</a>
-            </li>
-            <li>
-              <a href="{% url 'giftaid' %}" class="nav-link"
-                >Gift Aid Sign-up</a
-              >
-            </li>
-          </ul>
-          {% endif %}
-        </nav>
+  <ul id="nav-list" class="nav-list">
+    <li>
+      <a href="{% url 'home' %}" {% if request.resolver_match.url_name == 'home' %}aria-current="page"{% endif %}>Home</a>
+    </li>
+    <li>
+      <a href="{% url 'about' %}" {% if request.resolver_match.url_name == 'about' %}aria-current="page"{% endif %}>About</a>
+    </li>
+    <li>
+      <a href="{% url 'events' %}" {% if request.resolver_match.url_name == 'events' %}aria-current="page"{% endif %}>Events</a>
+    </li>
+    <li>
+      <a href="{% url 'contact' %}" {% if request.resolver_match.url_name == 'contact' %}aria-current="page"{% endif %}>Contact</a>
+    </li>
+
+    {% if user.is_authenticated %}
+      <li><a href="{% url 'members' %}" class="nav-link">Dashboard</a></li>
+      <li><a href="{% url 'settings' %}" class="nav-link">Settings</a></li>
+      <li><a href="{% url 'logout' %}" class="nav-link">Logout</a></li>
+    {% else %}
+      <li><a href="{% url 'login' %}" class="nav-link">Member Login</a></li>
+    {% endif %}
+  </ul>
+</nav>
       </div>
     </header>
 

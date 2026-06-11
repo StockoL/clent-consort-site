@@ -7,6 +7,7 @@ from django.contrib.auth import views as auth_views
 from django.urls import path
 
 # Explicitly import all your custom view functions here
+from choir import views
 from choir.views import (
     about_view,
     contact_view,
@@ -26,7 +27,7 @@ urlpatterns = [
     path("events/", events_view, name="events"),
     path("contact/", contact_view, name="contact"),
     # --- Secure Area ---
-    path("members/", dashboard_view, name="dashboard"),
+    path("members/", dashboard_view, name="members"),
     path("members/giftaid/", giftaid_view, name="giftaid"),
     path("members/hub/<str:voice_part>/", hub_view, name="hub"),
     # --- Auth Paths ---
@@ -37,6 +38,7 @@ urlpatterns = [
     ),
     # 2. Changed views.custom_logout_view to just custom_logout_view to match your style
     path("logout/", custom_logout_view, name="logout"),
+    path("members/settings/", views.settings_view, name="settings"),
 ]
 
 handler404 = "choir.views.custom_404"

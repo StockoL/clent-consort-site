@@ -1,15 +1,14 @@
-{% extends 'choir/base.html' %} {% load static %} {% block content %} {% block title %}Member's Login - Clent Consort{% endblock %} {% block extra_head %}
-<div
-  class="l-stack"
-  style="
-    padding-top: var(--s3);
-    padding-bottom: var(--s4);
-    max-width: 500px;
-    margin: 0 auto;
-  "
->
+{% extends 'choir/base.html' %}
+{% load static %}
+
+{% block title %}Member's Login - Clent Consort{% endblock title %}
+
+{% block extra_head %}{% endblock extra_head %}
+
+{% block content %}
+<div class="l-stack section-padding container-narrow mx-auto">
   <section class="box invert l-stack">
-    <div style="text-align: center">
+    <div class="text-center">
       <h1>Member Login</h1>
       <p>Please sign in to access the rehearsal schedule and learning hub.</p>
     </div>
@@ -19,13 +18,7 @@
 
       <div class="form-group l-stack l-stack--small">
         <label for="id_username">Username</label>
-        <input
-          type="text"
-          name="username"
-          id="id_username"
-          required
-          autofocus
-        />
+        <input type="text" name="username" id="id_username" required autofocus />
       </div>
 
       <div class="form-group l-stack l-stack--small">
@@ -35,11 +28,11 @@
 
       <input type="hidden" name="next" value="{{ next }}" />
 
-      <button type="submit" class="cta-button">Sign In</button>
+      <button type="submit" class="cta-button btn-block">Sign In</button>
     </form>
 
     {% if form.errors %}
-    <div style="color: #ff4d4d; text-align: center; margin-top: var(--s-1)">
+    <div class="text-error text-center mt-s-1">
       <p>Your username and password didn't match. Please try again.</p>
     </div>
     {% endif %}

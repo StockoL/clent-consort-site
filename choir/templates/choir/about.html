@@ -1,17 +1,22 @@
-{% extends 'choir/base.html' %} {% load static %} {% block title %}About - Clent Consort{% endblock %} {% block extra_head %}
+{% extends 'choir/base.html' %}
+{% load static %}
+
+{% block title %}About - Clent Consort{% endblock title %}
+
+{% block extra_head %}
 <link
   rel="preload"
   as="image"
   href="{% static 'images/cathedral_choir.webp' %}"
   fetchpriority="high"
 />
-{% endblock %} {% block content %}
+{% endblock extra_head %}
+
+{% block content %}
 <div class="mission-cover">
   <div class="center-content">
     <p>We believe in the power of historic spaces to transform choral music.</p>
-    <p>
-      Our mission is to bridge the gap between ancient stone and modern voice.
-    </p>
+    <p>Our mission is to bridge the gap between ancient stone and modern voice.</p>
   </div>
 </div>
 

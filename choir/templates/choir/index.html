@@ -1,16 +1,23 @@
-{% extends 'choir/base.html' %} {% load static %} {% block title %}Home - Clent Consort{% endblock %} {% block extra_head %}
+{% extends 'choir/base.html' %}
+{% load static %}
+
+{% block title %}Home - Clent Consort{% endblock title %}
+
+{% block extra_head %}
 <link
   rel="preload"
   as="image"
   href="{% static 'images/hero_image_clent_consort.jpg' %}"
   fetchpriority="high"
 />
-{% endblock %} {% block content %}
+{% endblock extra_head %}
+
+{% block content %}
 <section class="hero-cover">
   <div class="l-stack">
     <h1>Clent Consort</h1>
     <p>Ancient Spires, Modern Voices</p>
-    <a href="#" class="cta-button">Our Next Project</a>
+    <a href="{% url 'events' %}" class="cta-button">Our Next Project</a>
   </div>
 </section>
-{% endblock %}
+{% endblock content %}

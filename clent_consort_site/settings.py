@@ -124,7 +124,7 @@ STATIC_URL = "static/"
 LOGIN_URL = "login"
 
 # Where to send users immediately after a successful login:
-LOGIN_REDIRECT_URL = "dashboard"
+LOGIN_REDIRECT_URL = "members"
 
 # Where to send users immediately after logging out:
 LOGOUT_REDIRECT_URL = "home"
