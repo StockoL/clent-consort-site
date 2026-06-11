@@ -7,7 +7,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
-from .forms import AuditionApplicationForm, EnquiryForm, GiftAidForm
+from .forms import AuditionForm, EnquiryForm, GiftAidForm
 from .models import Event, GiftAidDeclaration, LearningAsset
 
 # ==============================================================================
@@ -28,16 +28,18 @@ def events_view(request):
 
 
 def contact_view(request):
+    """
+    Traffic controller handling both public contact enquiries and
+    audition applications from a unified frontend view.
+    """
     if request.method == "POST":
-        # 1. Traffic control: Check for 'voice_part' instead of 'voice'
         if "voice_part" in request.POST:
-            form = AuditionApplicationForm(request.POST)
+            form = AuditionForm(request.POST)
             is_audition = True
         else:
             form = EnquiryForm(request.POST)
             is_audition = False
 
-        # 2. Validation Check
         if form.is_valid():
             submission = form.save()
 
@@ -62,20 +64,22 @@ def contact_view(request):
             return redirect("contact")
 
         else:
-            # THIS IS THE MAGIC DEBUG LINE:
             print("🛑 FORM FAILED VALIDATION! Errors:", form.errors)
             messages.error(
                 request, "There was an error with your submission. Please try again."
             )
-            # 3. Redirect cleanly WITH an anchor tag
-            messages.success(
-                request, "Thank you! Your details have been securely recorded."
-            )
-
-            # This forces the browser to load /contact/#form-section
             return redirect(reverse("contact") + "#form-section")
 
-    return render(request, "choir/contact.html")
+    else:
+        # GET Request: Initialize fresh, empty forms to send to the template
+        enquiry_form = EnquiryForm()
+        audition_form = AuditionForm()
+
+    context = {
+        "enquiry_form": enquiry_form,
+        "audition_form": audition_form,
+    }
+    return render(request, "choir/contact.html", context)
 
 
 # ==============================================================================

@@ -4,20 +4,36 @@ from .models import AuditionApplication, Enquiry, GiftAidDeclaration
 
 
 class EnquiryForm(forms.ModelForm):
-    """Form to validate and save general website enquiries."""
+    """Form for processing public contact and booking enquiries."""
 
     class Meta:
         model = Enquiry
-        # These fields map exactly to your HTML input 'name' attributes
         fields = ["name", "email", "subject", "message"]
+        widgets = {
+            "message": forms.Textarea(
+                attrs={"rows": 5, "placeholder": "Type your message here..."}
+            ),
+            "name": forms.TextInput(attrs={"placeholder": "Jane Doe"}),
+            "email": forms.EmailInput(attrs={"placeholder": "jane@example.com"}),
+        }
 
 
-class AuditionApplicationForm(forms.ModelForm):
-    """Form to validate and save prospective singer requests."""
+class AuditionForm(forms.ModelForm):
+    """Form for prospective singers applying to audition."""
 
     class Meta:
         model = AuditionApplication
         fields = ["name", "email", "voice_part", "experience"]
+        widgets = {
+            "experience": forms.Textarea(
+                attrs={
+                    "rows": 4,
+                    "placeholder": "Tell us a bit about your choral experience...",
+                }
+            ),
+            "name": forms.TextInput(attrs={"placeholder": "John Smith"}),
+            "email": forms.EmailInput(attrs={"placeholder": "john@example.com"}),
+        }
 
 
 class GiftAidForm(forms.ModelForm):

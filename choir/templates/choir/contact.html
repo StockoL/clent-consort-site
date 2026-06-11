@@ -1,4 +1,9 @@
-{% extends 'choir/base.html' %} {% load static %} {% block content %}
+{% extends 'choir/base.html' %} 
+{% load static %} 
+
+{% block title %}Contact - Clent Consort{% endblock %} 
+
+{% block content %}
 <div class="l-stack l-stack--large" style="padding-bottom: var(--s4)">
   <section class="contact-hero l-stack l-stack--small">
     <h1>Connect With Us</h1>
@@ -10,53 +15,46 @@
   </section>
 
   <div id="form-section" class="l-stack">
-    {% if messages %} {% for message in messages %}
-    <div
-      class="box invert l-stack"
-      style="
-        border: 2px solid #4caf50;
-        text-align: center;
-        margin-bottom: var(--s2);
-      "
-      role="alert"
-    >
-      <h2 style="color: #4caf50; margin-bottom: 0">Message Received!</h2>
-      <p>{{ message }}</p>
-    </div>
-    {% endfor %} {% endif %}
+    {% if messages %} 
+      {% for message in messages %}
+        <div class="box invert l-stack" style="border: 2px solid {% if message.tags == 'error' %}#ff4d4d{% else %}#4caf50{% endif %}; text-align: center; margin-bottom: var(--s2);" role="alert">
+          <h2 style="color: {% if message.tags == 'error' %}#ff4d4d{% else %}#4caf50{% endif %}; margin-bottom: 0;">
+            {% if message.tags == 'error' %}Submission Error{% else %}Message Received!{% endif %}
+          </h2>
+          <p>{{ message }}</p>
+        </div>
+      {% endfor %} 
+    {% endif %}
 
     <div class="l-switcher contact-forms-layout">
+      
       <section class="contact-form-container box invert l-stack">
         <h2>General Enquiry</h2>
         <form action="{% url 'contact' %}" method="POST" class="l-stack">
           {% csrf_token %}
 
           <div class="form-group l-stack l-stack--small">
-            <label for="subject-general">Subject</label>
-            <select id="subject-general" name="subject">
-              <option value="general">General Enquiry</option>
-              <option value="booking">Concert Booking</option>
-            </select>
+            <label for="{{ enquiry_form.subject.id_for_label }}">Subject</label>
+            {{ enquiry_form.subject }}
+            <div style="color: #ff4d4d; font-size: 0.85em;">{{ enquiry_form.subject.errors }}</div>
           </div>
 
           <div class="form-group l-stack l-stack--small">
-            <label for="name-general">Name</label>
-            <input type="text" id="name-general" name="name" required />
+            <label for="{{ enquiry_form.name.id_for_label }}">Name</label>
+            {{ enquiry_form.name }}
+            <div style="color: #ff4d4d; font-size: 0.85em;">{{ enquiry_form.name.errors }}</div>
           </div>
 
           <div class="form-group l-stack l-stack--small">
-            <label for="email-general">Email</label>
-            <input type="email" id="email-general" name="email" required />
+            <label for="{{ enquiry_form.email.id_for_label }}">Email</label>
+            {{ enquiry_form.email }}
+            <div style="color: #ff4d4d; font-size: 0.85em;">{{ enquiry_form.email.errors }}</div>
           </div>
 
           <div class="form-group l-stack l-stack--small">
-            <label for="message-general">Message</label>
-            <textarea
-              id="message-general"
-              name="message"
-              rows="5"
-              required
-            ></textarea>
+            <label for="{{ enquiry_form.message.id_for_label }}">Message</label>
+            {{ enquiry_form.message }}
+            <div style="color: #ff4d4d; font-size: 0.85em;">{{ enquiry_form.message.errors }}</div>
           </div>
 
           <button type="submit" class="cta-button">Send Message</button>
@@ -69,40 +67,34 @@
           {% csrf_token %}
 
           <div class="form-group l-stack l-stack--small">
-            <label for="name-audition">Name</label>
-            <input type="text" id="name-audition" name="name" required />
+            <label for="{{ audition_form.name.id_for_label }}">Name</label>
+            {{ audition_form.name }}
+            <div style="color: #ff4d4d; font-size: 0.85em;">{{ audition_form.name.errors }}</div>
           </div>
 
           <div class="form-group l-stack l-stack--small">
-            <label for="email-audition">Email</label>
-            <input type="email" id="email-audition" name="email" required />
+            <label for="{{ audition_form.email.id_for_label }}">Email</label>
+            {{ audition_form.email }}
+            <div style="color: #ff4d4d; font-size: 0.85em;">{{ audition_form.email.errors }}</div>
           </div>
 
           <div class="form-group l-stack l-stack--small">
-            <label for="voice">Voice Type</label>
-            <select id="voice" name="voice_part">
-              <option value="soprano">Soprano</option>
-              <option value="alto">Alto</option>
-              <option value="tenor">Tenor</option>
-              <option value="baritone">Baritone</option>
-              <option value="bass">Bass</option>
-            </select>
+            <label for="{{ audition_form.voice_part.id_for_label }}">Voice Type</label>
+            {{ audition_form.voice_part }}
+            <div style="color: #ff4d4d; font-size: 0.85em;">{{ audition_form.voice_part.errors }}</div>
           </div>
 
           <div class="form-group l-stack l-stack--small">
-            <label for="experience">Choral Experience</label>
-            <textarea
-              id="experience"
-              name="experience"
-              rows="5"
-              placeholder="Tell us about your previous experience..."
-            ></textarea>
+            <label for="{{ audition_form.experience.id_for_label }}">Choral Experience</label>
+            {{ audition_form.experience }}
+            <div style="color: #ff4d4d; font-size: 0.85em;">{{ audition_form.experience.errors }}</div>
           </div>
 
           <button type="submit" class="cta-button">Apply to Audition</button>
         </form>
       </section>
+
     </div>
   </div>
-  {% endblock content %}
 </div>
+{% endblock content %}
