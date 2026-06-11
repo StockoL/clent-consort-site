@@ -1,0 +1,179 @@
+{% extends 'choir/base.html' %} {% load static %} {% block content %}
+<section class="featured-event">
+  <div class="card box invert l-sidebar">
+    <div class="event-image">
+      <img
+        src="{% static 'images/clent_church_postcard.jpg' %}"
+        alt="St Leonard's Church in Clent"
+      />
+    </div>
+    <div class="event-details l-stack">
+      <span class="label">Next Event</span>
+      <h1>Evensong at St. Leonard's</h1>
+      <p>
+        A traditional evening service of choral music in the heart of Clent.
+      </p>
+      <ul class="l-stack l-stack--small">
+        <li class="location">
+          <strong>Where:</strong> St. Leonard's Church, Clent
+        </li>
+        <li><strong>When:</strong> 20th September, 2026 | 16:30</li>
+      </ul>
+      <a href="{% url 'contact' %}" class="cta-button"
+        >Enquire for More Information</a
+      >
+    </div>
+  </div>
+</section>
+
+<section class="recent-reel l-stack">
+  <h2>Recent Performances</h2>
+  <div class="l-reel">
+    <div class="event-card box">
+      <h3>Choral Eucharist and Evensong</h3>
+      <p class="location">Carlisle Cathedral</p>
+      <time datetime="2025-10">October 2025</time>
+      <p>Stanford: Communion Service <em>in C</em></p>
+      <p>Elgar: O salutaris hostia <em>in F</em></p>
+      <hr />
+      <p>John IV of Portugal: Crux fidelis</p>
+      <p>Radcliffe Responses</p>
+      <p>Aston: Magnificat and Nunc Dimittis <em>in F</em></p>
+      <p>Haydn: Insane et vanae curae</p>
+    </div>
+
+    <div class="event-card box">
+      <h3>Choral Eucharist and Evensong</h3>
+      <p class="location">Exeter Cathedral</p>
+      <time datetime="2025-04">April 2025</time>
+      <p>Howells: Communion <em>Collegium Regale</em></p>
+      <p>Palestrina: Sicut cervus</p>
+      <hr />
+      <p>Sumsion Responses</p>
+      <p>Moore: Third Service</p>
+      <p>Nardone: I give to you a new commandment</p>
+    </div>
+
+    <div class="event-card box">
+      <h3>Choral Evensong</h3>
+      <p class="location">Rochester Cathedral</p>
+      <time datetime="2024-11">November 2024</time>
+      <p>Parry: Crossing the bar</p>
+      <p>L'Estrange Responses</p>
+      <p>Wood: Magnificat and Nunc Dimittis <em>in E-flat</em> (No.2)</p>
+      <p>Sumsion: They that go down to the sea in ships</p>
+    </div>
+  </div>
+</section>
+
+<section class="event-archive l-stack l-stack--small">
+  <h2>Past Events Archive</h2>
+  <div class="archive-list l-stack">
+    <div class="archive-item">
+      <time datetime="2024-04">April 2024</time>
+      <span class="location">Evensong, Hereford Cathedral</span>
+    </div>
+    <div class="archive-item">
+      <time datetime="2023-07">July 2023</time>
+      <span class="location">Whallet Wedding, Clent</span>
+    </div>
+    <div class="archive-item">
+      <time datetime="2022-12">December 2022</time>
+      <span class="location">Christmas Carols, Hagley Hall</span>
+    </div>
+    <div class="archive-item">
+      <time datetime="2022-10">October 2022</time>
+      <span class="location"
+        >Sung Services and Choral Recital, Lindisfarne Weekend</span
+      >
+    </div>
+    <div class="archive-item">
+      <time datetime="2022-06">June 2022</time>
+      <span class="location">Flower Festival Evensong, Clent</span>
+    </div>
+    <div class="archive-item">
+      <time datetime="2022-02">February 2022</time>
+      <span class="location">Evensong, St Albans</span>
+    </div>
+    <div class="archive-item">
+      <time datetime="2021-12">December 2021</time>
+      <span class="location">Carol Service, Clent</span>
+    </div>
+    <div class="archive-item">
+      <time datetime="2019-03">March 2019</time>
+      <span class="location"
+        >Sung Services and Choral Recital, St David's Cathedral (Pembrokeshire)
+        Weekend</span
+      >
+    </div>
+    <div class="archive-item">
+      <time datetime="2019-10">October 2019</time>
+      <span class="location"
+        >Sung Services, St Edmundsbury Cathedral Weekend</span
+      >
+    </div>
+    <div class="archive-item">
+      <time datetime="2018-10">October 2018</time>
+      <span class="location">Evensong, Leicester Cathedral</span>
+    </div>
+    <div class="archive-item">
+      <time datetime="2018-07">July 2018</time>
+      <span class="location">Choral Compline, Tardebigge</span>
+    </div>
+    <div class="archive-item">
+      <time datetime="2018-04">April 2018</time>
+      <span class="location">Sung Services, Wells Cathedral Weekend</span>
+    </div>
+    <div class="archive-item">
+      <time datetime="2017-10">October 2017</time>
+      <span class="location">Evensong, Derby Cathedral</span>
+    </div>
+    <div class="archive-item">
+      <time datetime="2017-03">March 2017</time>
+      <span class="location">Evensong, Southwark Cathedral</span>
+    </div>
+    <div class="archive-item">
+      <time datetime="2016-10">October 2016</time>
+      <span class="location">Sung Services, Salisbury Cathedral Weekend</span>
+    </div>
+    <div class="archive-item">
+      <time datetime="2016-03">March 2016</time>
+      <span class="location">Evensong, Bristol Cathedral</span>
+    </div>
+    <div class="archive-item">
+      <time datetime="2015-12">December 2015</time>
+      <span class="location">Evensong, Tardebigge</span>
+    </div>
+    <div class="archive-item">
+      <time datetime="2015-04">April 2015</time>
+      <span class="location">Evensong, Bath Abbey</span>
+    </div>
+    <div class="archive-item">
+      <time datetime="2014-11">November 2014</time>
+      <span class="location">Evensong, Sherborne Abbey</span>
+    </div>
+    <div class="archive-item">
+      <time datetime="2014-03">March 2014</time>
+      <span class="location">Evensong, Tardebigge</span>
+    </div>
+    <div class="archive-item">
+      <time datetime="2013-11">November 2013</time>
+      <span class="location">Clent Accord, Clent</span>
+    </div>
+    <div class="archive-item">
+      <time datetime="2013-04">April 2013</time>
+      <span class="location">Evensong, Lichfield Cathedral</span>
+    </div>
+    <div class="archive-item">
+      <time datetime="2012-11">November 2012</time>
+      <span class="location"
+        >Sung Services, Peterborough Cathedral Weekend</span
+      >
+    </div>
+    <div class="archive-item">
+      <time datetime="2012-06">June 2012</time>
+      <span class="location">Inaugural Evensong, Belbroughton Church</span>
+    </div>
+  </div>
+</section>
+{% endblock %}

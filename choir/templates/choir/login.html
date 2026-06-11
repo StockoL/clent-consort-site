@@ -1,0 +1,48 @@
+{% extends 'choir/base.html' %} {% load static %} {% block content %}
+<div
+  class="l-stack"
+  style="
+    padding-top: var(--s3);
+    padding-bottom: var(--s4);
+    max-width: 500px;
+    margin: 0 auto;
+  "
+>
+  <section class="box invert l-stack">
+    <div style="text-align: center">
+      <h1>Member Login</h1>
+      <p>Please sign in to access the rehearsal schedule and learning hub.</p>
+    </div>
+
+    <form method="POST" action="{% url 'login' %}" class="l-stack">
+      {% csrf_token %}
+
+      <div class="form-group l-stack l-stack--small">
+        <label for="id_username">Username</label>
+        <input
+          type="text"
+          name="username"
+          id="id_username"
+          required
+          autofocus
+        />
+      </div>
+
+      <div class="form-group l-stack l-stack--small">
+        <label for="id_password">Password</label>
+        <input type="password" name="password" id="id_password" required />
+      </div>
+
+      <input type="hidden" name="next" value="{{ next }}" />
+
+      <button type="submit" class="cta-button">Sign In</button>
+    </form>
+
+    {% if form.errors %}
+    <div style="color: #ff4d4d; text-align: center; margin-top: var(--s-1)">
+      <p>Your username and password didn't match. Please try again.</p>
+    </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock content %}

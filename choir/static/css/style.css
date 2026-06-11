@@ -1,0 +1,1210 @@
+/* ==========================================================================
+   1. BASE STYLES & VARIABLES
+   ========================================================================== */
+
+:root {
+  /* Spacing Scale */
+  --s-1: 0.8rem;
+  --s0: 1rem;
+  --s1: 1.5rem;
+  --s2: 2.25rem;
+  --s3: 3.375rem;
+  --s4: 5.063rem;
+  --s5: 7.594rem;
+
+  /* Font Stacks */
+  --font-heading: "Cinzel", serif;
+  --font-body: "Inter", sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-body);
+  line-height: 1.5;
+  color: #333;
+  margin: 0;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.05ch;
+}
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* Ensure the scrollytelling section also respects it */
+.project-rhythm-scroll {
+  background-color: #000;
+}
+/* ==========================================================================
+   2. GLOBAL LAYOUT PATTERNS (Every Layout Primitives)
+   ========================================================================== */
+
+/* The Center: Keeps content in a readable middle column */
+.l-center {
+  box-sizing: content-box;
+  margin-inline: auto;
+  max-width: 80rem;
+  padding-inline: var(--s1);
+}
+
+/* The Sidebar: General layout tool */
+.l-sidebar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s1);
+}
+
+.l-sidebar > :first-child {
+  flex-basis: 20rem;
+  flex-grow: 1;
+}
+
+.l-sidebar > :last-child {
+  flex-basis: 30rem;
+  flex-grow: 999;
+}
+
+/* The Reel: Horizontal scrolling logic */
+.l-reel {
+  display: flex;
+  overflow-x: auto;
+  gap: var(--s1);
+  padding-bottom: var(--s1);
+  scroll-snap-type: x mandatory;
+}
+
+.l-reel > * {
+  flex: 0 0 85%;
+  scroll-snap-align: start;
+}
+
+@media (min-width: 60rem) {
+  .l-reel > * {
+    flex: 0 0 calc(33.333% - var(--s1));
+  }
+}
+
+/* The Cluster: For row alignment */
+.l-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--s1);
+}
+/* The Switcher Pattern */
+.l-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s1);
+}
+
+.l-switcher > * {
+  flex-grow: 1;
+  /* If container < threshold, basis becomes huge and forces wrap */
+  flex-basis: calc((var(--threshold, 40rem) - 100%) * 999);
+}
+/* --- THE STACK --- */
+/* Injects vertical space between siblings */
+.l-stack > * + * {
+  margin-top: var(--space, var(--s1));
+}
+
+.l-stack--small {
+  --space: var(--s-1);
+}
+.l-stack--large {
+  --space: var(--s4);
+}
+
+/* --- THE BOX --- */
+.box {
+  padding: var(--s1);
+  border: 1px solid transparent;
+}
+
+/* Unified Invert: The "Card" standard for the whole site */
+.box.invert {
+  background-color: #1a1a1a;
+  color: #ffffff;
+  border-radius: 20px;
+  border: 1px solid rgba(201, 164, 94, 0.3);
+  overflow: hidden;
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.3),
+    0 40px 60px -15px rgba(0, 0, 0, 0.4);
+}
+.l-frame {
+  aspect-ratio: var(--aspect-ratio, 16/9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.l-frame > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* --- UTILITIES --- */
+
+/* Visually Hidden:
+  Hides an element visually while keeping it 
+  discoverable by screen readers and keyboard users.
+*/
+.u-visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+/* ==========================================================================
+   3. GLOBAL COMPONENTS (Header, Footer, Buttons)
+   ========================================================================== */
+
+/* --- THE HEADER WRAPPER --- */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 1100;
+  background-color: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid #eee;
+  width: 100%;
+}
+
+.header-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s1);
+  padding: var(--s0) 0;
+}
+
+@media (min-width: 45rem) {
+  .header-inner {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
+
+/* Active State for Nav */
+header nav a[aria-current="page"] {
+  color: #c9a45e;
+  font-weight: 700;
+  border-bottom: 2px solid #c9a45e;
+}
+
+.brand-name {
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1ch;
+  color: #1a1a1a;
+}
+
+.logo-link {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  text-decoration: none;
+  color: black;
+  font-weight: bold;
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.05ch;
+}
+
+header nav ul {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  list-style: none;
+  gap: var(--s0);
+  margin: 0;
+  padding: 0;
+}
+
+header nav a {
+  font-family: var(--font-body);
+  font-size: var(--s0);
+  font-weight: 505;
+  color: #444;
+  transition: color 0.2s;
+  padding: 0.5rem;
+  text-decoration: none;
+}
+
+header nav a:hover {
+  color: #c9a45e;
+  text-decoration: underline;
+}
+
+/* The Inner: Handles the centering and the flex layout */
+.header-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s1);
+  padding: var(--s0) 0; /* Vertical padding only, l-center handles horizontal */
+
+  /* No max-width here; .l-center utility handles it */
+}
+
+@media (min-width: 45rem) {
+  .header-inner {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
+/* CTA Button */
+.cta-button {
+  display: inline-block;
+  background-color: #c9a45e; /* Gold */
+  color: #1a1a1a; /* Dark Charcoal for contrast */
+  padding: 1rem 2rem;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 2px;
+  font-family:
+    "Cinzel", serif; /* Using the display font for buttons feels more premium */
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition:
+    transform 0.2s ease,
+    background-color 0.3s;
+  margin-top: var(--s1);
+}
+
+.cta-button:hover {
+  background-color: #dcb97a; /* A lighter gold for the hover state */
+  transform: translateY(-2px); /* A subtle 'lift' effect */
+}
+
+/* Global Footer Wrapper */
+footer {
+  padding: var(--s2) var(--s1);
+  border-top: 1px solid #eee;
+}
+
+/* The Grid Architecture */
+.footer-grid {
+  display: flex;
+  flex-direction: column; /* Mobile-first: stack everything vertically */
+  gap: var(--s2);
+  align-items: center;
+  margin-bottom: var(--s1);
+}
+
+/* Desktop Routing: Unpack the columns side-by-side */
+@media (min-width: 45rem) {
+  .footer-grid {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  /* Distribute the space evenly so the center column is dead-center */
+  .footer-col-left,
+  .footer-col-center,
+  .footer-col-right {
+    flex: 1;
+  }
+
+  /* Lock the text alignment for the outer columns */
+  .footer-col-left {
+    text-align: left;
+  }
+
+  .footer-col-right {
+    text-align: right;
+  }
+}
+
+/* Social Icon Grouping */
+.social-group {
+  display: flex;
+  flex-direction: row; /* Force the icons into a horizontal line */
+  gap: var(--s1);
+  justify-content: center;
+  align-items: center;
+}
+
+/* Link Styling */
+footer a,
+.footer-btn {
+  text-decoration: none;
+  color: #555;
+  transition: color 0.2s ease;
+}
+
+footer a:hover,
+.footer-btn:hover {
+  color: #c9a45e;
+}
+
+.copyright {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #888;
+  margin-top: var(--s1);
+}
+
+/* ==========================================================================
+   SVG ICON CONSTRAINTS
+   ========================================================================== */
+.social-icon svg {
+  width: 24px; /* Locks the mathematical scale */
+  height: 24px;
+  display: block; /* Removes awkward baseline spacing */
+  transition: transform 0.2s ease;
+}
+
+/* Optional: Add a nice hover effect while we're here */
+.social-icon:hover svg {
+  transform: scale(1.1);
+}
+
+/* ==========================================================================
+   4. PAGE-SPECIFIC SECTIONS
+   ========================================================================== */
+
+/* --- HOME PAGE: Hero --- */
+.hero-cover {
+  display: flex;
+  flex-direction: column;
+  min-height: 80vh;
+  padding: var(--s1);
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+    url("../images/hero_image_clent_consort.jpg") center/cover;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  text-align: center;
+  overflow: hidden;
+}
+
+.hero-cover h1 {
+  font-size: clamp(2.5rem, 10vw, 5rem);
+  font-weight: 700;
+  margin-bottom: var(--s1);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.hero-cover p {
+  font-size: 1.4rem;
+  margin-bottom: var(--s2);
+  max-width: 60ch;
+  margin-inline: auto;
+}
+
+/* --- ABOUT PAGE: Mission & Cycle --- */
+.mission-cover {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
+    url("../images/cathedral_choir.webp") center 25% / cover;
+  min-height: 50vh;
+  color: white;
+  text-align: center;
+  padding: var(--s1);
+}
+
+.mission-cover p {
+  font-family: var(--font-heading);
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  max-width: 40ch;
+  line-height: 1.2;
+}
+
+.sidebar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s1);
+  padding: var(--s2) var(--s1);
+  max-width: 80rem;
+  margin-inline: auto;
+}
+
+.sidebar-image {
+  flex-basis: 15rem;
+  flex-grow: 1;
+}
+
+.sidebar-image img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  border-radius: 2px;
+  filter: sepia(20%) contrast(105%);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-text {
+  flex-basis: 0;
+  flex-grow: 999;
+  min-width: 50%;
+}
+
+/* --- ABOUT PAGE: Project Rhythm Seamless Stacking --- */
+
+.project-rhythm-scroll {
+  position: relative;
+  background-color: #000;
+  overflow: visible; /* Crucial for sticky children to work */
+}
+
+.rhythm-slide {
+  position: sticky;
+  top: 0;
+  height: 100dvb;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 -20px 50px rgba(0, 0, 0, 0.5);
+}
+
+/* Proper Z-Index Stack */
+#slide-01 {
+  z-index: 1;
+}
+#slide-02 {
+  z-index: 2;
+}
+#slide-03 {
+  z-index: 3;
+}
+
+/* The Vignette Layer */
+.rhythm-slide::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: radial-gradient(
+    circle,
+    rgba(0, 0, 0, 0.2) 0%,
+    rgba(0, 0, 0, 0.8) 100%
+  );
+  pointer-events: none;
+}
+
+/* The Video Background */
+.slide-bg,
+.slide-bg video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.slide-bg video {
+  object-fit: cover;
+  filter: brightness(0.5) contrast(1.1);
+}
+
+/* The Text Content */
+.slide-content {
+  position: relative;
+  z-index: 2;
+  color: white;
+  text-align: center;
+  max-width: 65ch;
+  padding: var(--s2);
+
+  /* Scroll-Driven Reveal Animation */
+  view-timeline-name: --slide-reveal;
+  view-timeline-axis: block;
+  animation: reveal-content linear both;
+  animation-timeline: --slide-reveal;
+}
+
+@keyframes reveal-content {
+  0% {
+    opacity: 0;
+    transform: translateY(50px) scale(0.95);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.95);
+  }
+}
+
+.step-number {
+  font-family: var(--font-heading);
+  color: #c9a45e;
+  font-size: var(--s3);
+  margin-bottom: var(--s-1);
+  display: block;
+}
+/* --- EVENTS PAGE: Featured, Reel, Archive --- */
+.featured-event .invert {
+  background-color: #1a1a1a;
+  color: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.featured-event .event-image {
+  aspect-ratio: 16 / 9;
+}
+
+.featured-event .event-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+@media (min-width: 50.1rem) {
+  .featured-event .event-image {
+    aspect-ratio: auto;
+    min-height: 100%;
+  }
+}
+
+.featured-event .event-details {
+  padding: var(--s2);
+}
+
+.featured-event h1 {
+  color: #c9a45e;
+  margin-top: 0;
+  line-height: 1.1;
+  font-size: clamp(1.5rem, 5vw, 2.5rem);
+}
+
+.featured-event .label {
+  color: #c9a45e;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.2ch;
+  display: block;
+  margin-bottom: var(--s-1);
+}
+
+.featured-event ul {
+  list-style: none;
+  padding: 0;
+  margin: var(--s1) 0;
+}
+
+.featured-event ul li {
+  color: #e0e0e0;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: var(--s0);
+  align-items: flex-start;
+  margin-bottom: var(--s-1);
+  width: 100%;
+}
+
+.featured-event ul li strong {
+  color: #c9a45e;
+  flex-shrink: 0;
+  min-width: 4.5rem;
+}
+
+.featured-event ul li span {
+  flex-grow: 1;
+}
+
+.event-card {
+  background: white;
+  padding: var(--s2);
+  border: 1px solid #eee;
+  border-top: 4px solid #c9a45e;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.event-card h3 {
+  color: #1a1a1a;
+  margin-top: 0;
+}
+
+.event-card time,
+.archive-item time {
+  color: #c9a45e;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+}
+
+.event-archive h2 {
+  border-bottom: 2px solid #eee;
+  padding-bottom: var(--s0);
+  margin-bottom: var(--s1);
+}
+
+.archive-item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s0) var(--s2);
+  padding: var(--s1) 0;
+  border-bottom: 1px solid #eee;
+  align-items: baseline;
+}
+
+.archive-item time {
+  flex-basis: 10rem;
+  flex-grow: 1;
+}
+
+.archive-item span {
+  color: #555;
+  font-weight: 500;
+  flex-basis: 15rem;
+  flex-grow: 999;
+}
+
+/* --- CONTACT PAGE --- */
+
+/* 1. Layout & Constraints */
+.contact-hero {
+  text-align: center;
+  max-width: 60ch;
+  margin-inline: auto;
+}
+
+.contact-forms-layout {
+  --threshold: 60rem;
+  max-width: 75rem;
+  margin-inline: auto;
+  gap: var(--s2);
+  align-items: flex-start;
+}
+
+/* 2. The Form Card Container */
+.contact-form-container {
+  flex: 1 1 25rem;
+  max-width: 35rem;
+}
+
+/* 3. Elements & Typography */
+.contact-form-container h2 {
+  color: #c9a45e;
+  margin-top: 0;
+  border-bottom: 1px solid rgba(201, 164, 94, 0.2);
+  padding-bottom: var(--s-1);
+}
+
+.contact-form-container .form-group label {
+  color: #c9a45e;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1ch;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+/* 4. White Well Inputs & Buttons */
+.contact-form-container input,
+.contact-form-container select,
+.contact-form-container textarea {
+  width: 100%;
+  padding: var(--s0);
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  color: #1a1a1a;
+  font-family: var(--font-body);
+  border-radius: 4px;
+}
+
+.contact-form-container input:focus,
+.contact-form-container textarea:focus {
+  outline: none;
+  border-color: #c9a45e;
+  box-shadow: 0 0 0 3px rgba(201, 164, 94, 0.2);
+}
+
+.contact-form-container .cta-button {
+  width: 100%;
+  border: 1px solid #ccc; /* Adds definition to the white button */
+  cursor: pointer;
+  background-color: #ffffff;
+  color: #1a1a1a;
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+  padding: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1ch;
+}
+
+.contact-form-container .cta-button:hover {
+  background-color: #c9a45e;
+  color: #ffffff;
+  border-color: #c9a45e;
+  transform: translateY(-2px); /* Physical lift on hover */
+  box-shadow: 0 5px 15px rgba(201, 164, 94, 0.4); /* Gold glow */
+}
+/* ==========================================================================
+   5. ANIMATIONS
+   ========================================================================== */
+
+@keyframes heroEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+    filter: blur(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.hero-cover h1 {
+  animation: heroEntrance 1.2s ease-out forwards;
+}
+
+.hero-cover p {
+  opacity: 0;
+  animation: heroEntrance 1.2s ease-out 0.4s forwards;
+}
+
+.hero-cover .cta-button {
+  opacity: 0;
+  animation: heroEntrance 1.2s ease-out 0.8s forwards;
+}
+
+/* ==========================================================================
+   6. LOGIN PAGE & SECURITY FEEDBACK
+   ========================================================================== */
+
+.login-nav {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: var(--s-1);
+}
+
+.back-link {
+  color: #666;
+  text-decoration: none;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1ch;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.back-link:hover {
+  color: #c9a45e;
+  transform: translateX(-5px); /* Subtle physical movement to the left */
+}
+
+.login-wrapper {
+  margin-top: var(--s2);
+}
+
+.login-header {
+  text-align: center;
+}
+
+.login-header h1,
+.login-header p,
+.login-footer-text,
+.box.invert .form-group label {
+  color: #c9a45e;
+}
+
+.login-footer-text {
+  font-size: 0.85rem;
+  text-align: center;
+  opacity: 0.8;
+}
+
+/* Fat-Finger Touch Targets */
+.box.invert input {
+  min-height: 3.5rem; /* Large enough for thumbs */
+  font-size: 1.1rem; /* Prevents iOS zoom-on-focus */
+  padding: var(--s0);
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  width: 100%;
+}
+
+.box.invert .cta-button {
+  min-height: 3.5rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  border-radius: 8px;
+  margin-top: var(--s1);
+  background-color: #ffffff;
+  color: #1a1a1a;
+  border: none;
+  cursor: pointer;
+}
+
+.box.invert .cta-button:hover {
+  background-color: #c9a45e;
+  color: #ffffff;
+}
+
+/* --- High-Visibility Security Visual Feedback --- */
+
+/* 1. Neutral State: When the box is empty (placeholder is visible) 
+   We use a high-specificity selector to force the grey border */
+.box.invert input[type="password"] {
+  border: 2px solid #444 !important; /* Forces the neutral dark grey */
+  transition: all 0.2s ease-in-out;
+}
+
+/* 2. The 'Invalid' state: ONLY show red IF the user has started typing 
+   AND the input is currently focused */
+.box.invert input[type="password"]:not(:placeholder-shown):focus:invalid {
+  border-color: #ff4d4d !important;
+  box-shadow: 0 0 0 4px rgba(255, 77, 77, 0.4);
+}
+
+/* 3. The 'Valid' state: Green Light when it matches perfectly */
+.box.invert input[type="password"]:focus:valid {
+  border-color: #4caf50 !important;
+  box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.4);
+}
+
+/* 4. Persistence: Keep it green after they finish and click away */
+.box.invert input[type="password"]:valid:not(:placeholder-shown) {
+  border-color: #4caf50 !important;
+}
+
+/* 5. Suppress the 'Standard' browser red (Firefox especially) */
+.box.invert input:invalid {
+  box-shadow: none;
+}
+
+/* ==========================================================================
+   7. MEMBER DASHBOARD SPECIFICS
+   ========================================================================== */
+
+/* --- Layout Settings (Pure CSS Thresholds) --- */
+.dashboard-sidebar {
+  --gap: var(--s2);
+  --sidebar-width: 25rem; /* Prevents squishing by prioritizing the list side */
+}
+
+.dashboard-switcher {
+  --threshold: 60rem; /* Stacks sooner to allow full-width reading */
+}
+
+.voice-hub-switcher {
+  --threshold: 20rem;
+}
+
+.login-wrapper {
+  --box-padding: var(--s1);
+}
+
+@media (min-width: 45rem) {
+  .login-wrapper {
+    --box-padding: var(--s2); /* Desktop breathing room */
+  }
+}
+
+/* --- Schedule List Styling --- */
+.schedule-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s0);
+  border-top: 1px solid #444;
+  padding-top: var(--s0);
+}
+
+.schedule-list div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.schedule-list dt {
+  font-family: var(--font-heading);
+  color: #c9a45e;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  min-width: 11rem; /* Keeps dates on one line */
+  flex-shrink: 0;
+}
+
+.schedule-list dd {
+  margin: 0;
+  color: #fff;
+  font-size: 1rem;
+}
+
+@media (min-width: 40rem) {
+  .schedule-list div {
+    flex-direction: row;
+    gap: var(--s1);
+  }
+}
+
+/* --- Music Library & PDF Buttons --- */
+.service-title {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  color: #c9a45e;
+  border-bottom: 1px solid #444;
+  padding-bottom: 0.25rem;
+  margin-top: var(--s1);
+}
+
+.music-list {
+  list-style: none;
+  padding: 0;
+}
+
+.music-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.file-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.7rem;
+  background-color: rgba(201, 164, 94, 0.1);
+  color: #c9a45e;
+  border: 1px solid rgba(201, 164, 94, 0.5);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: none;
+  gap: 0.5rem;
+}
+
+.file-link::before {
+  content: "PDF";
+  font-size: 0.6rem;
+  padding: 0.1rem 0.3rem;
+  background-color: #c9a45e;
+  color: #1a1a1a;
+  border-radius: 2px;
+}
+
+.featured-download {
+  background: rgba(201, 164, 94, 0.1);
+  padding: var(--s0);
+  border-left: 4px solid #c9a45e;
+}
+
+.featured-download a {
+  color: #fff;
+  text-decoration: none;
+}
+
+/* --- Sidebar Meta & Voice Hubs --- */
+.schedule-meta {
+  border-top: 1px solid #333;
+  padding-top: var(--s1);
+}
+.meta-block h4 {
+  font-size: 0.75rem;
+  color: #c9a45e;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+@media (min-width: 50rem) {
+  .schedule-meta {
+    border-top: none;
+    border-left: 1px solid #333;
+    padding-top: 0;
+    padding-left: var(--s2);
+  }
+}
+
+.tracks-section {
+  margin-top: var(--s3);
+  padding-top: var(--s2);
+  border-top: 1px dashed rgba(201, 164, 94, 0.3);
+}
+
+.voice-card {
+  background: rgba(255, 255, 255, 0.03);
+  padding: var(--s1);
+  border: 1px solid #333;
+  text-align: center;
+}
+.voice-card h4 {
+  color: #c9a45e;
+  font-size: 0.9rem;
+  margin: 0;
+}
+.voice-card .cta-button {
+  width: 100%;
+  margin-top: var(--s0);
+  padding: 0.6rem;
+  font-size: 0.8rem;
+}
+
+/* --- General Utilities --- */
+.u-measure {
+  max-width: 65ch;
+}
+.u-muted {
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.6;
+  font-size: 0.9rem;
+}
+.dashboard-footer {
+  text-align: center;
+  border-top: 1px solid #eee;
+  padding-top: var(--s2);
+}
+
+/* ==========================================================================
+   8. RESTORED ARCHITECTURE CLASSES
+   ========================================================================== */
+
+/* Hide the hamburger menu on desktop (45rem and up) */
+@media (min-width: 45rem) {
+  .menu-toggle {
+    display: none !important;
+  }
+}
+
+/* Restore the dark 'invert' background specifically for the footer */
+footer.invert {
+  background-color: #1a1a1a;
+  color: #ffffff;
+  border-top: none;
+}
+
+/* Ensure links inside the dark footer remain readable */
+footer.invert a,
+footer.invert .copyright {
+  color: #e0e0e0;
+}
+
+footer.invert a:hover {
+  color: #c9a45e;
+}
+
+/* Restore the sharp borders for the footer buttons */
+.footer-btn {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border: 1px solid rgba(201, 164, 94, 0.4); /* Subtle gold border */
+  color: #c9a45e !important;
+  text-transform: uppercase;
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  letter-spacing: 0.1ch;
+  transition: all 0.3s ease;
+  border-radius: 2px;
+}
+
+.footer-btn:hover {
+  background-color: #c9a45e;
+  color: #1a1a1a !important;
+}
+
+/* ==========================================================================
+   9. FLOATING BACK-TO-TOP BUTTON
+   ========================================================================== */
+.back-to-top {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 9999; /* Forces it above all other content */
+
+  /* Aesthetics */
+  background-color: #1a1a1a;
+  color: #c9a45e;
+  border: 1px solid rgba(201, 164, 94, 0.4);
+  width: 3rem;
+  height: 3rem;
+  border-radius: 4px; /* Slight rounding to match your CTA buttons */
+
+  /* Centering the arrow inside */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  /* Interaction */
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+
+.back-to-top:hover {
+  background-color: #c9a45e;
+  color: #1a1a1a;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* ==========================================================================
+   10. CUSTOM SCROLLBAR (Webkit Browsers)
+   ========================================================================== */
+::-webkit-scrollbar {
+  width: 12px; /* Width of the vertical scrollbar */
+}
+
+::-webkit-scrollbar-track {
+  background: #f4f4f4; /* Light grey track background */
+  border-left: 1px solid #ddd;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c9a45e; /* Your signature gold */
+  border-radius: 6px;
+  border: 3px solid #f4f4f4; /* Adds a clean border around the thumb */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a88544; /* Darkens slightly when clicked/hovered */
+}

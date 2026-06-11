@@ -1,0 +1,186 @@
+{% extends 'choir/base.html' %} {% load static %} {% block title %}About - The
+Clent Consort{% endblock %} {% block extra_head %}
+<link
+  rel="preload"
+  as="image"
+  href="{% static 'images/cathedral_choir.webp' %}"
+  fetchpriority="high"
+/>
+{% endblock %} {% block content %}
+<div class="mission-cover">
+  <div class="center-content">
+    <p>We believe in the power of historic spaces to transform choral music.</p>
+    <p>
+      Our mission is to bridge the gap between ancient stone and modern voice.
+    </p>
+  </div>
+</div>
+
+<section class="conductor-sidebar sidebar">
+  <div class="sidebar-image">
+    <img
+      src="{% static 'images/conductor_headshot.jpg' %}"
+      width="400"
+      height="600"
+      alt="Conductor in a dark suit and blue tie stands facing the camera with a gentle smile, while a choir in dark attire holding blue music folders is seated behind him before a large pipe organ in a historic church hall."
+    />
+  </div>
+
+  <div class="sidebar-text">
+    <h2>A Note from the Conductor</h2>
+    <p>
+      "At Clent Consort, we believe that choral music is not a static art form,
+      but one that lives and breathes within the architecture for which it was
+      written. Our approach is intentionally different from the traditional
+      weekly rehearsal model.
+    </p>
+    <p>
+      By operating on a project-based cycle, we allow our singers - some of whom
+      are professional musicians and some dedicated amateurs - to immerse
+      themselves intensely in a specific era or liturgical theme. We don't just
+      'perform' in cathedrals; we inhabit them. This model ensures that when we
+      stand in the stalls of a cathedral, a great abbey, or a hidden medieval
+      chapel, every vowel and every rest is tuned to the specific resonance of
+      those ancient stones. It is a demanding process, but one that yields a
+      profound singular musical identity."
+    </p>
+  </div>
+</section>
+
+<div class="project-rhythm-swipe-wrapper">
+  <nav class="swipe-nav" aria-label="Project stages">
+    <a href="#slide-01"><span>01</span> Foundations</a>
+    <a href="#slide-02"><span>02</span> Preparation</a>
+    <a href="#slide-03"><span>03</span> Residency</a>
+  </nav>
+
+  <div class="project-rhythm-scroll">
+    <article class="rhythm-slide" id="slide-01">
+      <div class="l-frame slide-bg">
+        <video
+          autoplay
+          muted
+          loop
+          playsinline
+          poster="{% static 'images/foundations_still.jpg' %}"
+          aria-hidden="true"
+        >
+          <source
+            src="{% static 'images/foundations_comp.mp4' %}"
+            type="video/mp4"
+          />
+        </video>
+      </div>
+      <div class="slide-content l-stack">
+        <span class="step-number">01</span>
+        <h2>Foundations</h2>
+        <p>
+          Every project begins with the space. We identify cathedrals and
+          historic foundations, aiming to perform in new places regularly.
+        </p>
+        <p>
+          We do not expect members to be available for every project, so the
+          availability of the Consort is established before each project begins.
+        </p>
+      </div>
+    </article>
+
+    <article class="rhythm-slide" id="slide-02">
+      <div class="l-frame slide-bg">
+        <video
+          autoplay
+          muted
+          loop
+          playsinline
+          poster="{% static 'images/preparation_still.jpg' %}"
+          aria-hidden="true"
+        >
+          <source
+            src="{% static 'images/preparation_comp.mp4' %}"
+            type="video/mp4"
+          />
+        </video>
+      </div>
+      <div class="slide-content l-stack">
+        <span class="step-number">02</span>
+        <h2>Preparation</h2>
+        <p>Music is chosen to suit the space and the singers available.</p>
+        <p>
+          Preparation is a dual process of rehearsal and research to ensure
+          interpretations are spiritually informed.
+        </p>
+      </div>
+    </article>
+
+    <article class="rhythm-slide" id="slide-03">
+      <div class="l-frame slide-bg">
+        <video
+          autoplay
+          muted
+          loop
+          playsinline
+          poster="{% static 'images/residency_still.jpg' %}"
+          aria-hidden="true"
+        >
+          <source
+            src="{% static 'images/residency_comp.mp4' %}"
+            type="video/mp4"
+          />
+        </video>
+      </div>
+      <div class="slide-content l-stack">
+        <span class="step-number">03</span>
+        <h2>Residency</h2>
+        <p>
+          The cycle culminates in shared focus — where preparation meets the
+          stone, creating a unique moment of musical transcendence.
+        </p>
+        <p>
+          Projects are typically either day trips or full weekend residencies,
+          particularly if the venue is far from the Consort's base.
+        </p>
+      </div>
+    </article>
+  </div>
+</div>
+
+<section class="repertoire-section l-center l-stack">
+  <div class="repertoire-header u-text-center">
+    <h2 class="cinzel-heading">Our Sound & Inspiration</h2>
+    <p class="u-measure u-margin-inline-auto">
+      While we prepare our own studio recordings, explore the works currently in
+      our repertoire. This is the sound of Clent Consort.
+    </p>
+  </div>
+
+  <div class="l-sidebar repertoire-grid">
+    <div class="box invert repertoire-meta">
+      <h3 class="s-1">The 2026 Season</h3>
+      <ul class="l-stack l-stack--small">
+        <li><strong>Focus:</strong> Early English Polyphony</li>
+        <li><strong>Featured:</strong> Thomas Tallis and William Byrd</li>
+        <li><strong>Residency Venue:</strong> Worcester Cathedral</li>
+      </ul>
+    </div>
+
+    <div class="playlist-container">
+      <iframe
+        class="spotify-about-playlist"
+        src="https://open.spotify.com/embed/playlist/YOUR_PLAYLIST_ID_HERE"
+        height="352"
+        allowfullscreen=""
+        allow="
+          autoplay;
+          clipboard-write;
+          encrypted-media;
+          fullscreen;
+          picture-in-picture;
+        "
+        loading="lazy"
+        style="width: 100%; border-radius: 12px; border: none"
+      >
+      </iframe>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,112 @@
+{% extends 'choir/base.html' %}{% block content %}
+<div class="l-stack" style="padding-top: var(--s3); padding-bottom: var(--s4)">
+  <div style="text-align: center">
+    <h1>Members Area</h1>
+    <p>Welcome back, {{ user.first_name|default:user.username }}.</p>
+  </div>
+
+  <div class="l-switcher" style="margin-top: var(--s2)">
+    <section class="box invert l-stack">
+      <h2 style="color: var(--primary)">Upcoming Schedule</h2>
+
+      {% if upcoming_events %}
+      <div class="l-stack l-stack--small">
+        {% for event in upcoming_events %}
+        <article
+          style="border-left: 3px solid var(--primary); padding-left: var(--s0)"
+        >
+          <h3 style="margin-bottom: 0; font-size: var(--s1)">
+            {{ event.date_time|date:"l, j M Y" }}
+          </h3>
+          <!-- `` -->
+          <p style="margin-top: 0; color: #ccc; font-size: 0.9em">
+            <strong>{{ event.get_event_type_display }}</strong> |
+            {{event.date_time|time:"g:i A" }} <br />📍 {{ event.location }}
+          </p>
+          <!-- `` -->
+          {% if event.additional_notes %}
+          <p style="font-size: 0.85em; color: #ffb74d">
+            <em>Note: {{ event.additional_notes }}</em>
+          </p>
+          {% endif %}
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p>No upcoming events in the calendar.</p>
+      {% endif %}
+    </section>
+
+    <section class="box invert l-stack">
+      <h2 style="color: var(--primary)">Current Repertoire</h2>
+      <p style="font-size: 0.9em; margin-top: -1rem; color: #ccc">
+        Pieces scheduled for upcoming dates.
+      </p>
+
+      {% if current_repertoire %}
+      <ul
+        class="l-stack l-stack--small"
+        style="padding-left: 0; list-style-type: none"
+      >
+        {% for piece in current_repertoire %}
+        <li
+          style="
+            background: rgba(255, 255, 255, 0.05);
+            padding: var(--s-1);
+            border-radius: 4px;
+          "
+        >
+          <strong>{{ piece.title }}</strong><br />
+          <span style="font-size: 0.85em; color: #aaa"
+            >{{ piece.composer }}</span
+          >
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p>No music currently assigned.</p>
+      {% endif %}
+
+      <hr />
+      <div style="text-align: center">
+        <p style="margin-bottom: var(--s-1)">
+          <strong>Access Learning Tracks:</strong>
+        </p>
+        <div
+          style="
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+          "
+        >
+          <a
+            href="{% url 'hub' 'soprano' %}"
+            class="cta-button"
+            style="padding: 5px 15px; font-size: 0.85em"
+            >Sop</a
+          >
+          <a
+            href="{% url 'hub' 'alto' %}"
+            class="cta-button"
+            style="padding: 5px 15px; font-size: 0.85em"
+            >Alto</a
+          >
+          <a
+            href="{% url 'hub' 'tenor' %}"
+            class="cta-button"
+            style="padding: 5px 15px; font-size: 0.85em"
+            >Ten</a
+          >
+          <a
+            href="{% url 'hub' 'bass' %}"
+            class="cta-button"
+            style="padding: 5px 15px; font-size: 0.85em"
+            >Bass</a
+          >
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock content %}

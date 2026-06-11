@@ -1,0 +1,108 @@
+{% extends 'choir/base.html' %} {% load static %} {% block content %}
+<div class="l-stack l-stack--large" style="padding-bottom: var(--s4)">
+  <section class="contact-hero l-stack l-stack--small">
+    <h1>Connect With Us</h1>
+    <p>
+      Whether you are looking to bring our music to your next event or you are a
+      singer interested in joining our ranks, we would love to hear from you.
+      Simply scroll to the relevant section below to get started.
+    </p>
+  </section>
+
+  <div id="form-section" class="l-stack">
+    {% if messages %} {% for message in messages %}
+    <div
+      class="box invert l-stack"
+      style="
+        border: 2px solid #4caf50;
+        text-align: center;
+        margin-bottom: var(--s2);
+      "
+      role="alert"
+    >
+      <h2 style="color: #4caf50; margin-bottom: 0">Message Received!</h2>
+      <p>{{ message }}</p>
+    </div>
+    {% endfor %} {% endif %}
+
+    <div class="l-switcher contact-forms-layout">
+      <section class="contact-form-container box invert l-stack">
+        <h2>General Enquiry</h2>
+        <form action="{% url 'contact' %}" method="POST" class="l-stack">
+          {% csrf_token %}
+
+          <div class="form-group l-stack l-stack--small">
+            <label for="subject-general">Subject</label>
+            <select id="subject-general" name="subject">
+              <option value="general">General Enquiry</option>
+              <option value="booking">Concert Booking</option>
+            </select>
+          </div>
+
+          <div class="form-group l-stack l-stack--small">
+            <label for="name-general">Name</label>
+            <input type="text" id="name-general" name="name" required />
+          </div>
+
+          <div class="form-group l-stack l-stack--small">
+            <label for="email-general">Email</label>
+            <input type="email" id="email-general" name="email" required />
+          </div>
+
+          <div class="form-group l-stack l-stack--small">
+            <label for="message-general">Message</label>
+            <textarea
+              id="message-general"
+              name="message"
+              rows="5"
+              required
+            ></textarea>
+          </div>
+
+          <button type="submit" class="cta-button">Send Message</button>
+        </form>
+      </section>
+
+      <section class="contact-form-container box invert l-stack">
+        <h2>Join the Consort</h2>
+        <form action="{% url 'contact' %}" method="POST" class="l-stack">
+          {% csrf_token %}
+
+          <div class="form-group l-stack l-stack--small">
+            <label for="name-audition">Name</label>
+            <input type="text" id="name-audition" name="name" required />
+          </div>
+
+          <div class="form-group l-stack l-stack--small">
+            <label for="email-audition">Email</label>
+            <input type="email" id="email-audition" name="email" required />
+          </div>
+
+          <div class="form-group l-stack l-stack--small">
+            <label for="voice">Voice Type</label>
+            <select id="voice" name="voice_part">
+              <option value="soprano">Soprano</option>
+              <option value="alto">Alto</option>
+              <option value="tenor">Tenor</option>
+              <option value="baritone">Baritone</option>
+              <option value="bass">Bass</option>
+            </select>
+          </div>
+
+          <div class="form-group l-stack l-stack--small">
+            <label for="experience">Choral Experience</label>
+            <textarea
+              id="experience"
+              name="experience"
+              rows="5"
+              placeholder="Tell us about your previous experience..."
+            ></textarea>
+          </div>
+
+          <button type="submit" class="cta-button">Apply to Audition</button>
+        </form>
+      </section>
+    </div>
+  </div>
+  {% endblock content %}
+</div>

@@ -1,0 +1,50 @@
+{% extends 'choir/base.html' %}{% block content %}
+<div class="l-stack" style="padding-top: var(--s3); padding-bottom: var(--s4)">
+  <div style="text-align: center">
+    <h1>{{ voice_part_name }} Learning Hub</h1>
+    <p>Access your rehearsal tracks and sheet music below.</p>
+  </div>
+
+  <div class="l-switcher" style="margin-top: var(--s2)">
+    {% for asset in assets %}
+    <article class="box invert l-stack">
+      <h3 style="color: var(--primary)">{{ asset.repertoire.title }}</h3>
+      {% if asset.repertoire.composer %}
+      <p><em>{{ asset.repertoire.composer }}</em></p>
+      {% endif %}
+
+      <hr />
+      <p><strong>Resource:</strong> {{ asset.asset_name }}</p>
+      <p><strong>Part:</strong> {{ asset.get_voice_part_display }}</p>
+
+      <div style="margin-top: auto; padding-top: var(--s1)">
+        {% if asset.file_upload %}
+        <a
+          href="{{ asset.file_upload.url }}"
+          target="_blank"
+          class="cta-button"
+          style="display: block; text-align: center"
+          >Download File</a
+        >
+        {% elif asset.external_url %}
+        <a
+          href="{{ asset.external_url }}"
+          target="_blank"
+          class="cta-button"
+          style="display: block; text-align: center"
+          >External Link</a
+        >
+        {% else %}
+        <p style="color: #ff4d4d"><em>Link currently unavailable</em></p>
+        {% endif %}
+      </div>
+    </article>
+
+    {% empty %}
+    <div class="box invert" style="grid-column: 1 / -1; text-align: center">
+      <p>No rehearsal materials have been uploaded for this section yet.</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock content %}

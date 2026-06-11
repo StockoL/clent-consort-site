@@ -1,0 +1,144 @@
+{% extends 'choir/base.html' %} {% load static %} {% block content %}
+<div
+  class="l-center l-stack l-stack--large form-page-wrapper"
+  style="padding-top: var(--s3); padding-bottom: var(--s4)"
+>
+  <header class="u-text-center l-stack l-stack--small">
+    <h1>Member Registration</h1>
+    <p class="u-measure u-margin-inline-auto u-muted">
+      Please register your details with the Clent Consort. Completing this
+      declaration allows us to claim Gift Aid and maximize our collective
+      resources.
+    </p>
+  </header>
+
+  <div class="box invert u-measure--large-card u-margin-inline-auto">
+    <form
+      id="giftaid-form"
+      class="l-stack"
+      action="{% url 'giftaid' %}"
+      method="POST"
+    >
+      {% csrf_token %}
+
+      <fieldset class="form-section l-stack l-stack--small">
+        <div class="form-group l-stack l-stack--small">
+          <label for="first-name">First Name</label>
+          <input
+            type="text"
+            id="first-name"
+            name="first_name"
+            placeholder="John"
+            required
+          />
+        </div>
+
+        <div class="form-group l-stack l-stack--small">
+          <label for="last-name">Last Name</label>
+          <input
+            type="text"
+            id="last-name"
+            name="last_name"
+            placeholder="Smith"
+            required
+          />
+        </div>
+
+        <div class="form-group l-stack l-stack--small">
+          <label for="voice-part">Voice Section</label>
+          <select
+            id="voice-part"
+            name="voice_part"
+            required
+            style="padding: var(--s0); width: 100%"
+          >
+            <option value="">-- Select Section --</option>
+            <option value="S">Soprano</option>
+            <option value="A">Alto</option>
+            <option value="T">Tenor</option>
+            <option value="B">Bass</option>
+          </select>
+        </div>
+      </fieldset>
+
+      <hr class="form-divider" style="border-color: #444" />
+
+      <fieldset class="form-section l-stack l-stack--small">
+        <div class="form-group l-stack l-stack--small">
+          <label for="address-1">Home Address (Line 1)</label>
+          <input
+            type="text"
+            id="address-1"
+            name="address_1"
+            placeholder="123 Church Lane"
+            required
+          />
+        </div>
+
+        <div class="form-group l-stack l-stack--small">
+          <label for="town-city">Town or City</label>
+          <input
+            type="text"
+            id="town-city"
+            name="town_city"
+            placeholder="Evesham"
+            required
+          />
+        </div>
+
+        <div class="form-group l-stack l-stack--small">
+          <label for="postcode">Postcode</label>
+          <input
+            type="text"
+            id="postcode"
+            name="postcode"
+            placeholder="WR11 4AB"
+            required
+          />
+          <p class="form-hint" style="font-size: 0.8rem; color: #aaa">
+            <strong>Hint:</strong> HMRC requires your official residential
+            address to process claims.
+          </p>
+        </div>
+      </fieldset>
+
+      <hr class="form-divider" style="border-color: #444" />
+
+      <div class="form-checkbox-container l-stack l-stack--small">
+        <p class="form-hint" style="font-size: 0.8rem; color: #aaa">
+          <strong>Note:</strong> If you are not a UK taxpayer, please leave this
+          section blank.
+        </p>
+
+        <div style="display: flex; gap: var(--s0); align-items: flex-start">
+          <input
+            type="checkbox"
+            id="gift-aid-consent"
+            name="gift_aid_consent"
+            style="margin-top: 0.3rem"
+          />
+          <label for="gift-aid-consent" style="line-height: 1.5">
+            <strong style="color: #c9a45e">Yes, I want to Gift Aid.</strong> I
+            want Clent Consort to treat all subscriptions and donations I make
+            from this date forward, and any I have made in the past 4 years, as
+            Gift Aid donations. I am a UK taxpayer and understand that if I pay
+            less Income Tax and/or Capital Gains Tax than the amount of Gift Aid
+            claimed on all my donations in that tax year, it is my
+            responsibility to pay any difference.
+          </label>
+        </div>
+      </div>
+
+      <button type="submit" class="cta-button">Submit Registration</button>
+    </form>
+  </div>
+
+  <div class="u-text-center" style="margin-top: var(--s2)">
+    <a
+      href="{% url 'dashboard' %}"
+      style="color: #c9a45e; text-decoration: none"
+      >&larr; Back to Member Dashboard</a
+    >
+  </div>
+</div>
+{% endblock %}

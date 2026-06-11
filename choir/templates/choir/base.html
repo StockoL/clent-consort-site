@@ -1,78 +1,73 @@
+{% load static %}
 <!doctype html>
 <html lang="en-GB">
   <head>
     <meta charset="UTF-8" />
-    <!-- Viewport scale definition -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Experience The Clent Consort, a project-led choral ensemble inhabiting Britain's historic cathedral spaces through ancient and contemporary choral excellence."
+      content="Experience Clent Consort, a project-led choral ensemble inhabiting Britain's historic cathedral spaces through ancient and contemporary choral excellence."
     />
-    <title>Home - The Clent Consort</title>
-    <!-- SEO & SOCIAL METADATA: Strategic brand positioning for high-impact social sharing. Optimised with OpenGraph and Twitter protocols to ensure the 'Ancient Spires, Modern Voices' ethos translates across platforms. -->
+
+    <title>{% block title %}Clent Consort{% endblock title %}</title>
+
     <meta property="og:type" content="website" />
     <meta
       property="og:url"
       content="https://stockol.github.io/clent-consort-project-ms1/"
     />
-    <meta property="og:title" content="The Clent Consort" />
+    <meta property="og:title" content="Clent Consort" />
     <meta
       property="og:description"
-      content="Experience The Clent Consort, a project-led choral ensemble inhabiting Britain's historic cathedral spaces through ancient and contemporary choral excellence."
+      content="Experience Clent Consort, a project-led choral ensemble inhabiting Britain's historic cathedral spaces through ancient and contemporary choral excellence."
     />
     <meta
       property="og:image"
-      content="https://stockol.github.io/clent-consort-project-ms1/assets/images/logo_share_preview.jpg"
+      content="{% static 'images/logo_share_preview.jpg' %}"
     />
 
     <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:title" content="The Clent Consort" />
+    <meta property="twitter:title" content="Clent Consort" />
     <meta
       property="twitter:description"
-      content="Experience The Clent Consort, a project-led choral ensemble inhabiting Britain's historic cathedral spaces through ancient and contemporary choral excellence."
+      content="Experience Clent Consort, a project-led choral ensemble inhabiting Britain's historic cathedral spaces through ancient and contemporary choral excellence."
     />
     <meta
       property="twitter:image"
-      content="https://stockol.github.io/clent-consort-project-ms1/assets/images/logo_share_preview.jpg"
+      content="{% static 'images/logo_share_preview.jpg' %}"
     />
-    <!-- CRITICAL ASSET PRELOADING: Explicitly preloading the Hero Image with 'fetchpriority=high' to optimise the Largest Contentful Paint (LCP) and ensure immediate visual impact upon entry. -->
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="assets/images/favicon-clent.png" />
-    <!-- Google Fonts -->
+
+    <link
+      rel="icon"
+      type="image/png"
+      href="{% static 'images/favicon-clent.png' %}"
+    />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@400;600&display=swap"
       rel="stylesheet"
     />
-    <!-- Preload Hero Image for performance -->
-    <link
-      rel="preload"
-      as="image"
-      href="assets/images/hero_image_clent_consort.jpg"
-      fetchpriority="high"
-    />
-    <link rel="stylesheet" href="assets/css/style.css" />
+
+    {% block extra_head %}{% endblock extra_head %}
+
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
   </head>
-  <!-- GLOBAL STYLES: Architecture is built on 'Every Layout' primitives, ensuring the site scales algorithmically rather than relying on brittle, fixed breakpoints. -->
-  <!-- Body with ID for back-to-top anchor link -->
-  <body id="top">
+
+  <body id="top" class="{% block body_class %}{% endblock body_class %}">
     <header class="site-header">
-      <!-- SITE HEADER: Employs a sticky-positioning strategy with backdrop-filter
-      blur to maintain navigational context while maximising vertical viewport
-      real estate. -->
       <div class="l-center header-inner">
-        <!-- Logo anchor -->
-        <a href="index.html" class="logo-link">
+        <a href="{% url 'home' %}" class="logo-link">
           <img
-            src="assets/images/clent-consort-logo.webp"
+            src="{% static 'images/clent-consort-logo.webp' %}"
             alt="Logo"
             width="50"
             height="50"
           />
-          <span class="brand-name">The Clent Consort</span>
+          <span class="brand-name">Clent Consort</span>
         </a>
-        <!-- Main Navigation -->
+
         <nav class="main-nav" aria-label="Main Navigation">
           <button
             class="menu-toggle"
@@ -83,36 +78,112 @@
             <div class="hamburger" aria-hidden="true"></div>
           </button>
 
+          {% if not user.is_authenticated %}
           <ul id="nav-list" class="nav-list">
-            <li><a href="index.html" aria-current="page">Home</a></li>
-            <li><a href="about.html">About</a></li>
-            <li><a href="events.html">Events</a></li>
-            <li><a href="contact.html">Contact</a></li>
+            <li>
+              <a
+                href="{% url 'home' %}"
+                {%
+                if
+                request.resolver_match.url_name=""
+                ="home"
+                %}aria-current="page"
+                {%
+                endif
+                %}
+                >Home</a
+              >
+            </li>
+            <li>
+              <a
+                href="{% url 'about' %}"
+                {%
+                if
+                request.resolver_match.url_name=""
+                ="about"
+                %}aria-current="page"
+                {%
+                endif
+                %}
+                >About</a
+              >
+            </li>
+            <li>
+              <a
+                href="{% url 'events' %}"
+                {%
+                if
+                request.resolver_match.url_name=""
+                ="events"
+                %}aria-current="page"
+                {%
+                endif
+                %}
+                >Events</a
+              >
+            </li>
+            <li>
+              <a
+                href="{% url 'contact' %}"
+                {%
+                if
+                request.resolver_match.url_name=""
+                ="contact"
+                %}aria-current="page"
+                {%
+                endif
+                %}
+                >Contact</a
+              >
+            </li>
           </ul>
+          {% else %}
+          <ul id="nav-list" class="nav-list nav-list-dashboard">
+            <li>
+              <a href="{% url 'dashboard' %}#schedule" class="nav-link"
+                >Schedule</a
+              >
+            </li>
+            <li>
+              <a href="{% url 'dashboard' %}#logistics" class="nav-link"
+                >Logistics</a
+              >
+            </li>
+            <li>
+              <a href="{% url 'dashboard' %}#library" class="nav-link"
+                >Library</a
+              >
+            </li>
+            <li>
+              <a href="{% url 'dashboard' %}#hub" class="nav-link">Learning</a>
+            </li>
+            <li>
+              <a href="{% url 'giftaid' %}" class="nav-link"
+                >Gift Aid Sign-up</a
+              >
+            </li>
+          </ul>
+          {% endif %}
         </nav>
       </div>
     </header>
-    <main>
-      <!-- HERO COMPOSITION: A high-impact 'Cover' pattern. Utilizes the .l-stack primitive to maintain mathematical rhythm between the brand headline, sub-narrative, and primary call-to-action (CTA). -->
-      <section class="hero-cover">
-        <div class="l-stack">
-          <h1>The Clent Consort</h1>
-          <p>Ancient Spires, Modern Voices</p>
-          <a href="events.html" class="cta-button">Our Next Project</a>
-        </div>
-      </section>
+
+    <main class="{% block main_class %}{% endblock main_class %}">
+      {% block content %} {% endblock content %}
     </main>
-    <!-- Footer -->
+
     <footer class="invert footer-slim">
       <div class="l-center">
         <div class="footer-grid">
           <div class="footer-col-left">
-            <!-- 'Secret' Member Login button -->
-            <a href="login.html" class="footer-btn">Member Login</a>
+            {% if not user.is_authenticated %}
+            <a href="{% url 'login' %}" class="footer-btn">Member Login</a>
+            {% else %}
+            <a href="{% url 'logout' %}" class="footer-btn">Logout</a>
+            {% endif %}
           </div>
 
           <div class="footer-col-center">
-            <!-- Social Media SVG Icons / YouTube, Instagram, Facebook -->
             <div class="social-group">
               <a href="#" class="social-icon" aria-label="YouTube">
                 <svg viewBox="0 0 24 24" fill="currentColor">
@@ -137,15 +208,15 @@
               </a>
             </div>
           </div>
-          <!-- GLOBAL FOOTER: Features a 3-column .footer-grid with mobile-first stacking logic. -->
+
           <div class="footer-col-right">
-            <!-- ACCESSIBILITY: The #top anchor provides an essential 'Skip to Top' utility, enhancing keyboard navigation efficiency and conforming to WCAG 2.1 AAA navigational standards. -->
             <a href="#top" class="footer-btn">Top ↑</a>
           </div>
         </div>
-        <p class="copyright">&copy; 2026 The Clent Consort</p>
+        <p class="copyright">© 2026 The Clent Consort</p>
       </div>
     </footer>
+
     <button
       id="backToTop"
       class="back-to-top"
@@ -153,8 +224,8 @@
       aria-hidden="true"
       tabindex="-1"
     >
-      <span class="arrow"
-        ><svg
+      <span class="arrow">
+        <svg
           width="24"
           height="24"
           viewBox="0 0 24 24"
@@ -164,9 +235,11 @@
           stroke-linecap="round"
           stroke-linejoin="round"
         >
-          <path d="M18 15l-6-6-6 6" /></svg
-      ></span>
+          <path d="M18 15l-6-6-6 6" />
+        </svg>
+      </span>
     </button>
-    <script src="assets\clentConsort.js"></script>
+
+    <script src="{% static 'clentConsort.js' %}"></script>
   </body>
 </html>
