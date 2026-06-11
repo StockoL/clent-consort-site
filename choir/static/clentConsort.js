@@ -6,7 +6,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // Pull all the 'stops' once the DOM is ready cleanly in one loop
   initBackToTop();
   initMobileMenu();
-  initGiftAidForm(); // Added safely to the execution pipeline
+  initGiftAidForm();
+  initProjectCarousel();
 });
 
 /* ==========================================================================
@@ -21,13 +22,12 @@ const initBackToTop = () => {
     if (window.scrollY > 300) {
       backToTopButton.classList.add("is-visible");
       backToTopButton.setAttribute("aria-hidden", "false");
-      backToTopButton.setAttribute("tabindex", "0"); // Allow keyboard focus when visible
+      backToTopButton.setAttribute("tabindex", "0");
     } else {
       backToTopButton.classList.remove("is-visible");
       backToTopButton.setAttribute("aria-hidden", "true");
-      backToTopButton.setAttribute("tabindex", "-1"); // Strip keyboard focus when hidden
+      backToTopButton.setAttribute("tabindex", "-1");
 
-      // If the button currently has focus while hiding, blur it (remove focus)
       if (document.activeElement === backToTopButton) {
         backToTopButton.blur();
       }
@@ -40,16 +40,37 @@ const initBackToTop = () => {
 };
 
 /* ==========================================================================
-   MOBILE MENU TOGGLE
+   NAVIGATION MENU TOGGLE (Mobile Responsiveness)
    ========================================================================== */
 
 const initMobileMenu = () => {
-  const toggle = document.querySelector(".menu-toggle");
-  if (!toggle) return;
+  const menuToggle = document.querySelector(".menu-toggle");
+  const navList = document.getElementById("nav-list");
 
-  toggle.addEventListener("click", () => {
-    const isOpen = toggle.getAttribute("aria-expanded") === "true";
-    toggle.setAttribute("aria-expanded", !isOpen);
+  if (!menuToggle || !navList) return;
+
+  const toggleMenu = () => {
+    const isExpanded = menuToggle.getAttribute("aria-expanded") === "true";
+    menuToggle.setAttribute("aria-expanded", !isExpanded);
+    navList.classList.toggle("is-open");
+  };
+
+  menuToggle.addEventListener("click", toggleMenu);
+
+  document.addEventListener("click", (event) => {
+    const isClickInsideMenu = navList.contains(event.target);
+    const isClickOnToggle = menuToggle.contains(event.target);
+    const isMenuOpen = navList.classList.contains("is-open");
+
+    if (!isClickInsideMenu && !isClickOnToggle && isMenuOpen) {
+      toggleMenu();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && navList.classList.contains("is-open")) {
+      toggleMenu();
+    }
   });
 };
 
@@ -60,39 +81,84 @@ const initMobileMenu = () => {
 const initGiftAidForm = () => {
   const form = document.querySelector("#giftaid-form");
 
-  // Safety net: If the user is on a page without the Gift Aid form, exit early
   if (!form) return;
 
   form.addEventListener("submit", function (event) {
     const postcodeField = document.querySelector("#postcode");
     if (!postcodeField) return;
 
-    // 1. Clean the user data input string
     let cleanedPostcode = postcodeField.value.trim().toUpperCase();
-
-    // 2. Format the local variable layout back inside the field for the user to view
     postcodeField.value = cleanedPostcode;
 
-    // 3. Evaluate logical layout lengths (UK Postcodes run between 5 and 8 characters long)
     if (cleanedPostcode.length < 5 || cleanedPostcode.length > 8) {
-      // Halt form submittal processing pipeline immediately
       event.preventDefault();
-
-      // Fire native notification warning focus states
       alert(
         "Please check your input formatting. A valid UK postcode must be between 5 and 8 alphanumeric characters long.",
       );
       postcodeField.focus();
-
-      // Add an explicit inline visibility border for immediate tactile alert correction
       postcodeField.style.borderColor = "#ff4d4d";
     } else {
-      // SUCCESS STATE FOR PROTOTYPE TESTING:
-      // If validation passes, we stop the reload for now so you can see your success
       event.preventDefault();
       alert(
         "Success! Postcode format is valid. The form is ready for a database integration step next.",
       );
     }
   });
+};
+
+/* ==========================================================================
+    ABOUT PAGE PROJECT RHYTHM SWIPE NAV
+   ========================================================================== */
+
+const initProjectCarousel = () => {
+  const carousel = document.querySelector("#project-carousel");
+  if (!carousel) return;
+
+  const scrollContainer = carousel.querySelector(".project-rhythm-scroll");
+  const navButtons = carousel.querySelectorAll(".nav-link");
+  const slides = carousel.querySelectorAll(".rhythm-slide");
+
+  navButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const targetId = btn.getAttribute("data-target");
+      const targetSlide = document.getElementById(targetId);
+
+      if (targetSlide && scrollContainer) {
+        scrollContainer.scrollTo({
+          left: targetSlide.offsetLeft,
+          behavior: "smooth",
+        });
+      }
+    });
+  });
+
+  const observerOptions = {
+    root: scrollContainer,
+    threshold: 0.6,
+  };
+
+  const slideObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        const activeId = entry.target.id;
+
+        navButtons.forEach((btn) => {
+          const matches = btn.getAttribute("data-target") === activeId;
+          btn.classList.toggle("is-active", matches);
+        });
+      }
+    });
+  }, observerOptions);
+
+  slides.forEach((slide) => slideObserver.observe(slide));
+
+  const checkMobileViewport = () => {
+    const isMobile = window.innerWidth < 640;
+    navButtons.forEach((btn) => {
+      btn.classList.toggle("is-dot-mode", isMobile);
+    });
+  };
+
+  window.addEventListener("resize", checkMobileViewport);
+  checkMobileViewport();
 };
