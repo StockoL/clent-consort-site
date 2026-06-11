@@ -1,5 +1,7 @@
 from django.contrib.auth.models import User  # Django's built-in secure login model
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 # ==============================================================================
 # 1. PEOPLE & FINANCE
@@ -209,3 +211,26 @@ class AuditionApplication(models.Model):
 
     def __str__(self):
         return f"Audition application: {self.name} ({self.voice_part.title()})"
+
+
+# ==============================================================================
+# SIGNALS: Automate Profile Creation
+# ==============================================================================
+
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """
+    Listens for a new User being created. When it hears one,
+    it automatically generates a blank MemberProfile linked to it.
+    """
+    if created:
+        MemberProfile.objects.create(user=instance)
+
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    """
+    Ensures the profile saves whenever the core User object saves.
+    """
+    instance.profile.save()

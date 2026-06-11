@@ -11,10 +11,38 @@ from .models import (
     SubscriptionPayment,
 )
 
+
 # ==============================================================================
 # 1. PEOPLE & FINANCE
 # ==============================================================================
-admin.site.register(MemberProfile)
+@admin.register(MemberProfile)
+class MemberProfileAdmin(admin.ModelAdmin):
+    # This turns your list view into a beautiful multi-column table
+    list_display = ("get_username", "get_full_name", "voice_part", "phone_number")
+
+    # Adds a clickable filter sidebar on the right hand side
+    list_filter = ("voice_part",)
+
+    # Adds a powerful search bar at the top of the screen
+    search_fields = (
+        "user__username",
+        "user__first_name",
+        "user__last_name",
+        "phone_number",
+    )
+
+    # Helper methods to pull data cleanly from the linked User model
+    def get_username(self, obj):
+        return obj.user.username
+
+    get_username.short_description = "Username"
+
+    def get_full_name(self, obj):
+        return obj.user.get_full_name() or "No Name Set"
+
+    get_full_name.short_description = "Full Name"
+
+
 admin.site.register(GiftAidDeclaration)
 admin.site.register(SubscriptionPayment)
 

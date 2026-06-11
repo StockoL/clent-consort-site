@@ -7,8 +7,8 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
-from .forms import AuditionApplicationForm, EnquiryForm
-from .models import Event, LearningAsset
+from .forms import AuditionApplicationForm, EnquiryForm, GiftAidForm
+from .models import Event, GiftAidDeclaration, LearningAsset
 
 # ==============================================================================
 # PUBLIC VIEWS
@@ -110,9 +110,44 @@ def dashboard_view(request):
     return render(request, "choir/members.html", context)
 
 
-@login_required
+@login_required  # Protects the view; redirects to login page if logged out
 def giftaid_view(request):
-    return render(request, "choir/giftaid.html")
+    """
+    Handles secure submission of a member's Gift Aid declaration.
+    """
+    user_profile = request.user.profile  # Fetches the loggged-in user's profile
+
+    # Check if this member has already signed a declaration
+    existing_declaration = GiftAidDeclaration.objects.filter(
+        member=user_profile
+    ).first()
+
+    if request.method == "POST":
+        # Feed the incoming POST data into the form
+        form = GiftAidForm(request.POST)
+
+        if form.is_valid():
+            # Crucial Pattern: commit=False builds the database object in memory
+            # without writing it to the actual SQL disk yet.
+            declaration = form.save(commit=False)
+
+            # Programmatically attach the logged-in member's profile
+            declaration.member = user_profile
+
+            # Now commit it safely to the database!
+            declaration.save()
+
+            # Send them back to the members area with a clean success state
+            return redirect("dashboard")
+    else:
+        # If it's a GET request, pass a completely blank form to the template
+        form = GiftAidForm()
+
+    context = {
+        "form": form,
+        "existing_declaration": existing_declaration,
+    }
+    return render(request, "choir/giftaid.html", context)
 
 
 @login_required

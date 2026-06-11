@@ -12,6 +12,26 @@
     </p>
   </header>
 
+  {% if existing_declaration %}
+  <div
+    class="box invert u-measure--large-card u-margin-inline-auto"
+    style="border-left: 4px solid #4caf50"
+  >
+    <h2 style="color: #4caf50; margin-top: 0; text-align: center">
+      ✓ Declaration Active
+    </h2>
+    <p style="text-align: center">
+      Thank you! We have a valid statutory declaration on file for your
+      subscriptions.
+    </p>
+    <hr class="form-divider" style="border-color: #444" />
+    <p style="text-align: center; font-size: 0.9em; color: #aaa">
+      <strong>Registered Name:</strong> {{ existing_declaration.first_name }} {{ existing_declaration.last_name }}<br />
+      <strong>Signed On:</strong> {{ existing_declaration.date_signed|date:"jS F Y" }}
+    </p>
+  </div>
+
+  {% else %}
   <div class="box invert u-measure--large-card u-margin-inline-auto">
     <form
       id="giftaid-form"
@@ -19,45 +39,27 @@
       action="{% url 'giftaid' %}"
       method="POST"
     >
-      {% csrf_token %}
+      {% csrf_token %} {% if form.non_field_errors %}
+      <div style="color: #ff4d4d; margin-bottom: 1rem">
+        {{ form.non_field_errors }}
+      </div>
+      {% endif %}
 
       <fieldset class="form-section l-stack l-stack--small">
         <div class="form-group l-stack l-stack--small">
-          <label for="first-name">First Name</label>
-          <input
-            type="text"
-            id="first-name"
-            name="first_name"
-            placeholder="John"
-            required
-          />
+          <label for="{{ form.first_name.id_for_label }}">First Name</label>
+          {{ form.first_name }}
+          <div style="color: #ff4d4d; font-size: 0.85em">
+            {{ form.first_name.errors }}
+          </div>
         </div>
 
         <div class="form-group l-stack l-stack--small">
-          <label for="last-name">Last Name</label>
-          <input
-            type="text"
-            id="last-name"
-            name="last_name"
-            placeholder="Smith"
-            required
-          />
-        </div>
-
-        <div class="form-group l-stack l-stack--small">
-          <label for="voice-part">Voice Section</label>
-          <select
-            id="voice-part"
-            name="voice_part"
-            required
-            style="padding: var(--s0); width: 100%"
-          >
-            <option value="">-- Select Section --</option>
-            <option value="S">Soprano</option>
-            <option value="A">Alto</option>
-            <option value="T">Tenor</option>
-            <option value="B">Bass</option>
-          </select>
+          <label for="{{ form.last_name.id_for_label }}">Last Name</label>
+          {{ form.last_name }}
+          <div style="color: #ff4d4d; font-size: 0.85em">
+            {{ form.last_name.errors }}
+          </div>
         </div>
       </fieldset>
 
@@ -65,37 +67,33 @@
 
       <fieldset class="form-section l-stack l-stack--small">
         <div class="form-group l-stack l-stack--small">
-          <label for="address-1">Home Address (Line 1)</label>
-          <input
-            type="text"
-            id="address-1"
-            name="address_1"
-            placeholder="123 Church Lane"
-            required
-          />
+          <label for="{{ form.address_line_1.id_for_label }}"
+            >Home Address (Line 1)</label
+          >
+          {{ form.address_line_1 }}
+          <div style="color: #ff4d4d; font-size: 0.85em">
+            {{ form.address_line_1.errors }}
+          </div>
         </div>
 
         <div class="form-group l-stack l-stack--small">
-          <label for="town-city">Town or City</label>
-          <input
-            type="text"
-            id="town-city"
-            name="town_city"
-            placeholder="Evesham"
-            required
-          />
+          <label for="{{ form.town_city.id_for_label }}">Town or City</label>
+          {{ form.town_city }}
+          <div style="color: #ff4d4d; font-size: 0.85em">
+            {{ form.town_city.errors }}
+          </div>
         </div>
 
         <div class="form-group l-stack l-stack--small">
-          <label for="postcode">Postcode</label>
-          <input
-            type="text"
-            id="postcode"
-            name="postcode"
-            placeholder="WR11 4AB"
-            required
-          />
-          <p class="form-hint" style="font-size: 0.8rem; color: #aaa">
+          <label for="{{ form.postcode.id_for_label }}">Postcode</label>
+          {{ form.postcode }}
+          <div style="color: #ff4d4d; font-size: 0.85em">
+            {{ form.postcode.errors }}
+          </div>
+          <p
+            class="form-hint"
+            style="font-size: 0.8rem; color: #aaa; margin-top: 0"
+          >
             <strong>Hint:</strong> HMRC requires your official residential
             address to process claims.
           </p>
@@ -105,19 +103,21 @@
       <hr class="form-divider" style="border-color: #444" />
 
       <div class="form-checkbox-container l-stack l-stack--small">
-        <p class="form-hint" style="font-size: 0.8rem; color: #aaa">
+        <p
+          class="form-hint"
+          style="font-size: 0.8rem; color: #aaa; margin-bottom: 0.5rem"
+        >
           <strong>Note:</strong> If you are not a UK taxpayer, please leave this
           section blank.
         </p>
 
         <div style="display: flex; gap: var(--s0); align-items: flex-start">
-          <input
-            type="checkbox"
-            id="gift-aid-consent"
-            name="gift_aid_consent"
-            style="margin-top: 0.3rem"
-          />
-          <label for="gift-aid-consent" style="line-height: 1.5">
+          <div style="margin-top: 0.3rem">{{ form.consent_given }}</div>
+
+          <label
+            for="{{ form.consent_given.id_for_label }}"
+            style="line-height: 1.5; cursor: pointer"
+          >
             <strong style="color: #c9a45e">Yes, I want to Gift Aid.</strong> I
             want Clent Consort to treat all subscriptions and donations I make
             from this date forward, and any I have made in the past 4 years, as
@@ -127,11 +127,17 @@
             responsibility to pay any difference.
           </label>
         </div>
+        <div style="color: #ff4d4d; font-size: 0.85em">
+          {{ form.consent_given.errors }}
+        </div>
       </div>
 
-      <button type="submit" class="cta-button">Submit Registration</button>
+      <button type="submit" class="cta-button" style="margin-top: var(--s1)">
+        Submit Registration
+      </button>
     </form>
   </div>
+  {% endif %}
 
   <div class="u-text-center" style="margin-top: var(--s2)">
     <a
