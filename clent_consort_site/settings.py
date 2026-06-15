@@ -10,17 +10,27 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
+
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# 1. Force load the .env file using the Path object
+env_path = BASE_DIR / ".env"
+load_dotenv(dotenv_path=env_path)
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
+# 2. Fetch the variables
+SECRET_KEY = os.environ.get("SECRET_KEY")
+DEBUG = os.environ.get("DEBUG") == "True"
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# 3. Add a hard-stop safety check so you know exactly if the file loaded
+if not SECRET_KEY:
+    raise ValueError(
+        f"No SECRET_KEY found. Check that your .env file exists at {env_path}"
+    )
 
 ALLOWED_HOSTS = []
 
@@ -34,8 +44,17 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # --- ADD THESE FOR ALLAUTH ---
+    "django.contrib.sites",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    # Your apps...
     "choir",
 ]
+
+# Required by allauth to identify which database site it is managing
+SITE_ID = 1
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -45,6 +64,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = "clent_consort_site.urls"
@@ -139,3 +159,23 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # The address the server uses to send the email (must be defined, even if dummy)
 DEFAULT_FROM_EMAIL = "noreply@clentconsort.com"
+
+# ==============================================================================
+# AUTHENTICATION & ALLAUTH CONFIGURATION
+# ==============================================================================
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",  # Needed to login to Django Admin
+    "allauth.account.auth_backends.AuthenticationBackend",  # Needed for member login
+]
+
+# Switch from "Username" logins to "Email" logins
+ACCOUNT_AUTHENTICATION_METHOD = "email"
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+
+# Require members to click the link in their email before gaining access
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+
+# Where to send the user after they successfully log in or log out
+LOGIN_REDIRECT_URL = "members"  # Assuming your dashboard url name is 'members'
+ACCOUNT_LOGOUT_REDIRECT_URL = "home"
