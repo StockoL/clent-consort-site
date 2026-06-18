@@ -13,27 +13,35 @@
       <p>Please sign in to access the rehearsal schedule and learning hub.</p>
     </div>
 
-    <form method="POST" action="{% url 'login' %}" class="l-stack">
+    <form method="POST" action="{% url 'account_login' %}" class="l-stack">
       {% csrf_token %}
 
       <div class="form-group l-stack l-stack--small">
-        <label for="id_username">Username</label>
-        <input type="text" name="username" id="id_username" required autofocus />
+        <label for="id_login">Email Address</label>
+        <input type="email" name="login" id="id_login" required autofocus autocomplete="email" />
       </div>
 
       <div class="form-group l-stack l-stack--small">
         <label for="id_password">Password</label>
-        <input type="password" name="password" id="id_password" required />
+        <input type="password" name="password" id="id_password" required autocomplete="current-password" />
       </div>
 
-      <input type="hidden" name="next" value="{{ next }}" />
+      {% if request.GET.next %}
+        <input type="hidden" name="next" value="{{ request.GET.next }}" />
+      {% endif %}
 
-      <button type="submit" class="cta-button btn-block">Sign In</button>
+      <button type="submit" class="cta-button btn-block mt-s-1">Sign In</button>
     </form>
+
+    <div class="text-center mt-s-min">
+      <a href="{% url 'account_reset_password' %}" style="color: #c9a45e; text-decoration: none; font-size: 0.9rem;">
+        Forgot your password?
+      </a>
+    </div>
 
     {% if form.errors %}
     <div class="text-error text-center mt-s-1">
-      <p>Your username and password didn't match. Please try again.</p>
+      <p style="color: #ff4d4d;">Your email and password didn't match. Please try again.</p>
     </div>
     {% endif %}
   </section>

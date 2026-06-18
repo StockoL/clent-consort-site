@@ -1,0 +1,22 @@
+{% extends 'choir/base.html' %}
+
+{% block title %}Sign Out - Clent Consort{% endblock title %}
+
+{% block content %}
+<div class="l-stack section-padding container-narrow mx-auto">
+  <section class="box invert l-stack text-center">
+    <h1>Sign Out</h1>
+    <p>Are you sure you want to sign out of the member dashboard?</p>
+    
+    <form method="POST" action="{% url 'account_logout' %}">
+      {% csrf_token %}
+      
+      {% if redirect_field_value %}
+        <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+      {% endif %}
+      
+      <button type="submit" class="cta-button btn-block mt-s-1">Confirm Sign Out</button>
+    </form>
+  </section>
+</div>
+{% endblock content %}
