@@ -23,6 +23,8 @@ urlpatterns = [
     # --- The Allauth Security Doorman ---
     # This automatically handles login, logout, password resets, and email verification
     path("accounts/", include("allauth.urls")),
+    # Wire in the Invitation listener
+    path("invitations/", include("invitations.urls", namespace="invitations")),
     # --- Public Pages ---
     path("", home_view, name="home"),
     path("about/", about_view, name="about"),

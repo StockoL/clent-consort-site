@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # --- INVITATIONS BEFORE ALLAUTH ---
+    "invitations",
     # --- ADD THESE FOR ALLAUTH ---
     "django.contrib.sites",
     "allauth",
@@ -73,7 +75,8 @@ ROOT_URLCONF = "clent_consort_site.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        # Tell Django to check this specific folder BEFORE looking at third-party packages
+        "DIRS": [BASE_DIR / "choir" / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -179,6 +182,18 @@ ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 # Where to send the user after they successfully log in or log out
 LOGIN_REDIRECT_URL = "members"  # Assuming your dashboard url name is 'members'
 ACCOUNT_LOGOUT_REDIRECT_URL = "home"
+
+# ==============================================================================
+# SECURE INVITATION PROTOCOL
+# ==============================================================================
+# Tell Allauth to use the Invitations system to handle signups
+ACCOUNT_ADAPTER = "invitations.models.InvitationsAdapter"
+
+# Completely disable the public registration form
+INVITATIONS_INVITE_ONLY = True
+
+# Automatically accept the invitation token once they finish setting their password
+INVITATIONS_ACCEPT_INVITE_AFTER_SIGNUP = True
 
 # ==============================================================================
 # MEDIA STORAGE CONFIGURATION (AWS S3)

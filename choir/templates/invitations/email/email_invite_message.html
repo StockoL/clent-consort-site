@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+</head>
+<body style="background-color: #f4f4f4; padding: 40px 20px; font-family: Helvetica, Arial, sans-serif; line-height: 1.6; margin: 0;">
+    
+    <div style="max-width: 500px; margin: 0 auto; background-color: #1a1a1a; color: #ffffff; border-radius: 8px; padding: 40px; text-align: center; border: 1px solid #333333; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        
+        <h2 style="color: #c9a45e; margin-top: 0; margin-bottom: 8px; font-size: 24px; font-weight: normal;">Clent Consort</h2>
+        <h3 style="margin-top: 0; font-size: 18px; color: #dddddd; font-weight: normal;">Member Dashboard Invitation</h3>
+        
+        <hr style="border: none; border-top: 1px solid #444444; margin: 24px 0;">
+        
+        <p style="font-size: 16px; margin-bottom: 32px; color: #cccccc;">
+            You have been invited to join the secure Clent Consort platform. Click the button below to accept your invitation, verify your email, and access your rehearsal materials.
+        </p>
+        
+        <a href="{{ invite_url }}" style="background-color: #c9a45e; color: #1a1a1a; padding: 14px 28px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 16px; display: inline-block;">
+            Accept Invitation
+        </a>
+        
+        <hr style="border: none; border-top: 1px solid #444444; margin: 32px 0 24px 0;">
+        
+        <p style="font-size: 12px; color: #888888; text-align: left; margin: 0;">
+            If the button doesn't work, copy and paste this link into your browser:<br>
+            <span style="color: #66b3ff;">{{ invite_url }}</span>
+        </p>
+
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,9 @@
+Clent Consort - Member Dashboard Invitation
+
+You have been invited to join the secure Clent Consort platform. 
+
+Please copy and paste the link below into your browser to accept your invitation, verify your email, and access your rehearsal materials:
+
+{{ invite_url }}
+
+If you did not expect this invitation, you can safely ignore this email.
