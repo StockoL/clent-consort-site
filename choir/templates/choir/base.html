@@ -95,9 +95,9 @@
     {% if user.is_authenticated %}
       <li><a href="{% url 'members' %}" class="nav-link">Dashboard</a></li>
       <li><a href="{% url 'settings' %}" class="nav-link">Settings</a></li>
-      <li><a href="{% url 'logout' %}" class="nav-link">Logout</a></li>
+      <li><a href="{% url 'account_logout' %}" class="nav-link">Logout</a></li>
     {% else %}
-      <li><a href="{% url 'login' %}" class="nav-link">Member Login</a></li>
+      <li><a href="{% url 'account_login' %}" class="nav-link">Member Login</a></li>
     {% endif %}
   </ul>
 </nav>
@@ -113,9 +113,9 @@
         <div class="footer-grid">
           <div class="footer-col-left">
             {% if not user.is_authenticated %}
-            <a href="{% url 'login' %}" class="footer-btn">Member Login</a>
+            <a href="{% url 'account_login' %}" class="footer-btn">Member Login</a>
             {% else %}
-            <a href="{% url 'logout' %}" class="footer-btn">Logout</a>
+            <a href="{% url 'account_logout' %}" class="footer-btn">Logout</a>
             {% endif %}
           </div>
 

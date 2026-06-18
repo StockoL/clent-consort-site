@@ -5,35 +5,77 @@
 {% block extra_head %}{% endblock extra_head %}
 
 {% block content %}
-<div class="l-stack section-padding">
+<div class="l-center l-stack section-padding">
   <div class="text-center">
     <h1>{{ voice_part_name }} Learning Hub</h1>
     <p>Access your rehearsal tracks and sheet music below.</p>
   </div>
 
   <div class="l-switcher mt-s2">
-    {% for asset in assets %}
+    {% regroup assets by repertoire as grouped_assets %}
+
+    {% for group in grouped_assets %}
     <article class="box invert l-stack card-flex">
-      <h3 class="text-primary">{{ asset.repertoire.title }}</h3>
       
-      {% if asset.repertoire.composer %}
-        <p><em>{{ asset.repertoire.composer }}</em></p>
-      {% endif %}
-
-      <hr class="divider" />
-      
-      <p><strong>Resource:</strong> {{ asset.asset_name }}</p>
-      <p><strong>Part:</strong> {{ asset.get_voice_part_display }}</p>
-
-      <div class="card-footer">
-        {% if asset.file_upload %}
-          <a href="{{ asset.file_upload.url }}" target="_blank" class="cta-button btn-block">Download File</a>
-        {% elif asset.external_url %}
-          <a href="{{ asset.external_url }}" target="_blank" class="cta-button btn-block">External Link</a>
-        {% else %}
-          <p class="text-error"><em>Link currently unavailable</em></p>
+      <div class="repertoire-header">
+        <h3 class="text-primary mb-0">{{ group.grouper.title }}</h3>
+        {% if group.grouper.composer %}
+          <p class="mt-s-min text-muted"><em>{{ group.grouper.composer }}</em></p>
         {% endif %}
       </div>
+
+      <hr class="divider" />
+
+      <div class="l-stack l-stack--small">
+        {% for asset in group.list %}
+          <div class="asset-item">
+            <p class="mb-s-min"><strong>{{ asset.asset_name }}</strong></p>
+
+            {% if asset.file_upload %}
+              
+              {# Audio Track Integration #}
+              {% if ".mp3" in asset.file_upload.name|lower or ".wav" in asset.file_upload.name|lower or ".m4a" in asset.file_upload.name|lower %}
+                <div class="media-flex-row mt-s-min">
+                  <label class="sr-only" for="audio-{{ asset.id }}">Listen to {{ asset.asset_name }}</label>
+                  <audio id="audio-{{ asset.id }}" controls preload="none" class="w-100">
+                    <source src="{{ asset.file_upload.url }}" type="audio/mpeg">
+                    Your browser does not support the audio element.
+                  </audio>
+                  <a href="{{ asset.file_upload.url }}" download class="icon-action-btn" title="Download Audio">
+                    📥
+                  </a>
+                </div>
+
+              {# Document / Sheet Music Integration #}
+              {% elif ".pdf" in asset.file_upload.name|lower %}
+                <div class="media-flex-row mt-s-min">
+                  <a href="{{ asset.file_upload.url }}" target="_blank" rel="noopener noreferrer" class="cta-button btn-small w-100 text-center">
+                    📄 Open Score
+                  </a>
+                  </div>
+
+              {# Generic File Backup #}
+              {% else %}
+                <div class="media-flex-row mt-s-min">
+                  <a href="{{ asset.file_upload.url }}" target="_blank" class="cta-button btn-small w-100 text-center">
+                    Open Resource
+                  </a>
+                </div>
+              {% endif %}
+
+            {% elif asset.external_url %}
+              <div class="media-flex-row mt-s-min">
+                <a href="{{ asset.external_url }}" target="_blank" rel="noopener noreferrer" class="cta-button btn-small w-100 text-center">
+                  🌐 External Link
+                </a>
+              </div>
+            {% else %}
+              <p class="text-error mt-s-min"><em>Resource currently unavailable</em></p>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+      
     </article>
 
     {% empty %}

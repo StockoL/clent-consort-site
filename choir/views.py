@@ -106,15 +106,19 @@ def dashboard_view(request):
     )
 
     # 2. Build the "Active Music Library"
-    # We use a Python 'set()' to automatically remove any duplicate songs
-    current_repertoire = set()
+    # We use a Python 'set()' to automatically remove duplicate songs
+    repertoire_set = set()
     for event in upcoming_events:
         for piece in event.pieces.all():
-            current_repertoire.add(piece)
+            repertoire_set.add(piece)
+
+    # Convert the set back to a sorted list so the template can loop over it.
+    # We sort it alphabetically by the piece's title.
+    current_repertoire = sorted(list(repertoire_set), key=lambda x: x.title)
 
     context = {
         "upcoming_events": upcoming_events,
-        "current_repertoire": current_repertoire,  # Pass the unique list to the template
+        "current_repertoire": current_repertoire,  # Now an ordered list!
     }
 
     return render(request, "choir/members.html", context)

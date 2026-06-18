@@ -20,7 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # 1. Force load the .env file using the Path object
 env_path = BASE_DIR / ".env"
-load_dotenv(dotenv_path=env_path)
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 # 2. Fetch the variables
 SECRET_KEY = os.environ.get("SECRET_KEY")
@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
+    "storages",  # For AWS S3 storage
     # Your apps...
     "choir",
 ]
@@ -138,7 +139,7 @@ STATIC_URL = "static/"
 # AUTHENTICATION ROUTING CONTROLS
 # ==========================================================================
 # Where to redirect users if they try to access a locked page:
-LOGIN_URL = "login"
+LOGIN_URL = "account_login"
 
 # Where to send users immediately after a successful login:
 LOGIN_REDIRECT_URL = "members"
@@ -168,10 +169,9 @@ AUTHENTICATION_BACKENDS = [
     "allauth.account.auth_backends.AuthenticationBackend",  # Needed for member login
 ]
 
-# Switch from "Username" logins to "Email" logins
-ACCOUNT_AUTHENTICATION_METHOD = "email"
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False
+# Modern Allauth configuration for Django 6.x
+ACCOUNT_LOGIN_METHODS = {"email"}
+ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 
 # Require members to click the link in their email before gaining access
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
@@ -179,3 +179,45 @@ ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 # Where to send the user after they successfully log in or log out
 LOGIN_REDIRECT_URL = "members"  # Assuming your dashboard url name is 'members'
 ACCOUNT_LOGOUT_REDIRECT_URL = "home"
+
+# ==============================================================================
+# MEDIA STORAGE CONFIGURATION (AWS S3)
+# ==============================================================================
+AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
+AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME")
+
+# Temporary print to prove the .env is connected
+print("=== CLOUD CHECK ===")
+print("Bucket:", AWS_STORAGE_BUCKET_NAME)
+print("Key Found:", bool(AWS_ACCESS_KEY_ID))
+print("===================")
+
+# Only activate AWS storage if we have supplied real keys
+if AWS_ACCESS_KEY_ID and AWS_ACCESS_KEY_ID != "pending_verification_id":
+    # Modern Django 5.0+ Cloud Storage Configuration
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+
+    AWS_S3_REGION_NAME = "eu-north-1"  # Stockholm
+    AWS_S3_SIGNATURE_VERSION = "s3v4"
+    AWS_QUERYSTRING_AUTH = True
+    AWS_S3_FILE_OVERWRITE = False
+else:
+    # Modern Django 5.0+ Local Storage Configuration
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+    MEDIA_URL = "/media/"
+    MEDIA_ROOT = os.path.join(BASE_DIR, "media")
