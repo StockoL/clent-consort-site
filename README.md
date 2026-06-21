@@ -99,64 +99,221 @@ Instead of relying on rigid, breakpoint-heavy media queries, the site uses intri
 
 ## 4. <a name="backend-architecture"></a> ⚙️ Phase 2: Backend Production (Django Integration)
 
-To elevate the project from a static portfolio to a functional, live application, the architecture was migrated to **Python** and the **Django 5.0** framework.
+Transitioning the prototype to a full-stack environment required engineering a robust backend infrastructure with a strict "Security by Design" mindset. The system was rebuilt utilizing **Python** and the **Django 5.0** framework, prioritising the protection of user data, proprietary ensemble assets, and scalable code maintainability.
 
 ### Django Architecture & Template Inheritance
 
-The static Phase 1 HTML files were completely deconstructed into a modular Django template system.
+The static Phase 1 HTML files were completely deconstructed into a modular Django template system to enforce DRY (Don't Repeat Yourself) architecture.
 
 - **The Master Skeleton (`base.html`):** The global `<head>`, persistent sticky navigation, and footer grid were extracted into a single master template.
-- **DRY Rendering:** Individual pages (e.g., `events.html`) were refactored to use `{% extends 'choir/base.html' %}` and `{% block content %}`. This ensures that any adjustments to the main navigation automatically cascade across the entire application simultaneously.
+- **Dynamic Context Rendering:** Individual pages (e.g., `events.html`) were refactored to use `{% extends 'choir/base.html' %}` and `{% block content %}`.
+
+<details>
+<summary><b>🔍 Expand Engineering Case Study: Mitigating Technical Debt</b></summary>
+
+#### The Template Inheritance Strategy
+
+In the static prototype, a single change to the main navigation required manual updates across eight separate HTML files—a highly error-prone process. By migrating to Django's template engine, the architecture now relies on inheritance.
+
+The `base.html` file acts as the single source of truth for the site's structural wrapper. Child templates only inject their specific, unique content into predefined blocks. This architectural decision eliminates code duplication, significantly reduces the repository footprint, and ensures that layout adjustments instantly and safely cascade across the entire application simultaneously.
+
+</details>
 
 ### The Authentication Perimeter (Django-Allauth)
 
-The "Member Resource Area" required a secure gateway. I implemented the `django-allauth` package to manage cryptographic hashing and user sessions.
+The "Member Resource Area" required a secure gateway to protect copyrighted sheet music and internal logistics. I implemented the `django-allauth` package to manage cryptographic hashing and user sessions.
 
-- **Invite-Only Protocol:** Because this is a private ensemble, public registration poses a security risk. I integrated `django-invitations`, configuring `INVITATIONS_INVITE_ONLY = True`. Member accounts can now only be provisioned via secure, single-use cryptographic email tokens dispatched by the director.
-- **Bespoke UI Overrides:** Default Allauth templates visually break bespoke frontend design systems. I engineered a complete override by mapping Allauth's backend hooks (e.g., mapping the expected `login` field to my `type="email"` input) directly into custom HTML files located in `templates/account/`. This ensured the entire password-reset and login journey remained visually identical to the established `.box .invert` CSS primitives.
+- **Zero-Trust Public Registration:** Because this is a private ensemble, open public signup forms represent an unnecessary vector for bot spam. I integrated `django-invitations` and configured `INVITATIONS_INVITE_ONLY = True`.
+- **Bespoke UI Overrides:** Default third-party package templates visually break bespoke frontend design systems. I engineered a complete override by mapping Allauth's backend hooks directly into my custom HTML structures.
 
-### Cloud Storage (AWS S3 & WhiteNoise)
+<details>
+<summary><b>🔍 Expand Engineering Case Study: Secure UI Integration</b></summary>
 
-A choral ensemble generates massive files (PDF scores, MP3 rehearsal tracks). Storing these directly on the web server would cause severe database bloat and performance degradation.
+#### Overriding Third-Party Authentication UX
 
-- **Amazon Web Services (S3):** I configured the `boto3` and `django-storages` packages to offload all user-uploaded media to an AWS S3 bucket. When a director uploads a new score via the Django Admin panel, it is automatically routed to AWS, keeping the core server lean.
-- **Static File Delivery:** Django's `runserver` does not serve static assets (CSS/JS) in production environments. I implemented `WhiteNoise` middleware to intercept static file requests, apply Brotli/Gzip compression, and serve them securely and efficiently directly from the WSGI server.
+The default `django-allauth` package provides robust cryptographic security but injects unstyled, table-based HTML forms that shattered the project's intrinsic CSS primitives.
 
-### Python Configuration & Security
+Instead of writing brittle, high-specificity CSS to patch Allauth's default forms, I intercepted the template rendering hierarchy. I recreated the exact expected directory structure (`templates/account/login.html`) and mapped the required Python backend variables (e.g., swapping `username` fields for `type="email"` inputs) directly into my custom `.box .invert` markup.
 
-The `settings.py` file was completely refactored to safely handle the transition from a local laptop to the live internet.
+This ensured the entire password-reset and login journey remained visually consistent with the main application, maintaining frontend continuity without compromising backend security.
 
-- **Environment Isolation (`.env`):** Integrated `python-dotenv`. All sensitive routing and cryptographic keys (AWS keys, `SECRET_KEY`, database credentials) are extracted into an isolated `.env` file, ensuring they are never committed to version control.
-- **Database Abstraction:** Utilised `dj-database-url`. If `DEBUG=True`, Django connects to a local `db.sqlite3` file. In production, the environment variable dynamically maps Django's ORM to a high-performance **PostgreSQL** database.
-- **Security Hardening:** Implemented strict environmental logic. When `DEBUG=False` (production), Django automatically enforces `SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE`, and restricts incoming traffic via a defined `ALLOWED_HOSTS` array.
+</details>
 
-## <p align="right">(<a href="#top">Back to top</a>)</p>
+### Cloud Storage (AWS S3) & Static File Delivery
+
+A choral ensemble generates massive files (PDF scores, MP3 rehearsal tracks). Storing these directly on the web server would cause severe database bloat, limit scalability, and degrade performance.
+
+- **Amazon Web Services (S3):** I configured the `boto3` and `django-storages` packages to offload all user-uploaded media to an AWS S3 bucket, keeping the core server incredibly lean.
+- **Static File Interception:** Django explicitly drops static asset (CSS/JS) serving in production environments. I implemented `WhiteNoise` middleware to handle this delivery pipeline.
+
+<details>
+<summary><b>🔍 Expand Engineering Case Study: The WSGI Delivery Pipeline</b></summary>
+
+#### Separating Media and Static Lifecycles
+
+User-uploaded media (sheet music) and developer-written static files (CSS) have entirely different lifecycles and security requirements.
+
+When a director uploads a new PDF via the secure Django Admin panel, the `storages` backend automatically routes that file to AWS S3. However, routing static CSS files to S3 introduces unnecessary network latency for core stylistic elements.
+
+To solve this, `WhiteNoise` was injected directly into the `MIDDLEWARE` array immediately after the Security Middleware. This intercepts static file requests, applies aggressive Brotli/Gzip compression, and serves the bespoke CSS/JS efficiently and securely directly from the Python WSGI server (Gunicorn) before the request ever hits the database layer.
+
+</details>
+
+### Python Configuration & Environmental Security
+
+The `settings.py` file was entirely refactored to safely handle the transition from a local development laptop to the live internet, adhering to 12-Factor App methodology.
+
+- **Environment Isolation (`.env`):** Integrated the `python-dotenv` package to isolate AWS IAM keys, the Django `SECRET_KEY`, and database credentials.
+- **Database Abstraction:** Utilised `dj-database-url` to dynamically map Django's ORM between local SQLite files and high-performance production PostgreSQL databases.
+- **Security Hardening:** Implemented strict, environment-aware logic (`if not DEBUG:`) to elevate the application's defensive posture automatically upon deployment.
+
+<details>
+<summary><b>🔍 Expand Engineering Case Study: Dynamic Security Routing</b></summary>
+
+#### Defensive Transport & Session Protocols
+
+Hardcoding sensitive data or security states is a critical vulnerability. The application relies on environmental polling to determine its context.
+
+When deployed to production (where `DEBUG` evaluates to `False`), the configuration file automatically activates high-level anti-sniffing protocols. Both `SESSION_COOKIE_SECURE = True` and `CSRF_COOKIE_SECURE = True` are enforced, ensuring session IDs and CSRF tokens are only ever transmitted over encrypted HTTPS connections. Furthermore, the `ALLOWED_HOSTS` array strictly validates incoming traffic against designated production URLs, neutralising HTTP Host Header spoofing attacks.
+
+</details>
+
+<p align="right">(<a href="#top">Back to top</a>)</p>
 
 ## 5. <a name="features"></a> ✨ Core Features & Page Implementations
 
-- **index.html:** Features a high-performance Hero Section utilizing fluid typography (`clamp()`) and `<link rel="preload">` to ensure near-instant Largest Contentful Paint (LCP). A semi-transparent CSS gradient overlay guarantees WCAG 2.1 contrast ratios regardless of the background image's original brightness.
-- **about.html (Scrollytelling):** Employs pure CSS "Scrollytelling" using the experimental `view-timeline` API. As users swipe horizontally through the "Project Rhythm," background videos provide atmospheric context while text performs scroll-driven reveal animations.
-- **contact.html (Dual-Stream Forms):** Utilises the `.l-switcher` primitive (`--threshold: 60rem`). Booking and Audition forms sit side-by-side on wide screens but stack on mobile. Forms are styled with high-contrast "White Well" inputs to exceed accessibility requirements, complete with `:focus-visible` gold box-shadows.
-- **members.html (Algorithmic Dashboard):** Engineered a high-density dashboard. Employs progressive disclosure `<details>` accordions to prevent YouTube iframes from tanking initial page loads. The Voice Part Hubs utilise a "Clickable Row" pattern designed around Fitts's Law, providing a massive 48px touch target for musicians attempting to download PDFs while at a music stand.
-- **Administrative Control Center (Django Admin):** Leveraged Django's built-in Admin panel, heavily customized for the ensemble director. Provides a secure GUI to perform CRUD operations on chorister profiles, event dates, and seamlessly upload PDF scores directly to AWS S3 without needing to touch a line of code.
+The application bridges high-end, performant frontend UX with a robust backend utility, ensuring both the public and private sides of the platform serve their specific target audiences without friction.
 
-## <p align="right">(<a href="#top">Back to top</a>)</p>
+### The Public Entrypoint (`index.html`)
+
+Features a high-performance Hero Section utilizing fluid typography (`clamp()`) and `<link rel="preload">` to ensure near-instant Largest Contentful Paint (LCP) times.
+
+<details>
+<summary><b>🔍 Expand Engineering Case Study: Critical Rendering Path Optimization</b></summary>
+
+#### Guarantees Over JavaScript
+
+Standard browser behavior discovers background images defined in CSS relatively late in the rendering lifecycle. By explicitly preloading the primary hero asset in the HTML `<head>` with `fetchpriority="high"`, I forced the browser to download the heaviest visual element immediately, drastically cutting down the LCP time.
+
+Furthermore, to guarantee strict WCAG 2.1 AA text-contrast compliance across unpredictable dynamic images, I applied a semi-transparent linear-gradient overlay directly within the CSS. This guarantees legibility at the architectural level without requiring heavy, client-side JavaScript contrast-checking libraries.
+
+</details>
+
+### Native CSS Scrollytelling (`about.html`)
+
+Employs experimental pure CSS "Scrollytelling" using the `view-timeline` API. As users swipe horizontally through the "Project Rhythm," background videos provide atmospheric context while text performs scroll-driven reveal animations.
+
+<details>
+<summary><b>🔍 Expand Engineering Case Study: Progressive Enhancement</b></summary>
+
+#### Dropping the JavaScript Scroll-Hijackers
+
+Traditional "scrollytelling" relies heavily on JavaScript intersection observers or heavy libraries (like GSAP or ScrollMagic), which often hijack native scrolling, drop frame rates, and bloat the initial payload.
+
+I opted for the emerging CSS Animation Level 4 specification (`animation-timeline: view()`). This offloads the animation calculations entirely to the browser's compositor thread, resulting in silky 60fps hardware-accelerated animations. Because it is built as a progressive enhancement, legacy browsers simply ignore the property and gracefully degrade to a highly readable, static layout without breaking the user experience.
+
+</details>
+
+### The Ergonomic Dashboard (`members.html`)
+
+Engineered as a high-density logistics hub. It employs progressive disclosure `<details>` accordions and utilizes a "Clickable Row" pattern designed specifically around Fitts's Law.
+
+<details>
+<summary><b>🔍 Expand Engineering Case Study: Payload Mitigation & Fitts's Law</b></summary>
+
+#### Designing for the Rehearsal Room
+
+A chorister accessing the dashboard is likely standing in a rehearsal room, holding a physical folder, and trying to download a PDF on a small mobile screen with one hand. Following Fitts's Law (which dictates that the time required to move to a target is a function of the target size and distance), I transformed the entire `.music-row-link` into a massive 48px-tall flexbox touch target, eliminating "fat-finger" errors.
+
+#### The Iframe Payload Trap
+
+The Voice Part Hubs require multiple embedded YouTube rehearsal tracks. Loading 10 YouTube iframes simultaneously on page load would force the browser to download megabytes of third-party tracking scripts, tanking the performance score. By wrapping these iframes inside semantic HTML `<details>` and `<summary>` accordions, the browser defers the rendering of the iframe until the user explicitly clicks to open it—a strategy known as Progressive Disclosure.
+
+</details>
+
+### Dual-Stream Contact Gateways (`contact.html`)
+
+Utilises the `.l-switcher` primitive (`--threshold: 60rem`). Booking and Audition forms sit side-by-side on wide screens but mathematically stack on mobile devices.
+
+<details>
+<summary><b>🔍 Expand Engineering Case Study: Intrinsic Form Architecture</b></summary>
+
+#### Reducing Cognitive Friction
+
+Users visiting the contact page have two entirely different goals: booking the choir (Stakeholders) or joining the choir (Singers). By splitting these into a dual-stream layout using the Switcher primitive, the application significantly reduces cognitive load.
+
+To exceed accessibility standards, the forms are styled with high-contrast "White Well" inputs against the dark theme. I implemented robust `:focus-visible` states with custom gold box-shadows to ensure users relying on keyboard navigation have absolute parity with mouse-driven users.
+
+</details>
+
+### The Command Center (Django Admin)
+
+Leveraged and heavily customized Django's built-in Admin panel for the ensemble director, providing a secure GUI to perform CRUD operations on chorister profiles and event dates.
+
+<details>
+<summary><b>🔍 Expand Engineering Case Study: Eradicating Developer Bottlenecks</b></summary>
+
+#### Transitioning to a True CMS
+
+A static site requires a developer to manually alter HTML every time the choir schedules a new concert or uploads a new piece of sheet music. By wiring the frontend templates directly into Django's Object-Relational Mapper (ORM), the application functions as a true Content Management System (CMS).
+
+The ensemble director can now log into the `/admin/` portal, create a new "Concert Event," and upload a PDF score. The Django backend automatically validates the data, routes the PDF to the AWS S3 cloud bucket via `boto3`, and dynamically generates the new HTML nodes on the live public site, completely removing the developer from the daily operational loop.
+
+</details>
+
+<p align="right">(<a href="#top">Back to top</a>)</p>
 
 ## 6. <a name="dev-log"></a> 🏗️ Development Log & Engineering Phases
 
-To ensure a clean, maintainable, and scalable codebase, this application was built iteratively.
+To ensure a clean, maintainable, and scalable codebase, this application was built iteratively, resolving systemic layout and backend routing challenges at the architectural level rather than relying on brittle patches.
 
 ### Phase 1: Frontend Technical Log
 
+- **Mobile Viewport Overflow:** During iPhone SE testing, the layout broke horizontally, creating a "nested pressure cooker" effect that disabled vertical scrolling. _Fix:_ Refactored the global `<body>` to `min-height: 100vh` and applied `max-width: 100%` safety valves to all intrinsic child primitives.
+- **The Sticky Footer Anchoring:** On sparse pages (like the 404 error state), the footer floated awkwardly in the middle of the screen. _Fix:_ Engineered a flexbox global layout, applying `flex: 1` to the `<main>` element to act as a "greedy" container.
 - **Logo Aspect Ratio Distortion:** Identified that flexbox expansions were horizontally stretching the logo on the member dashboard. _Fix:_ Refactored the raw asset to a perfect 1:1 canvas size in GIMP and enforced strict `width/height` HTML attributes.
-- **Mobile Viewport Overflow:** During iPhone SE testing, the layout broke horizontally, creating a "nested pressure cooker" effect that disabled vertical scrolling. _Fix:_ Refactored the global `<body>` to `min-height: 100vh` (instead of fixed `100vh`) and applied `max-width: 100%` safety valves to all intrinsic child primitives (`.l-switcher`, `.l-sidebar`), restoring fluid scrolling constraints.
-- **The Sticky Footer Anchoring:** On sparse pages (like 404), the footer floated awkwardly in the middle of the screen. _Fix:_ Engineered a flexbox global layout, applying `flex: 1` to the `<main>` element to act as a "greedy" container, automatically pushing the footer flush to the bottom viewport edge.
+
+<details>
+<summary><b>🔍 Expand Engineering Case Study: Resolving Viewport "Pressure Cookers"</b></summary>
+
+#### The `100vh` Flexbox Trap
+
+During initial mobile testing, the application exhibited a critical "vertical lock" where users could not scroll, accompanied by horizontal bleeding of UI elements. Using Chrome Developer Tools, I profiled the rendering tree and identified a conflict between the global wrapper and the CSS `min()` primitives.
+
+By setting the global `<body>` to a strict `height: 100vh`, I had accidentally created a rigid container. When the internal `l-switcher` primitives required more height to stack their contents on narrow screens, they collided with the rigid `100vh` floor. The flex-engine panicked, forcing the content to overflow horizontally instead.
+
+**The Fix:** I refactored the global architecture to use `min-height: 100vh`. This allows the application to guarantee a full-screen presentation on sparse pages (perfectly pinning the footer via `flex: 1`), but allows the `<body>` to dynamically expand downwards to accommodate the intrinsic height requirements of dense, stacked mobile content, completely eliminating the horizontal overflow and restoring native scrolling.
+
+</details>
 
 ### Phase 2: Backend Technical Log
 
-- **ModuleNotFoundError during Deployment Checks:** Python crashed when trying to parse the production `settings.py` due to missing cloud libraries. _Fix:_ Synchronised the virtual environment using `pip install gunicorn whitenoise psycopg2-binary dj-database-url`, and locked the manifest via `pip freeze > requirements.txt`.
-- **Allauth Security Feedback Loop:** The default Allauth login form lacked interactive user feedback. _Fix:_ Engineered a state-driven CSS border system using `:placeholder-shown`, `:valid`, and `:invalid` pseudo-classes. The input remains neutral until typing begins, turning red for structural errors, and locking to a green success state natively before the form is even submitted.
-- **Dynamic Email Routing:** A hardcoded `EMAIL_BACKEND` broke the application flow. If pushed to production, emails would only print to the server log. _Fix:_ Refactored `settings.py` to check the `DEBUG` state. Locally, it prints to the terminal; in production, it fetches secure `EMAIL_HOST_USER` and `EMAIL_HOST_PASSWORD` App Passwords from the `.env` variables to dispatch real SMTP invitations.
+- **Dynamic Email Routing:** A hardcoded `EMAIL_BACKEND` broke the application flow. If pushed to production, emails would silently print to the server log. _Fix:_ Refactored `settings.py` to intelligently poll the `DEBUG` state, fetching secure SMTP credentials dynamically only when in production.
+- **Allauth Security Feedback Loop:** The default Allauth login form lacked interactive user feedback. _Fix:_ Engineered a state-driven CSS border system using `:placeholder-shown`, `:valid`, and `:invalid` pseudo-classes to handle validation natively.
+- **ModuleNotFoundError during Deployment:** Python crashed when parsing the production `settings.py` on Render. _Fix:_ Synchronised the production virtual environment using `pip freeze > requirements.txt` to ensure cloud servers had access to the `dj-database-url` and `whitenoise` middleware packages.
+
+<details>
+<summary><b>🔍 Expand Engineering Case Study: Environment-Aware Infrastructure</b></summary>
+
+#### Preventing Silent Failures in Production
+
+When integrating `django-invitations`, the system relies heavily on email delivery to provision user accounts. During local development, configuring Django to use an SMTP server is dangerous and slows down testing. However, leaving the development `console.EmailBackend` active in production results in a catastrophic silent failure—users request an invite, the server prints the token to a hidden backend log, and the user assumes the application is broken.
+
+**The Fix:** I engineered an environment-aware routing switch in `settings.py`.
+When `DEBUG = True`, the system utilizes the `console` backend, allowing me to instantly click invitation tokens directly in my VS Code terminal. When `DEBUG = False`, the system automatically shifts to the `.smtp.EmailBackend` and queries the OS environment variables for the injected `EMAIL_HOST_USER` and `EMAIL_HOST_PASSWORD`. This ensures seamless parity between environments without ever exposing the ensemble's proprietary Gmail App Passwords to version control.
+
+</details>
+
+<details>
+<summary><b>🔍 Expand Engineering Case Study: JavaScript-Free Validation</b></summary>
+
+#### State-Driven UI with CSS Pseudo-Classes
+
+Standard form validation relies heavily on attaching JavaScript event listeners (`keyup`, `blur`) to input fields to toggle error classes. This adds unnecessary weight to the DOM and can cause execution delays.
+
+To maintain a pristine Lighthouse Performance score while enhancing the security UX of the login page, I offloaded the validation logic entirely to the CSS rendering engine. By chaining high-specificity pseudo-classes (`input:not(:placeholder-shown):invalid`), the application suppresses default browser errors on empty fields. The moment a user types an invalid character format, the CSS engine instantly transitions the border to a pulsing crimson state. Once the HTML5 constraint API (`pattern` or `type="email"`) is satisfied, it locks to a green success state, providing instantaneous, haptic-like visual feedback with zero JavaScript overhead.
+
+</details>
 
 ## <p align="right">(<a href="#top">Back to top</a>)</p>
 
@@ -216,7 +373,7 @@ python manage.py migrate
 To run this full-stack application locally on your own machine:
 
 1. Open your terminal and clone the repository:
-   git clone https://github.com/StockoL/clent-consort-project-ms1.git
+   `git clone https://github.com/StockoL/clent-consort-project-ms1.git`
 
 2. Navigate into the directory and create a virtual environment:
    `python -m venv .venv`
