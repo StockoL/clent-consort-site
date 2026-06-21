@@ -32,15 +32,16 @@ if not SECRET_KEY:
 # ==============================================================================
 
 if DEBUG:
-    # LOCAL DEVELOPMENT: Relaxed security to allow local testing
-    ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+    ALLOWED_HOSTS = [
+        "127.0.0.1",
+        "localhost",
+    ]
 else:
     # PRODUCTION: Maximum armor activated
-    # Replace these with your actual Render and live domains later
     ALLOWED_HOSTS = [
-        "clentconsort.onrender.com",
-        "clentconsort.com",
-        "www.clentconsort.com",
+        "clent-consort-app.onrender.com",
+        "clentconsort.org",
+        "www.clentconsort.org",
     ]
 
     # Force cookies to only travel over encrypted HTTPS connections
