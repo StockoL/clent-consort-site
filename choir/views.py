@@ -257,7 +257,7 @@ def update_rsvp_view(request, attendance_id):
             f"Your RSVP for {attendance.event.date_time.strftime('%d %b')} has been updated.",
         )
 
-    return redirect("dashboard")
+    return redirect("members")  # Send them back to the dashboard after the update
 
 
 # ==============================================================================
