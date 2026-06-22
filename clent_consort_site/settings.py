@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     # Your apps...
     "anymail",
     "choir",
+    "tinymce",
 ]
 
 # Required by allauth to identify which database site it is managing

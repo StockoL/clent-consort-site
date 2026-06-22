@@ -2,6 +2,7 @@ from django.contrib.auth.models import User  # Django's built-in secure login mo
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from tinymce.models import HTMLField
 
 # ==============================================================================
 # 1. PEOPLE & FINANCE
@@ -173,7 +174,7 @@ class Event(models.Model):
 
     date_time = models.DateTimeField()
     location = models.CharField(max_length=200, default="St Laurence's Church")
-    additional_notes = models.TextField(blank=True)
+    additional_notes = additional_notes = HTMLField(blank=True)
 
     # Many-to-Many: An event features multiple pieces, a piece is sung at multiple events.
     pieces = models.ManyToManyField(Repertoire, blank=True, related_name="events")

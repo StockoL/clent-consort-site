@@ -22,6 +22,7 @@ from choir.views import (
 urlpatterns = [
     # --- Django Admin ---
     path("admin/", admin.site.urls),
+    path("tinymce/", include("tinymce.urls")),
     # --- The Allauth Security Doorman ---
     path("accounts/", include("allauth.urls")),
     # Wire in the Invitation listener

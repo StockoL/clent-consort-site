@@ -22,48 +22,53 @@
       {% if user_attendances %}
       <div class="l-stack l-stack--small">
         {% for attendance in user_attendances %}
-        <article class="event-card-highlight" style="position: relative;">
+        <article class="event-card-highlight" style="display: flex; flex-direction: column; gap: 1rem;">
           
-          <div style="position: absolute; top: 12px; right: 12px; font-size: 0.75rem; font-weight: bold; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;
-              {% if attendance.status == 'ATTENDING' %}background-color: #2e7d32; color: white;
-              {% elif attendance.status == 'ABSENT' %}background-color: #c62828; color: white;
-              {% else %}background-color: #f57f17; color: white;{% endif %}">
-              {{ attendance.get_status_display }}
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+            <h3 class="event-date" style="margin: 0; line-height: 1.2;">
+              {{ attendance.event.date_time|date:"l, j M Y" }}
+            </h3>
+            <div style="font-size: 0.7rem; font-weight: bold; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
+                {% if attendance.status == 'ATTENDING' %}background-color: #2e7d32; color: white;
+                {% elif attendance.status == 'ABSENT' %}background-color: #c62828; color: white;
+                {% else %}background-color: #f57f17; color: white;{% endif %}">
+                {{ attendance.get_status_display }}
+            </div>
           </div>
 
-          <h3 class="event-date" style="padding-right: 100px;">
-            {{ attendance.event.date_time|date:"l, j M Y" }}
-          </h3>
-          <p class="event-meta">
-            <strong>{{ attendance.event.get_event_type_display }}</strong> |
-            {{ attendance.event.date_time|time:"g:i A" }} <br />📍 {{ attendance.event.location }}
-          </p>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <p class="event-meta" style="margin: 0;">
+              <strong>{{ attendance.event.get_event_type_display }}</strong> |
+              {{ attendance.event.date_time|time:"g:i A" }} <br />📍 {{ attendance.event.location }}
+            </p>
+            
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+              <form method="POST" action="{% url 'update_rsvp' attendance.id %}" style="margin: 0;">
+                {% csrf_token %}
+                <input type="hidden" name="status" value="ATTENDING">
+                <button type="submit" class="cta-button" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: 4px; {% if attendance.status == 'ATTENDING' %}opacity: 0.6; cursor: not-allowed;{% endif %}" {% if attendance.status == 'ATTENDING' %}disabled{% endif %}>
+                  ✓ I'll be there
+                </button>
+              </form>
+
+              <form method="POST" action="{% url 'update_rsvp' attendance.id %}" style="margin: 0;">
+                {% csrf_token %}
+                <input type="hidden" name="status" value="ABSENT">
+                <button type="submit" class="cta-button" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; background-color: transparent; border: 1px solid rgba(255,255,255,0.3); color: #ccc; border-radius: 4px; {% if attendance.status == 'ABSENT' %}opacity: 0.6; cursor: not-allowed;{% endif %}" {% if attendance.status == 'ABSENT' %}disabled{% endif %}>
+                  ✗ Absent
+                </button>
+              </form>
+            </div>
+          </div>
           
           {% if attendance.event.additional_notes %}
-          <p class="text-warning">
-            <em>Note: {{ attendance.event.additional_notes }}</em>
-          </p>
-          {% endif %}
-          
-          <hr style="border-top: 1px solid rgba(255,255,255,0.1); margin: 1rem 0 0.75rem 0;" />
-          
-          <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-            <form method="POST" action="{% url 'update_rsvp' attendance.id %}" style="margin: 0;">
-              {% csrf_token %}
-              <input type="hidden" name="status" value="ATTENDING">
-              <button type="submit" class="cta-button btn-small" style="padding: 0.5rem 1rem; font-size: 0.85rem; {% if attendance.status == 'ATTENDING' %}opacity: 0.6; cursor: not-allowed;{% endif %}" {% if attendance.status == 'ATTENDING' %}disabled{% endif %}>
-                I'll be there
-              </button>
-            </form>
-
-            <form method="POST" action="{% url 'update_rsvp' attendance.id %}" style="margin: 0;">
-              {% csrf_token %}
-              <input type="hidden" name="status" value="ABSENT">
-              <button type="submit" class="cta-button btn-small" style="padding: 0.5rem 1rem; font-size: 0.85rem; background-color: transparent; border: 1px solid #c9a45e; color: #c9a45e; {% if attendance.status == 'ABSENT' %}opacity: 0.6; cursor: not-allowed;{% endif %}" {% if attendance.status == 'ABSENT' %}disabled{% endif %}>
-                Apologies, I'm absent
-              </button>
-            </form>
+          <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 0.75rem;">
+            <p class="text-small" style="color: #aaa; margin: 0; line-height: 1.5;">
+              <strong>Rehearsal Plan:</strong><br/>
+              {{ attendance.event.additional_notes|safe }}
+            </p>
           </div>
+          {% endif %}
 
         </article>
         {% endfor %}
