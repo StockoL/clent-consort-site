@@ -15,3 +15,7 @@ env/
 # User Media (Uploaded files)
 media/
 learning_assets/
+
+# Database Migrations
+datadump.json
+
