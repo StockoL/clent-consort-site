@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from .models import (
+    Attendance,
     AuditionApplication,
     Enquiry,
     Event,
@@ -50,6 +51,20 @@ admin.site.register(SubscriptionPayment)
 # ==============================================================================
 # 2. LOGISTICS
 # ==============================================================================
+class AttendanceInline(admin.TabularInline):
+    """
+    Creates a spreadsheet-style list of RSVPs directly inside the Event page.
+    """
+
+    model = Attendance
+    extra = 0  # Stops Django from adding empty blank rows at the bottom
+    readonly_fields = ("user", "status", "updated_at")
+    can_delete = False  # Data integrity: Prevents admins from accidentally deleting a member's RSVP record
+
+    # Optional: Orders the list so 'ATTENDING' shows up at the top, followed by 'PENDING', etc.
+    ordering = ("status", "user__username")
+
+
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
     list_display = ("event_type", "date_time", "location")
@@ -57,6 +72,9 @@ class EventAdmin(admin.ModelAdmin):
 
     # This single line replaces the clunky Ctrl-Click box with a beautiful dual-panel UI
     filter_horizontal = ("pieces",)
+
+    # Injects the RSVP list at the bottom of the event page
+    inlines = [AttendanceInline]
 
 
 # ==============================================================================

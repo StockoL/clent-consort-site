@@ -1,8 +1,11 @@
+import json  # <-- Added here
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required  # Imports the security lock
 from django.core.mail import send_mail
+from django.http import JsonResponse  # <-- Added here
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -239,25 +242,28 @@ def settings_view(request):
 @login_required
 @require_POST  # Security: Forbids people from typing the URL directly to change RSVPs
 def update_rsvp_view(request, attendance_id):
-    """Catches the button click from the dashboard and updates the database."""
+    """Catches the silent JS fetch request and updates the database without a page reload."""
 
     # Securely fetch the record, ensuring it actually belongs to the logged-in user
     attendance = get_object_or_404(Attendance, id=attendance_id, user=request.user)
 
-    # Extract the new status from the hidden HTML form input
-    new_status = request.POST.get("status")
+    # 1. Parse the JSON packet sent by our JavaScript in the template
+    try:
+        data = json.loads(request.body)
+        new_status = data.get("status")
+    except json.JSONDecodeError:
+        return JsonResponse({"success": False, "error": "Invalid payload"}, status=400)
 
-    # Validate the data before saving
+    # 2. Validate the data against our allowed choices
     valid_choices = [choice[0] for choice in Attendance.STATUS_CHOICES]
     if new_status in valid_choices:
         attendance.status = new_status
         attendance.save()
-        messages.success(
-            request,
-            f"Your RSVP for {attendance.event.date_time.strftime('%d %b')} has been updated.",
-        )
 
-    return redirect("members")  # Send them back to the dashboard after the update
+        # 3. Return a silent success signal instead of a page redirect
+        return JsonResponse({"success": True, "new_status": new_status})
+
+    return JsonResponse({"success": False, "error": "Invalid status"}, status=400)
 
 
 # ==============================================================================

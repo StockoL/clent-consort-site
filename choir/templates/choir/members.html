@@ -28,12 +28,17 @@
             <h3 class="event-date" style="margin: 0; line-height: 1.2;">
               {{ attendance.event.date_time|date:"l, j M Y" }}
             </h3>
-            <div style="font-size: 0.7rem; font-weight: bold; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
+            
+            <select class="rsvp-toggle" data-attendance-id="{{ attendance.id }}" 
+                style="font-size: 0.75rem; font-weight: bold; padding: 6px 12px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; border: none; outline: none; cursor: pointer; appearance: none; text-align: center;
                 {% if attendance.status == 'ATTENDING' %}background-color: #2e7d32; color: white;
                 {% elif attendance.status == 'ABSENT' %}background-color: #c62828; color: white;
                 {% else %}background-color: #f57f17; color: white;{% endif %}">
-                {{ attendance.get_status_display }}
-            </div>
+                
+                <option value="PENDING" {% if attendance.status == 'PENDING' %}selected{% endif %}>No Response</option>
+                <option value="ATTENDING" {% if attendance.status == 'ATTENDING' %}selected{% endif %}>Attending</option>
+                <option value="ABSENT" {% if attendance.status == 'ABSENT' %}selected{% endif %}>Absent</option>
+            </select>
           </div>
 
           <div style="display: flex; flex-direction: column; gap: 0.75rem;">
@@ -41,24 +46,6 @@
               <strong>{{ attendance.event.get_event_type_display }}</strong> |
               {{ attendance.event.date_time|time:"g:i A" }} <br />📍 {{ attendance.event.location }}
             </p>
-            
-            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
-              <form method="POST" action="{% url 'update_rsvp' attendance.id %}" style="margin: 0;">
-                {% csrf_token %}
-                <input type="hidden" name="status" value="ATTENDING">
-                <button type="submit" class="cta-button" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: 4px; {% if attendance.status == 'ATTENDING' %}opacity: 0.6; cursor: not-allowed;{% endif %}" {% if attendance.status == 'ATTENDING' %}disabled{% endif %}>
-                  ✓ I'll be there
-                </button>
-              </form>
-
-              <form method="POST" action="{% url 'update_rsvp' attendance.id %}" style="margin: 0;">
-                {% csrf_token %}
-                <input type="hidden" name="status" value="ABSENT">
-                <button type="submit" class="cta-button" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; background-color: transparent; border: 1px solid rgba(255,255,255,0.3); color: #ccc; border-radius: 4px; {% if attendance.status == 'ABSENT' %}opacity: 0.6; cursor: not-allowed;{% endif %}" {% if attendance.status == 'ABSENT' %}disabled{% endif %}>
-                  ✗ Absent
-                </button>
-              </form>
-            </div>
           </div>
           
           {% if attendance.event.additional_notes %}
@@ -109,4 +96,50 @@
     </section>
   </div>
 </div>
+
+<input type="hidden" id="csrf_token_input" value="{{ csrf_token }}">
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const csrfToken = document.getElementById('csrf_token_input').value;
+    const rsvpSelects = document.querySelectorAll('.rsvp-toggle');
+
+    rsvpSelects.forEach(select => {
+        select.addEventListener('change', async function() {
+            const attendanceId = this.getAttribute('data-attendance-id');
+            const newStatus = this.value;
+
+            // Send the silent request to Django
+            try {
+                const response = await fetch(`/rsvp/${attendanceId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Update the color immediately on success without page reload
+                    if (newStatus === 'ATTENDING') {
+                        this.style.backgroundColor = '#2e7d32'; // Green
+                    } else if (newStatus === 'ABSENT') {
+                        this.style.backgroundColor = '#c62828'; // Red
+                    } else {
+                        this.style.backgroundColor = '#f57f17'; // Orange
+                    }
+                } else {
+                    alert('Error updating RSVP. Please try again.');
+                }
+            } catch (error) {
+                console.error("Fetch error:", error);
+                alert('Network error. Could not connect to the server.');
+            }
+        });
+    });
+});
+</script>
 {% endblock content %}
