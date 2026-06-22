@@ -190,7 +190,7 @@ LOGOUT_REDIRECT_URL = "home"
 if DEBUG:
     # LOCAL DEVELOPMENT: Keep printing to the terminal
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-    DEFAULT_FROM_EMAIL = "hello@clentconsort.org"
+    DEFAULT_FROM_EMAIL = "Clent Consort <hello@clentconsort.org>"
 else:
     # PRODUCTION: Bypass Render's SMTP firewall via Brevo HTTP API
     EMAIL_BACKEND = "anymail.backends.brevo.EmailBackend"
@@ -202,6 +202,9 @@ else:
 
     # The official address your choir members will see
     DEFAULT_FROM_EMAIL = "Clent Consort <hello@clentconsort.org>"
+
+# Add so views.py can find it
+CHOIR_CONTACT_EMAIL = "hello@clentconsort.org"
 
 # ==============================================================================
 # AUTHENTICATION & ALLAUTH CONFIGURATION
