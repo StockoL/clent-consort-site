@@ -136,6 +136,30 @@ class LearningAsset(models.Model):
 # ==============================================================================
 
 
+class Attendance(models.Model):
+    """
+    Intermediate model tracking the RSVP status of individual choir members for specific events.
+    """
+
+    STATUS_CHOICES = [
+        ("PENDING", "No Response"),
+        ("ATTENDING", "Attending"),
+        ("ABSENT", "Absent"),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="attendances")
+    event = models.ForeignKey("Event", on_delete=models.CASCADE, related_name="rsvps")
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="PENDING")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        # Prevents a user from having duplicate RSVP records for a single event
+        unique_together = ("user", "event")
+
+    def __str__(self):
+        return f"{self.user.get_full_name() or self.user.username} - {self.event}: {self.get_status_display()}"
+
+
 class Event(models.Model):
     """
     Unifies Rehearsals and Performances into a single timeline.
@@ -153,6 +177,11 @@ class Event(models.Model):
 
     # Many-to-Many: An event features multiple pieces, a piece is sung at multiple events.
     pieces = models.ManyToManyField(Repertoire, blank=True, related_name="events")
+
+    # The clean link to your members via the intermediate model
+    attendees = models.ManyToManyField(
+        User, through=Attendance, related_name="events_attending", blank=True
+    )
 
     def __str__(self):
         return (
@@ -234,3 +263,20 @@ def save_user_profile(sender, instance, **kwargs):
     Ensures the profile saves whenever the core User object saves.
     """
     instance.profile.save()
+
+
+@receiver(post_save, sender=Event)
+def create_attendance_records_for_new_event(sender, instance, created, **kwargs):
+    """
+    Automator: The absolute millisecond an admin saves a new Event,
+    this loop generates a 'PENDING' RSVP placeholder for every active choir member.
+    """
+    if created:
+        active_users = User.objects.filter(is_active=True)
+
+        # Performance trick: bulk_create hits the database once instead of performing dozens of separate writes
+        attendance_placeholders = [
+            Attendance(user=user, event=instance, status="PENDING")
+            for user in active_users
+        ]
+        Attendance.objects.bulk_create(attendance_placeholders)

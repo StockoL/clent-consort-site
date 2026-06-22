@@ -2,6 +2,7 @@
 URL configuration for clent_consort_site project.
 """
 
+from django import views
 from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import RedirectView
@@ -40,6 +41,7 @@ urlpatterns = [
         "favicon.ico",
         RedirectView.as_view(url="/static/images/favicon.ico", permanent=True),
     ),
+    path("rsvp/<int:attendance_id>/", views.update_rsvp_view, name="update_rsvp"),
 ]
 
 handler404 = "choir.views.custom_404"

@@ -3,9 +3,10 @@ from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required  # Imports the security lock
 from django.core.mail import send_mail
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from .forms import (
     AuditionForm,
@@ -14,7 +15,7 @@ from .forms import (
     ProfileUpdateForm,
     UserUpdateForm,
 )
-from .models import Event, GiftAidDeclaration, LearningAsset
+from .models import Attendance, GiftAidDeclaration, LearningAsset
 
 # ==============================================================================
 # PUBLIC VIEWS
@@ -96,29 +97,30 @@ def contact_view(request):
 @login_required
 def dashboard_view(request):
     """
-    Renders the dashboard with the upcoming schedule and the active repertoire list.
+    Renders the dashboard with the upcoming schedule (via Attendance RSVPs)
+    and the active repertoire list.
     """
-    # 1. Fetch the next 5 upcoming events (both Rehearsals and Performances)
-    upcoming_events = (
-        Event.objects.filter(date_time__gte=timezone.now())
-        .prefetch_related("pieces")
-        .order_by("date_time")[:5]
+    # 1. Fetch the user's specific Attendance records for upcoming events
+    user_attendances = (
+        Attendance.objects.filter(
+            user=request.user, event__date_time__gte=timezone.now()
+        )
+        .select_related("event")
+        .prefetch_related("event__pieces")
+        .order_by("event__date_time")[:5]
     )
 
-    # 2. Build the "Active Music Library"
-    # We use a Python 'set()' to automatically remove duplicate songs
+    # 2. Build the "Active Music Library" from those attendance records
     repertoire_set = set()
-    for event in upcoming_events:
-        for piece in event.pieces.all():
+    for attendance in user_attendances:
+        for piece in attendance.event.pieces.all():
             repertoire_set.add(piece)
 
-    # Convert the set back to a sorted list so the template can loop over it.
-    # We sort it alphabetically by the piece's title.
     current_repertoire = sorted(list(repertoire_set), key=lambda x: x.title)
 
     context = {
-        "upcoming_events": upcoming_events,
-        "current_repertoire": current_repertoire,  # Now an ordered list!
+        "user_attendances": user_attendances,
+        "current_repertoire": current_repertoire,
     }
 
     return render(request, "choir/members.html", context)
@@ -232,6 +234,30 @@ def settings_view(request):
         "profile_form": profile_form,
     }
     return render(request, "choir/settings.html", context)
+
+
+@login_required
+@require_POST  # Security: Forbids people from typing the URL directly to change RSVPs
+def update_rsvp_view(request, attendance_id):
+    """Catches the button click from the dashboard and updates the database."""
+
+    # Securely fetch the record, ensuring it actually belongs to the logged-in user
+    attendance = get_object_or_404(Attendance, id=attendance_id, user=request.user)
+
+    # Extract the new status from the hidden HTML form input
+    new_status = request.POST.get("status")
+
+    # Validate the data before saving
+    valid_choices = [choice[0] for choice in Attendance.STATUS_CHOICES]
+    if new_status in valid_choices:
+        attendance.status = new_status
+        attendance.save()
+        messages.success(
+            request,
+            f"Your RSVP for {attendance.event.date_time.strftime('%d %b')} has been updated.",
+        )
+
+    return redirect("dashboard")
 
 
 # ==============================================================================
