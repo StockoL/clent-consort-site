@@ -74,8 +74,27 @@ class UserUpdateForm(forms.ModelForm):
 
 
 class ProfileUpdateForm(forms.ModelForm):
-    """Allows members to update their choir-specific details."""
+    """Allows members to update their choir-specific details and legal consents."""
 
     class Meta:
         model = MemberProfile
-        fields = ["phone_number", "voice_part"]
+        fields = [
+            "phone_number",
+            "voice_part",
+            "emergency_contact_name",
+            "emergency_contact_relation",
+            "emergency_contact_phone",
+            "consent_audio_video",
+            "consent_photography",
+            "medical_accessibility_notes",
+        ]
+
+        # We explicitly tell Django to render the notes field as a larger text box
+        widgets = {
+            "medical_accessibility_notes": forms.Textarea(
+                attrs={
+                    "rows": 4,
+                    "placeholder": "Optional: Let us know how we can best support you during rehearsals...",
+                }
+            ),
+        }

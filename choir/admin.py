@@ -18,13 +18,11 @@ from .models import (
 # ==============================================================================
 @admin.register(MemberProfile)
 class MemberProfileAdmin(admin.ModelAdmin):
-    # This turns your list view into a beautiful multi-column table
     list_display = ("get_username", "get_full_name", "voice_part", "phone_number")
 
-    # Adds a clickable filter sidebar on the right hand side
-    list_filter = ("voice_part",)
-
-    # Adds a powerful search bar at the top of the screen
+    # We add the new consent booleans to the filter sidebar so you can instantly
+    # generate a list of "who cannot be photographed" before a concert.
+    list_filter = ("voice_part", "consent_audio_video", "consent_photography")
     search_fields = (
         "user__username",
         "user__first_name",
@@ -32,7 +30,30 @@ class MemberProfileAdmin(admin.ModelAdmin):
         "phone_number",
     )
 
-    # Helper methods to pull data cleanly from the linked User model
+    # This organizes the individual member page into clean, logical sections
+    fieldsets = (
+        ("User Link", {"fields": ("user",)}),
+        ("Choir Details", {"fields": ("voice_part", "phone_number")}),
+        (
+            "Duty of Care (Emergency Contact)",
+            {
+                "fields": (
+                    "emergency_contact_name",
+                    "emergency_contact_relation",
+                    "emergency_contact_phone",
+                )
+            },
+        ),
+        (
+            "Media & Publicity Permissions",
+            {"fields": ("consent_audio_video", "consent_photography")},
+        ),
+        (
+            "Medical & Accessibility Support",
+            {"fields": ("medical_accessibility_notes",)},
+        ),
+    )
+
     def get_username(self, obj):
         return obj.user.username
 

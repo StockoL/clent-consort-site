@@ -11,10 +11,10 @@ from tinymce.models import HTMLField
 
 class MemberProfile(models.Model):
     """
-    Extends the built-in Django User model to hold choir-specific data.
+    Extends the built-in Django User model to hold choir-specific data,
+    including duty of care and legal consents.
     """
 
-    # 1-to-1: If the User is deleted, the Profile is automatically deleted (CASCADE)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
 
     VOICE_CHOICES = [
@@ -27,6 +27,29 @@ class MemberProfile(models.Model):
         max_length=1, choices=VOICE_CHOICES, blank=True, null=True
     )
     phone_number = models.CharField(max_length=20, blank=True)
+
+    # --- 1. Duty of Care (Emergency Contacts) ---
+    emergency_contact_name = models.CharField(max_length=100, blank=True)
+    emergency_contact_relation = models.CharField(max_length=50, blank=True)
+    emergency_contact_phone = models.CharField(max_length=20, blank=True)
+
+    # --- 2. Media & Publicity Permissions ---
+    # Defaulting to False protects you under GDPR; they must actively opt-in.
+    consent_audio_video = models.BooleanField(
+        default=False,
+        help_text="I consent to being included in audio and video recordings for promotional purposes.",
+    )
+    consent_photography = models.BooleanField(
+        default=False,
+        help_text="I consent to being photographed for social media and website use.",
+    )
+
+    # --- 3. Medical and Accessibility Requirements ---
+    medical_accessibility_notes = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Optional: Please share any health, medical, or accessibility requirements (e.g., mobility needs, severe allergies) that the committee should be aware of to support you during rehearsals and events.",
+    )
 
     def __str__(self):
         return f"{self.user.get_full_name()} ({self.get_voice_part_display()})"

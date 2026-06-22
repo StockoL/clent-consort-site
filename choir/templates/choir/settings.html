@@ -62,7 +62,73 @@
         </div>
       </div>
 
-      <hr class="divider">
+      <hr class="divider" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
+
+      <div class="l-switcher">
+        
+        <div class="l-stack">
+            <h3 class="section-heading">Emergency Contact</h3>
+            <p class="text-small" style="color: #aaa; margin-top: -0.5rem; margin-bottom: 1rem;">For duty of care during rehearsals and events.</p>
+            
+            <div class="form-group l-stack l-stack--small">
+                <label for="{{ profile_form.emergency_contact_name.id_for_label }}">Contact Name</label>
+                {{ profile_form.emergency_contact_name }}
+                <div class="form-error">{{ profile_form.emergency_contact_name.errors }}</div>
+            </div>
+
+            <div class="form-group l-stack l-stack--small">
+                <label for="{{ profile_form.emergency_contact_relation.id_for_label }}">Relationship to You</label>
+                {{ profile_form.emergency_contact_relation }}
+                <div class="form-error">{{ profile_form.emergency_contact_relation.errors }}</div>
+            </div>
+
+            <div class="form-group l-stack l-stack--small">
+                <label for="{{ profile_form.emergency_contact_phone.id_for_label }}">Contact Phone Number</label>
+                {{ profile_form.emergency_contact_phone }}
+                <div class="form-error">{{ profile_form.emergency_contact_phone.errors }}</div>
+            </div>
+        </div>
+
+        <div class="l-stack">
+            <h3 class="section-heading">Media & Publicity</h3>
+            <p class="text-small" style="color: #aaa; margin-top: -0.5rem; margin-bottom: 1rem;">Legal opt-ins for promotional material.</p>
+            
+            <div class="form-group" style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                <div style="padding-top: 3px;">
+                    {{ profile_form.consent_audio_video }}
+                </div>
+                <label for="{{ profile_form.consent_audio_video.id_for_label }}" style="font-weight: normal; cursor: pointer;">
+                    {{ profile_form.consent_audio_video.help_text }}
+                </label>
+                <div class="form-error">{{ profile_form.consent_audio_video.errors }}</div>
+            </div>
+
+            <div class="form-group" style="display: flex; align-items: flex-start; gap: 0.75rem; margin-top: 1rem;">
+                <div style="padding-top: 3px;">
+                    {{ profile_form.consent_photography }}
+                </div>
+                <label for="{{ profile_form.consent_photography.id_for_label }}" style="font-weight: normal; cursor: pointer;">
+                    {{ profile_form.consent_photography.help_text }}
+                </label>
+                <div class="form-error">{{ profile_form.consent_photography.errors }}</div>
+            </div>
+        </div>
+      </div>
+
+      <hr class="divider" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
+
+      <div class="l-stack">
+          <h3 class="section-heading">Medical & Accessibility Support</h3>
+          <div class="form-group l-stack l-stack--small">
+              <label for="{{ profile_form.medical_accessibility_notes.id_for_label }}" style="font-weight: normal; color: #aaa; margin-bottom: 0.5rem;">
+                  {{ profile_form.medical_accessibility_notes.help_text }}
+              </label>
+              {{ profile_form.medical_accessibility_notes }}
+              <div class="form-error">{{ profile_form.medical_accessibility_notes.errors }}</div>
+          </div>
+      </div>
+
+      <hr class="divider" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
 
       <button type="submit" class="cta-button align-start">Save Changes</button>
     </form>
