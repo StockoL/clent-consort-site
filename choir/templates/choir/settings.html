@@ -2,6 +2,26 @@
 
 {% block title %}Account Settings - Clent Consort{% endblock %} 
 
+{% block extra_head %}
+<style>
+    /* Overrides global input styles so checkboxes don't force line breaks */
+    .protected-checkboxes input[type="checkbox"] {
+        width: auto !important;
+        display: inline-block !important;
+        margin: 0 !important;
+        cursor: pointer;
+    }
+
+    /* Forces the textarea to strictly behave as a full-width block below the label */
+    .protected-textarea textarea {
+        display: block !important;
+        width: 100% !important;
+        box-sizing: border-box;
+        margin-top: 0.5rem;
+    }
+</style>
+{% endblock extra_head %}
+
 {% block content %}
 <div class="l-center l-stack l-stack--large section-padding">
   <section class="settings-hero l-stack l-stack--small text-center">
@@ -93,24 +113,26 @@
             <h3 class="section-heading">Media & Publicity</h3>
             <p class="text-small" style="color: #aaa; margin-top: -0.5rem; margin-bottom: 1rem;">Legal opt-ins for promotional material.</p>
             
-            <div class="form-group" style="display: flex; align-items: flex-start; gap: 0.75rem;">
-                <div style="padding-top: 3px;">
-                    {{ profile_form.consent_audio_video }}
+            <div class="protected-checkboxes">
+                <div class="form-group" style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                    <div style="padding-top: 4px;">
+                        {{ profile_form.consent_audio_video }}
+                    </div>
+                    <label for="{{ profile_form.consent_audio_video.id_for_label }}" style="font-weight: normal; cursor: pointer; display: block; margin: 0; line-height: 1.4;">
+                        {{ profile_form.consent_audio_video.help_text }}
+                    </label>
                 </div>
-                <label for="{{ profile_form.consent_audio_video.id_for_label }}" style="font-weight: normal; cursor: pointer;">
-                    {{ profile_form.consent_audio_video.help_text }}
-                </label>
-                <div class="form-error">{{ profile_form.consent_audio_video.errors }}</div>
-            </div>
+                <div class="form-error" style="margin-left: 2rem;">{{ profile_form.consent_audio_video.errors }}</div>
 
-            <div class="form-group" style="display: flex; align-items: flex-start; gap: 0.75rem; margin-top: 1rem;">
-                <div style="padding-top: 3px;">
-                    {{ profile_form.consent_photography }}
+                <div class="form-group" style="display: flex; align-items: flex-start; gap: 0.75rem; margin-top: 1rem;">
+                    <div style="padding-top: 4px;">
+                        {{ profile_form.consent_photography }}
+                    </div>
+                    <label for="{{ profile_form.consent_photography.id_for_label }}" style="font-weight: normal; cursor: pointer; display: block; margin: 0; line-height: 1.4;">
+                        {{ profile_form.consent_photography.help_text }}
+                    </label>
                 </div>
-                <label for="{{ profile_form.consent_photography.id_for_label }}" style="font-weight: normal; cursor: pointer;">
-                    {{ profile_form.consent_photography.help_text }}
-                </label>
-                <div class="form-error">{{ profile_form.consent_photography.errors }}</div>
+                <div class="form-error" style="margin-left: 2rem;">{{ profile_form.consent_photography.errors }}</div>
             </div>
         </div>
       </div>
@@ -119,8 +141,8 @@
 
       <div class="l-stack">
           <h3 class="section-heading">Medical & Accessibility Support</h3>
-          <div class="form-group l-stack l-stack--small">
-              <label for="{{ profile_form.medical_accessibility_notes.id_for_label }}" style="font-weight: normal; color: #aaa; margin-bottom: 0.5rem;">
+          <div class="form-group protected-textarea">
+              <label for="{{ profile_form.medical_accessibility_notes.id_for_label }}" style="display: block; font-weight: normal; color: #aaa; margin-bottom: 0.5rem; line-height: 1.5;">
                   {{ profile_form.medical_accessibility_notes.help_text }}
               </label>
               {{ profile_form.medical_accessibility_notes }}
