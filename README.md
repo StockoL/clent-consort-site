@@ -1,6 +1,6 @@
 # 🏛️ The Clent Consort | Full-Stack Web Application
 
-[![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/StockoL/clent-consort-project-ms1?color=success)](https://github.com/StockoL/clent-consort-project-ms1)
+[![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/StockoL/clent-consort-site?color=success)](https://github.com/StockoL/clent-consort-site)
 [![Lighthouse Performance](https://img.shields.io/badge/Lighthouse_Performance-98%25-brightgreen)](#testing)
 [![Lighthouse Accessibility](https://img.shields.io/badge/Lighthouse_Accessibility-100%25-brightgreen)](#testing)
 
