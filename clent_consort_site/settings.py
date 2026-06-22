@@ -186,15 +186,26 @@ LOGOUT_REDIRECT_URL = "home"
 # EMAIL CONFIGURATION
 # ==============================================================================
 
-# The address that will receive the contact form submissions.
-# TODO: Update this when the official choir email is created.
-CHOIR_CONTACT_EMAIL = "placeholder@clentconsort.com"
+if DEBUG:
+    # LOCAL DEVELOPMENT: Keep printing to the terminal so we don't spam
+    # real people while testing broken code.
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+    DEFAULT_FROM_EMAIL = "hello@clentconsort.org"
+else:
+    # PRODUCTION: Engage the Brevo SMTP pipeline
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
-# For development: Forces Django to print emails to the terminal instead of sending them.
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+    # Read the secure credentials from Render's environment
+    EMAIL_HOST = os.environ.get("EMAIL_HOST")
+    EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 587))
+    EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
+    EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
 
-# The address the server uses to send the email (must be defined, even if dummy)
-DEFAULT_FROM_EMAIL = "noreply@clentconsort.com"
+    # Security protocols required by Brevo
+    EMAIL_USE_TLS = True
+
+    # The official address your choir members will see
+    DEFAULT_FROM_EMAIL = "Clent Consort <hello@clentconsort.org>"
 
 # ==============================================================================
 # AUTHENTICATION & ALLAUTH CONFIGURATION
