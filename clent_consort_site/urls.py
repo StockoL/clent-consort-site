@@ -2,7 +2,6 @@
 URL configuration for clent_consort_site project.
 """
 
-from django import views
 from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import RedirectView
@@ -17,13 +16,13 @@ from choir.views import (
     home_view,
     hub_view,
     settings_view,
+    update_rsvp_view,  # <-- Added here
 )
 
 urlpatterns = [
     # --- Django Admin ---
     path("admin/", admin.site.urls),
     # --- The Allauth Security Doorman ---
-    # This automatically handles login, logout, password resets, and email verification
     path("accounts/", include("allauth.urls")),
     # Wire in the Invitation listener
     path("invitations/", include("invitations.urls", namespace="invitations")),
@@ -37,11 +36,15 @@ urlpatterns = [
     path("members/giftaid/", giftaid_view, name="giftaid"),
     path("members/hub/<str:voice_part>/", hub_view, name="hub"),
     path("members/settings/", settings_view, name="settings"),
+    # --- Action Handlers ---
+    path(
+        "rsvp/<int:attendance_id>/", update_rsvp_view, name="update_rsvp"
+    ),  # <-- Cleaned up here
+    # --- Utilities ---
     path(
         "favicon.ico",
         RedirectView.as_view(url="/static/images/favicon.ico", permanent=True),
     ),
-    path("rsvp/<int:attendance_id>/", views.update_rsvp_view, name="update_rsvp"),
 ]
 
 handler404 = "choir.views.custom_404"
