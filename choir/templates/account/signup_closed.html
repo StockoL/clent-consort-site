@@ -1,0 +1,16 @@
+{% extends 'choir/base.html' %}
+{% load static %}
+
+{% block title %}Registration Closed - Clent Consort{% endblock title %}
+
+{% block content %}
+<div class="l-stack section-padding container-narrow mx-auto">
+  <section class="box invert l-stack text-center">
+    <h1>Registration Closed</h1>
+    <p style="margin-bottom: var(--s2);">
+      The Clent Consort members area is currently invite-only. If you are a current singer and need access, please contact the musical director.
+    </p>
+    <a href="{% url 'home' %}" class="cta-button">Return to Home</a>
+  </section>
+</div>
+{% endblock content %}
