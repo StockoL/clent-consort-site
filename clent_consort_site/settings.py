@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount",
     "storages",  # For AWS S3 storage
     # Your apps...
+    "anymail",
     "choir",
 ]
 
@@ -187,22 +188,17 @@ LOGOUT_REDIRECT_URL = "home"
 # ==============================================================================
 
 if DEBUG:
-    # LOCAL DEVELOPMENT: Keep printing to the terminal so we don't spam
-    # real people while testing broken code.
+    # LOCAL DEVELOPMENT: Keep printing to the terminal
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
     DEFAULT_FROM_EMAIL = "hello@clentconsort.org"
 else:
-    # PRODUCTION: Engage the Brevo SMTP pipeline
-    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    # PRODUCTION: Bypass Render's SMTP firewall via Brevo HTTP API
+    EMAIL_BACKEND = "anymail.backends.brevo.EmailBackend"
 
-    # Read the secure credentials from Render's environment
-    EMAIL_HOST = os.environ.get("EMAIL_HOST")
-    EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 587))
-    EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
-    EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
-
-    # Security protocols required by Brevo
-    EMAIL_USE_TLS = True
+    # Read the secure API credential from Render's environment
+    ANYMAIL = {
+        "BREVO_API_KEY": os.environ.get("BREVO_API_KEY"),
+    }
 
     # The official address your choir members will see
     DEFAULT_FROM_EMAIL = "Clent Consort <hello@clentconsort.org>"
