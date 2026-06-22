@@ -4,6 +4,7 @@ URL configuration for clent_consort_site project.
 
 from django.contrib import admin
 from django.urls import include, path
+from django.views.generic import RedirectView
 
 # Explicitly import all custom view functions
 from choir.views import (
@@ -35,6 +36,10 @@ urlpatterns = [
     path("members/giftaid/", giftaid_view, name="giftaid"),
     path("members/hub/<str:voice_part>/", hub_view, name="hub"),
     path("members/settings/", settings_view, name="settings"),
+    path(
+        "favicon.ico",
+        RedirectView.as_view(url="/static/images/favicon.ico", permanent=True),
+    ),
 ]
 
 handler404 = "choir.views.custom_404"
