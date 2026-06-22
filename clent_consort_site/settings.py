@@ -19,7 +19,7 @@ load_dotenv(env_path)
 
 # 2. Fetch the variables
 SECRET_KEY = os.environ.get("SECRET_KEY")
-DEBUG = os.environ.get("DEBUG") == "True"
+DEBUG = os.environ.get("DEBUG", "False") == "True"
 
 # 3. Add a hard-stop safety check so you know exactly if the file loaded
 if not SECRET_KEY:
@@ -113,17 +113,23 @@ WSGI_APPLICATION = "clent_consort_site.wsgi.application"
 # DATABASE CONFIGURATION (SQLite Local vs PostgreSQL Production)
 # ==============================================================================
 
-DATABASES = {
-    "default": dj_database_url.config(
-        # If the environment variable DATABASE_URL exists (e.g., on Render), use it.
-        # Otherwise, gracefully fall back to your local development SQLite file.
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-        # conn_max_age keeps database connections alive for 10 minutes instead of
-        # opening/closing them on every single request, drastically improving speed.
-        conn_max_age=600,
-        ssl_require=not DEBUG,
-    )
-}
+if DEBUG:
+    # LOCAL DEVELOPMENT: Safely use the offline SQLite file
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
+else:
+    # PRODUCTION: Maximum strictness.
+    # If DATABASE_URL is missing from Render, this will intentionally crash the build
+    # to protect you from accidentally saving live data to a temporary file.
+    DATABASES = {
+        "default": dj_database_url.parse(
+            os.environ.get("DATABASE_URL"), conn_max_age=600, ssl_require=True
+        )
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators

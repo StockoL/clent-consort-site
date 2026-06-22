@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="l-center login-wrapper section-padding">
+    <div class="box invert mx-auto container-narrow">
+        
+        <div class="login-header">
+            <h1>{% trans "Confirm Email" %}</h1>
+        </div>
+
+        <div class="l-stack text-center mt-s2">
+            {% if confirmation %}
+                <p class="u-muted mb-0">
+                    {% blocktrans with confirmation.email_address.email as email %}
+                    Please confirm that <strong class="text-primary">{{ email }}</strong> is the correct address for {{ user_display }}.
+                    {% endblocktrans %}
+                </p>
+                
+                <form method="post" action="{% url 'account_confirm_email' confirmation.key %}">
+                    {% csrf_token %}
+                    <button class="cta-button" type="submit">{% trans "Confirm Address" %}</button>
+                </form>
+            {% else %}
+                <div class="alert alert--error mt-s-1">
+                    <p class="mb-0">{% trans "This confirmation link has expired or is invalid. Please log in to request a new one." %}</p>
+                </div>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}
