@@ -4,7 +4,7 @@ URL configuration for clent_consort_site project.
 
 from django.contrib import admin
 from django.urls import include, path
-from django.views.generic import RedirectView
+from django.views.generic import RedirectView, TemplateView
 
 # Explicitly import all custom view functions
 from choir.views import (
@@ -45,6 +45,20 @@ urlpatterns = [
     path(
         "favicon.ico",
         RedirectView.as_view(url="/static/images/favicon.ico", permanent=True),
+    ),
+    path(
+        "favicon.ico",
+        RedirectView.as_view(url="/static/images/favicon.ico", permanent=True),
+    ),
+    path(
+        "robots.txt",
+        TemplateView.as_view(template_name="robots.txt", content_type="text/plain"),
+    ),
+    path(
+        "sitemap.xml",
+        TemplateView.as_view(
+            template_name="sitemap.xml", content_type="application/xml"
+        ),
     ),
 ]
 
