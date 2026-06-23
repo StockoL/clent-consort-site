@@ -79,10 +79,12 @@ class AttendanceInline(admin.TabularInline):
 
     model = Attendance
     extra = 0  # Stops Django from adding empty blank rows at the bottom
-    readonly_fields = ("user", "status", "updated_at")
-    can_delete = False  # Data integrity: Prevents admins from accidentally deleting a member's RSVP record
 
-    # Optional: Orders the list so 'ATTENDING' shows up at the top, followed by 'PENDING', etc.
+    # We only lock 'updated_at' (because it is an auto-timestamp).
+    # 'user' and 'status' are now editable so you can manually backfill records!
+    readonly_fields = ("updated_at",)
+
+    can_delete = False  # Data integrity: Prevents accidental row deletion
     ordering = ("status", "user__username")
 
 
