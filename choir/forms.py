@@ -7,6 +7,19 @@ from .models import AuditionApplication, Enquiry, GiftAidDeclaration, MemberProf
 class EnquiryForm(forms.ModelForm):
     """Form for processing public contact and booking enquiries."""
 
+    # THE HONEYPOT: Visually hidden from humans using CSS, but bots will fill it out.
+    website = forms.CharField(
+        required=False,
+        label="Leave this field empty",
+        widget=forms.TextInput(
+            attrs={
+                "style": "display:none;",  # Hides it from humans
+                "tabindex": "-1",  # Prevents humans from accidentally tabbing into it
+                "autocomplete": "off",
+            }
+        ),
+    )
+
     class Meta:
         model = Enquiry
         fields = ["name", "email", "subject", "message"]
@@ -18,9 +31,27 @@ class EnquiryForm(forms.ModelForm):
             "email": forms.EmailInput(attrs={"placeholder": "jane@example.com"}),
         }
 
+    # Custom Django validation to check the honeypot
+    def clean_website(self):
+        bot_catcher = self.cleaned_data.get("website")
+        if bot_catcher:
+            # If there is ANY text in this field, it's a bot.
+            # Raising a ValidationError stops the form from saving or sending an email.
+            raise forms.ValidationError("Automated submission detected.")
+        return bot_catcher
+
 
 class AuditionForm(forms.ModelForm):
     """Form for prospective singers applying to audition."""
+
+    # THE HONEYPOT: Protecting the audition endpoint from automated spam as well.
+    website = forms.CharField(
+        required=False,
+        label="Leave this field empty",
+        widget=forms.TextInput(
+            attrs={"style": "display:none;", "tabindex": "-1", "autocomplete": "off"}
+        ),
+    )
 
     class Meta:
         model = AuditionApplication
@@ -35,6 +66,13 @@ class AuditionForm(forms.ModelForm):
             "name": forms.TextInput(attrs={"placeholder": "John Smith"}),
             "email": forms.EmailInput(attrs={"placeholder": "john@example.com"}),
         }
+
+    # Custom Django validation to check the honeypot
+    def clean_website(self):
+        bot_catcher = self.cleaned_data.get("website")
+        if bot_catcher:
+            raise forms.ValidationError("Automated submission detected.")
+        return bot_catcher
 
 
 class GiftAidForm(forms.ModelForm):
