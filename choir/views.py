@@ -18,7 +18,7 @@ from .forms import (
     ProfileUpdateForm,
     UserUpdateForm,
 )
-from .models import Attendance, GiftAidDeclaration, LearningAsset
+from .models import Attendance, Event, GiftAidDeclaration, LearningAsset
 
 # ==============================================================================
 # PUBLIC VIEWS
@@ -101,9 +101,34 @@ def contact_view(request):
 def dashboard_view(request):
     """
     Renders the dashboard with the upcoming schedule (via Attendance RSVPs)
-    and the active repertoire list.
+    and the active repertoire list, featuring an auto-healing matrix.
     """
-    # 1. Fetch the user's specific Attendance records for upcoming events
+    # ==========================================================================
+    # 1. THE AUTO-HEALING MATRIX
+    # ==========================================================================
+    # Get all events happening from right now into the future
+    upcoming_events = Event.objects.filter(date_time__gte=timezone.now())
+
+    # Get a flat list of the IDs for events this user ALREADY has an RSVP row for
+    existing_rsvp_event_ids = Attendance.objects.filter(
+        user=request.user, event__in=upcoming_events
+    ).values_list("event_id", flat=True)
+
+    # Find the gap: isolate the events that are missing from their profile
+    missing_events = upcoming_events.exclude(id__in=existing_rsvp_event_ids)
+
+    # If there are missing events, create the 'PENDING' rows instantly
+    if missing_events.exists():
+        new_attendances = [
+            Attendance(user=request.user, event=event, status="PENDING")
+            for event in missing_events
+        ]
+        # bulk_create writes them all to the database in a single, lightning-fast SQL query
+        Attendance.objects.bulk_create(new_attendances)
+
+    # ==========================================================================
+    # 2. FETCH THE DASHBOARD DATA (Business as usual)
+    # ==========================================================================
     user_attendances = (
         Attendance.objects.filter(
             user=request.user, event__date_time__gte=timezone.now()
@@ -113,7 +138,6 @@ def dashboard_view(request):
         .order_by("event__date_time")[:5]
     )
 
-    # 2. Build the "Active Music Library" from those attendance records
     repertoire_set = set()
     for attendance in user_attendances:
         for piece in attendance.event.pieces.all():
