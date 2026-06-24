@@ -1,0 +1,78 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | Clent Consort Admin{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+    /* ==========================================================================
+       DJANGO ADMIN THEME OVERRIDES
+       Mapping Clent Consort variables to Django's root tokens
+       ========================================================================== */
+    :root {
+        /* Colors */
+        --primary: #c9a45e;             /* Warm gold for primary buttons/accents */
+        --secondary: #222222;           /* Dark charcoal for secondary headers */
+        --header-bg: #1a1a1a;           /* Deep charcoal for the top nav bar */
+        --header-color: #c9a45e;        /* Gold text on the header */
+        --header-link-color: #ffffff;   /* White links in header for contrast */
+        --link-fg: #c9a45e;             /* Standard links */
+        --link-hover-color: #dcb97a;    /* Lighter gold on hover */
+        --link-selected-fg: #c9a45e;    /* Highlighted links */
+        
+        /* Button Mapping */
+        --button-bg: #c9a45e;
+        --button-hover-bg: #dcb97a;
+        --button-fg: #1a1a1a;           /* Dark text on gold buttons (like the CTA) */
+        
+        /* Base Typography */
+        --font-family-primary: "Inter", sans-serif;
+    }
+
+    /* Apply the body font universally */
+    body {
+        font-family: var(--font-family-primary);
+    }
+
+    /* Hijack specific elements for the display font */
+    #site-name a, 
+    div.breadcrumbs,
+    .module h2, 
+    .module caption, 
+    h1 {
+        font-family: "Cinzel", serif;
+        letter-spacing: 0.05ch;
+    }
+
+    /* Site Title Polish */
+    #site-name a {
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    
+    /* Make Django's default Save buttons mimic the custom .cta-button */
+    input[type=submit], .button {
+        text-transform: uppercase;
+        font-family: "Cinzel", serif;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        border-radius: 2px;
+        transition: background-color 0.3s, transform 0.2s ease;
+    }
+    
+    input[type=submit]:hover, .button:hover {
+        transform: translateY(-2px); /* Matches your subtle lift effect */
+    }
+</style>
+{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">
+    <a href="{% url 'admin:index' %}">Clent Consort</a>
+</h1>
+{% endblock %}
