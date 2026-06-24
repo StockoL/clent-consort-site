@@ -1347,10 +1347,12 @@ footer a:hover,
 }
 
 /* Base RSVP Dropdown Styling */
-.rsvp-toggle {
+/* 1. Base Select Styling */
+select.rsvp-toggle {
+  font-family: var(--font-body);
   font-size: 0.75rem;
   font-weight: bold;
-  padding: 6px 12px;
+  padding: 8px 30px 8px 12px; /* Extra padding on the right for the arrow */
   border-radius: 4px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -1358,8 +1360,36 @@ footer a:hover,
   outline: none;
   cursor: pointer;
   appearance: none;
-  text-align: center;
-  color: white;
+  text-align: left; /* Left alignment looks better with the new arrow */
+  color: white !important; /* Force text to be white */
+
+  /* Fallback dark background just in case */
+  background-color: #333333;
+
+  /* Injecting a custom white dropdown arrow */
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px top 50%;
+  background-size: 10px auto;
+}
+
+/* 2. Dynamic Status Colors (High Specificity) */
+/* Adding 'select' and '!important' guarantees these colors beat the browser defaults */
+select.rsvp-toggle.rsvp-pending {
+  background-color: #f57f17;
+}
+select.rsvp-toggle.rsvp-attending {
+  background-color: #2e7d32;
+}
+select.rsvp-toggle.rsvp-absent {
+  background-color: #c62828;
+}
+
+/* 3. The Options Panel Fix (Keep this from earlier!) */
+select.rsvp-toggle option {
+  background-color: #1a1a1a;
+  color: #ffffff;
+  font-weight: 500;
 }
 
 /* Fix for invisible dropdown options: forces a dark background and white text */
