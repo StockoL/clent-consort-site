@@ -3,6 +3,7 @@ from django.contrib import admin
 from .models import (
     Attendance,
     AuditionApplication,
+    ChoirCommunication,
     Enquiry,
     Event,
     GiftAidDeclaration,
@@ -131,3 +132,26 @@ class RepertoireAdmin(admin.ModelAdmin):
     list_display = ("composer", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
     inlines = [LearningAssetInline]
+
+
+# ==============================================================================
+# 5. COMMUNICATIONS HUB
+# ==============================================================================
+@admin.register(ChoirCommunication)
+class ChoirCommunicationAdmin(admin.ModelAdmin):
+    list_display = ("subject", "get_audience_display", "sent_at", "author")
+    list_filter = ("audience", "sent_at")
+    search_fields = ("subject", "message")
+
+    # Lock the fields so you can't accidentally re-send or edit an email that
+    # has already gone out to 24 people.
+    def get_readonly_fields(self, request, obj=None):
+        if obj:  # If the object already exists, lock everything down
+            return ("audience", "subject", "message", "author", "sent_at")
+        return ("author", "sent_at")  # If it's new, let them type!
+
+    # Automatically stamp the logged-in admin as the author
+    def save_model(self, request, obj, form, change):
+        if getattr(obj, "author", None) is None:
+            obj.author = request.user
+        obj.save()

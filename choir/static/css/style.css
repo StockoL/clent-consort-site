@@ -1310,21 +1310,90 @@ footer a:hover,
 .mt-s-1 {
   margin-top: var(--s-1);
 }
-/* Event Cards */
+/* ==========================================================================
+   EVENT DASHBOARD CARDS
+   ========================================================================== */
+
+/* The Main Card Boundary */
 .event-card-highlight {
+  /* Flexbox Layout */
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  /* Spacing: 1.5rem top/right/bottom, keeping your custom spacing variable on the left */
+  padding: 1.5rem 1.5rem 1.5rem var(--s0);
+
+  /* Card Aesthetics */
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+
+  /* Borders: General subtle outline first, then your brand highlight override! */
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-left: 3px solid var(--primary);
-  padding-left: var(--s0);
+}
+
+/* Card Header (Date and RSVP Button) */
+.event-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
 }
 
 .event-date {
-  margin-bottom: 0;
-  font-size: var(--s1);
+  margin: 0;
+  line-height: 1.2;
+}
+
+/* Base RSVP Dropdown Styling */
+.rsvp-toggle {
+  font-size: 0.75rem;
+  font-weight: bold;
+  padding: 6px 12px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  text-align: center;
+  color: white;
+}
+
+/* Dynamic Status Colors injected by Django */
+.rsvp-pending {
+  background-color: #f57f17;
+}
+.rsvp-attending {
+  background-color: #2e7d32;
+}
+.rsvp-absent {
+  background-color: #c62828;
+}
+
+/* Card Body (Location and Time) */
+.event-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .event-meta {
-  margin-top: 0;
-  color: #ccc;
-  font-size: 0.9em;
+  margin: 0;
+}
+
+/* Optional Additional Notes */
+.event-card-notes {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 0.75rem;
+}
+
+.event-card-notes .text-small {
+  color: #aaa;
+  margin: 0;
+  line-height: 1.5;
 }
 
 /* Repertoire List */
