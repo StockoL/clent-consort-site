@@ -13,6 +13,9 @@
     <a href="{% url 'settings' %}" class="cta-button btn-small mt-s-1" style="text-decoration: none; display: inline-block;">
       Update Profile
     </a>
+    <a href="#repertoire-section" class="cta-button-outline hide-on-desktop">
+      ↓ Jump to Music
+    </a>
   </div>
 
   <div class="l-switcher mt-s2">
@@ -61,7 +64,7 @@
   {% endif %}
 </section>
 
-    <section class="box invert l-stack">
+    <section id="repertoire-section" class="box invert l-stack">
   <h2 class="text-primary">Current Repertoire</h2>
   <p class="subtitle-faded">Pieces scheduled for upcoming dates.</p>
 

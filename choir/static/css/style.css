@@ -356,6 +356,40 @@ body {
   transform: translateY(-2px); /* A subtle 'lift' effect */
 }
 
+/* --- SECONDARY OUTLINE BUTTON --- */
+.cta-button-outline {
+  display: inline-block;
+  background-color: transparent;
+  color: var(--primary); /* Gold text */
+  border: 2px solid var(--primary); /* Gold border */
+  padding: 1rem 2rem;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 2px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition:
+    transform 0.2s ease,
+    background-color 0.3s,
+    color 0.3s;
+}
+
+.cta-button-outline:hover {
+  background-color: var(--primary);
+  color: #1a1a1a;
+  transform: translateY(-2px);
+}
+
+/* --- MOBILE ONLY UTILITY CLASS --- */
+/* Using your existing 45rem (720px) breakpoint from your global styles */
+@media (min-width: 45rem) {
+  .hide-on-desktop {
+    display: none !important;
+  }
+}
+
 /* Global Footer Wrapper */
 footer {
   padding: var(--s2) var(--s1);
@@ -1338,7 +1372,8 @@ footer a:hover,
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 1rem;
+  gap: var(--s0);
+  flex-wrap: wrap; /* Allows the RSVP button to drop below on smaller screens */
 }
 
 .event-date {
@@ -1362,6 +1397,7 @@ select.rsvp-toggle {
   appearance: none;
   text-align: left; /* Left alignment looks better with the new arrow */
   color: white !important; /* Force text to be white */
+  flex-shrink: 0; /* Prevents the select from shrinking in flex layouts */
 
   /* Fallback dark background just in case */
   background-color: #333333;
@@ -1374,7 +1410,7 @@ select.rsvp-toggle {
 }
 
 /* 2. Dynamic Status Colors (High Specificity) */
-/* Adding 'select' and '!important' guarantees these colors beat the browser defaults */
+/* Adding 'select' guarantees these colors beat the browser defaults */
 select.rsvp-toggle.rsvp-pending {
   background-color: #f57f17;
 }
