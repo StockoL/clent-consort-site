@@ -1362,6 +1362,13 @@ footer a:hover,
   color: white;
 }
 
+/* Fix for invisible dropdown options: forces a dark background and white text */
+.rsvp-toggle option {
+  background-color: #1a1a1a; /* Matches the dark card background */
+  color: #ffffff; /* Forces the text to be visible */
+  font-weight: 500; /* Slightly bumps the weight for readability */
+}
+
 /* Dynamic Status Colors injected by Django */
 .rsvp-pending {
   background-color: #f57f17;
