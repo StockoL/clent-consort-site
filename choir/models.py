@@ -84,17 +84,44 @@ class GiftAidDeclaration(models.Model):
 class SubscriptionPayment(models.Model):
     """
     Ledger for tracking who has paid what and when.
+    Prepared for both manual entry and automated Stripe webhooks.
     """
 
-    # Many-to-1: One member can have dozens of payment records over time
+    PAYMENT_METHODS = [
+        ("CARD", "Online (Stripe/Card)"),
+        ("CASH", "Cash"),
+        ("BACS", "Bank Transfer (BACS)"),
+        ("MIX", "Mixed / Other"),
+    ]
+
     member = models.ForeignKey(
         MemberProfile, on_delete=models.CASCADE, related_name="payments"
     )
-
-    amount = models.DecimalField(max_digits=6, decimal_places=2)  # e.g., 150.00
+    amount = models.DecimalField(max_digits=6, decimal_places=2)
     date_paid = models.DateField()
     term_reference = models.CharField(
         max_length=100, help_text="e.g., Autumn 2026 or Annual 26/27"
+    )
+
+    # --- NEW FIELDS FOR THE UPGRADED LEDGER ---
+    payment_method = models.CharField(
+        max_length=4, choices=PAYMENT_METHODS, default="BACS"
+    )
+
+    # Stripe will eventually pass a unique "pi_..." token here.
+    # It is blank=True because cash payments won't have one!
+    transaction_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="Stripe PaymentIntent ID or Cheque Number",
+    )
+
+    # For manual administrative context
+    notes = models.TextField(
+        blank=True,
+        null=True,
+        help_text="e.g., 'Paid half in cash, remainder to be transferred'",
     )
 
     def __str__(self):

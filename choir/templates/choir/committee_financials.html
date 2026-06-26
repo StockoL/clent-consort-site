@@ -1,0 +1,86 @@
+{% extends 'choir/base.html' %}
+
+{% block title %}Financial Ledger - Clent Consort{% endblock title %}
+
+{% block content %}
+<div class="l-center l-stack section-padding">
+  <div class="text-center">
+    <h1 class="text-primary">Financial Ledger</h1>
+    <p>Subscription tracking for <strong style="color: #f57f17;">{{ current_term }}</strong>.</p>
+    
+    <a href="{% url 'committee_hub' %}" class="cta-button-outline btn-small mt-s-1" style="text-decoration: none; display: inline-block;">
+      ← Back to Hub
+    </a>
+  </div>
+
+  <div class="box invert mt-s2" style="overflow-x: auto;">
+    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+      <thead>
+        <tr style="border-bottom: 1px solid rgba(255,255,255,0.2);">
+          <th style="padding: 1rem; color: #c9a45e;">Singer</th>
+          <th style="padding: 1rem; color: #c9a45e;">Voice Part</th>
+          <th style="padding: 1rem; color: #c9a45e;">Gift Aid</th> <!-- NEW HEADER -->
+          <th style="padding: 1rem; color: #c9a45e;">Status</th>
+          <th style="padding: 1rem; color: #c9a45e;">Admin Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in roster %}
+        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+          
+          <td style="padding: 1rem;">
+            <strong>{{ row.user.first_name }} {{ row.user.last_name }}</strong>
+          </td>
+          
+          <td style="padding: 1rem;" class="text-small text-muted">
+            {{ row.profile.get_voice_part_display }}
+          </td>
+
+          <!-- NEW GIFT AID COLUMN -->
+          <td style="padding: 1rem;">
+            {% if row.has_gift_aid %}
+              <span style="color: #2e7d32; font-size: 0.85rem; font-weight: bold;">✓ Signed</span>
+            {% else %}
+              <span class="text-muted" style="font-size: 0.85rem;">Missing</span>
+            {% endif %}
+          </td>
+          
+          <td style="padding: 1rem;">
+            {% if row.payment %}
+              <span style="background: #2e7d32; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">
+                Paid (£{{ row.payment.amount }})
+              </span>
+            {% else %}
+              <span style="background: rgba(245, 127, 23, 0.2); color: #f57f17; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">
+                Unpaid
+              </span>
+            {% endif %}
+          </td>
+          
+          <td style="padding: 1rem;">
+            {% if not row.payment %}
+            <form method="POST" style="display: flex; gap: 0.5rem; align-items: center;">
+              {% csrf_token %}
+              <input type="hidden" name="member_id" value="{{ row.profile.id }}">
+              
+              <input type="number" name="amount" value="50.00" step="0.01" style="width: 80px; padding: 0.25rem; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.2); color: white;" required>
+              
+              <select name="method" style="padding: 0.25rem; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.2); color: white;">
+                <option value="BACS">BACS</option>
+                <option value="CASH">Cash</option>
+              </select>
+              
+              <button type="submit" class="cta-button btn-small" style="padding: 0.25rem 0.75rem;">Log</button>
+            </form>
+            {% else %}
+              <span class="text-small text-muted">Recorded: {{ row.payment.date_paid|date:"j M Y" }}</span>
+            {% endif %}
+          </td>
+
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock content %}

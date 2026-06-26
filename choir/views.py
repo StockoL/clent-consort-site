@@ -1,19 +1,14 @@
-import json  # <-- Added here
+import json
 from datetime import timedelta
 from datetime import timezone as py_timezone
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import logout
-from django.contrib.auth.decorators import (  # Imports the security lock
-    login_required,
-    user_passes_test,
-)
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.models import User
 from django.core.mail import send_mail
-from django.http import (
-    HttpResponse,
-    JsonResponse,  # <-- Added here
-)
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -34,22 +29,26 @@ from .models import (
     Event,
     GiftAidDeclaration,
     LearningAsset,
+    SubscriptionPayment,  # <-- Added for the new financial logic
 )
 
 # ==============================================================================
-# PUBLIC VIEWS
+# 1. PUBLIC VIEWS (No login required)
 # ==============================================================================
 
 
 def home_view(request):
+    """Renders the public-facing landing page."""
     return render(request, "choir/index.html")
 
 
 def about_view(request):
+    """Renders the public 'About Us' and director biography page."""
     return render(request, "choir/about.html")
 
 
 def events_view(request):
+    """Renders the public concert and events schedule."""
     return render(request, "choir/events.html")
 
 
@@ -59,6 +58,7 @@ def contact_view(request):
     audition applications from a unified frontend view.
     """
     if request.method == "POST":
+        # Route the POST data to the correct form based on the presence of 'voice_part'
         if "voice_part" in request.POST:
             form = AuditionForm(request.POST)
             is_audition = True
@@ -69,6 +69,7 @@ def contact_view(request):
         if form.is_valid():
             submission = form.save()
 
+            # Construct the appropriate email payload based on the form type
             if is_audition:
                 email_subject = f"New Audition Request: {submission.name} ({submission.get_voice_part_display()})"
                 email_body = f"Name: {submission.name}\nEmail: {submission.email}\nVoice Part: {submission.get_voice_part_display()}\n\nExperience:\n{submission.experience}"
@@ -76,6 +77,7 @@ def contact_view(request):
                 email_subject = f"Website Enquiry: {submission.get_subject_display()} - {submission.name}"
                 email_body = f"Name: {submission.name}\nEmail: {submission.email}\n\nMessage:\n{submission.message}"
 
+            # Dispatch via configured SMTP (Brevo)
             send_mail(
                 subject=email_subject,
                 message=email_body,
@@ -109,42 +111,37 @@ def contact_view(request):
 
 
 # ==============================================================================
-# SECURE MEMBER VIEWS
+# 2. SECURE MEMBER VIEWS (Requires active authentication)
 # ==============================================================================
 
 
 @login_required
 def dashboard_view(request):
     """
-    Renders the dashboard with the upcoming schedule (via Attendance RSVPs)
-    and the active repertoire list, featuring an auto-healing matrix.
+    The primary member command center.
+    Handles the auto-healing RSVP matrix, repertoire loading, and subscription status.
     """
-    # ==========================================================================
-    # 1. THE AUTO-HEALING MATRIX
-    # ==========================================================================
-    # Get all events happening from right now into the future
+    # --- A. THE AUTO-HEALING MATRIX ---
+    # Fetch all events happening from right now into the future
     upcoming_events = Event.objects.filter(date_time__gte=timezone.now())
 
-    # Get a flat list of the IDs for events this user ALREADY has an RSVP row for
+    # Flatten the IDs of events this user ALREADY has an RSVP row for
     existing_rsvp_event_ids = Attendance.objects.filter(
         user=request.user, event__in=upcoming_events
     ).values_list("event_id", flat=True)
 
-    # Find the gap: isolate the events that are missing from their profile
+    # Isolate the events that are completely missing from their profile
     missing_events = upcoming_events.exclude(id__in=existing_rsvp_event_ids)
 
-    # If there are missing events, create the 'PENDING' rows instantly
+    # Bulk-create 'PENDING' rows instantly for any missing events
     if missing_events.exists():
         new_attendances = [
             Attendance(user=request.user, event=event, status="PENDING")
             for event in missing_events
         ]
-        # bulk_create writes them all to the database in a single, lightning-fast SQL query
         Attendance.objects.bulk_create(new_attendances)
 
-    # ==========================================================================
-    # 2. FETCH THE DASHBOARD DATA (Business as usual)
-    # ==========================================================================
+    # --- B. FETCH DASHBOARD DATA ---
     user_attendances = (
         Attendance.objects.filter(
             user=request.user, event__date_time__gte=timezone.now()
@@ -154,6 +151,7 @@ def dashboard_view(request):
         .order_by("event__date_time")[:5]
     )
 
+    # Extract unique repertoire across all upcoming events
     repertoire_set = set()
     for attendance in user_attendances:
         for piece in attendance.event.pieces.all():
@@ -161,45 +159,42 @@ def dashboard_view(request):
 
     current_repertoire = sorted(list(repertoire_set), key=lambda x: x.title)
 
+    # --- C. FINANCIAL TRACKING (Progressive Disclosure) ---
+    current_term = "Autumn 2026"  # Update this string at the start of each new term
+
+    # Check if a payment record exists for this user for this specific term
+    has_paid_current_term = SubscriptionPayment.objects.filter(
+        member=request.user.profile, term_reference=current_term
+    ).exists()
+
     context = {
         "user_attendances": user_attendances,
         "current_repertoire": current_repertoire,
+        "current_term": current_term,
+        "has_paid_current_term": has_paid_current_term,
     }
 
     return render(request, "choir/members.html", context)
 
 
-@login_required  # Protects the view; redirects to login page if logged out
+@login_required
 def giftaid_view(request):
-    """
-    Handles secure submission of a member's Gift Aid declaration.
-    """
-    user_profile = request.user.profile  # Fetches the loggged-in user's profile
+    """Handles secure submission of a member's Gift Aid declaration."""
+    user_profile = request.user.profile
 
-    # Check if this member has already signed a declaration
     existing_declaration = GiftAidDeclaration.objects.filter(
         member=user_profile
     ).first()
 
     if request.method == "POST":
-        # Feed the incoming POST data into the form
         form = GiftAidForm(request.POST)
-
         if form.is_valid():
-            # Crucial Pattern: commit=False builds the database object in memory
-            # without writing it to the actual SQL disk yet.
+            # commit=False builds the object in memory to allow appending the user profile
             declaration = form.save(commit=False)
-
-            # Programmatically attach the logged-in member's profile
             declaration.member = user_profile
-
-            # Now commit it safely to the database!
             declaration.save()
-
-            # Send them back to the members area with a clean success state
             return redirect("dashboard")
     else:
-        # If it's a GET request, pass a completely blank form to the template
         form = GiftAidForm()
 
     context = {
@@ -211,10 +206,7 @@ def giftaid_view(request):
 
 @login_required
 def hub_view(request, voice_part):
-    """
-    Renders the learning hub dynamically based on the requested voice part.
-    """
-    # Translate the URL parameter (e.g., 'tenor') to match our Database codes ('TEN')
+    """Renders the learning hub dynamically based on the requested voice part."""
     part_map = {
         "soprano": "SOP",
         "alto": "ALT",
@@ -223,52 +215,36 @@ def hub_view(request, voice_part):
         "bass": "BAS",
     }
 
-    # Grab the correct database code, default to None if someone types a weird URL
     db_part = part_map.get(voice_part.lower())
 
     if db_part:
-        # Fetch all assets matching this specific part OR 'ALL' (like a full PDF score)
-        # We use 'select_related' as a performance boost to grab the Repertoire title at the same time
+        # select_related optimizes the database hit when fetching foreign keys
         assets = LearningAsset.objects.filter(
             voice_part__in=[db_part, "ALL"]
         ).select_related("repertoire")
     else:
-        assets = []  # Failsafe for an invalid URL
+        assets = []
 
     context = {
-        "voice_part_name": voice_part.title(),  # Sends "Tenor" to the template for the header
+        "voice_part_name": voice_part.title(),
         "assets": assets,
     }
-
     return render(request, "choir/hub.html", context)
-
-
-def custom_logout_view(request):
-    """Safely logs the user out and redirects to the home page."""
-    logout(request)
-    messages.info(request, "You have been securely logged out.")
-    return redirect("home")
 
 
 @login_required
 def settings_view(request):
-    """Allows members to update their personal details."""
+    """Allows members to update their base User and Profile details simultaneously."""
     if request.method == "POST":
-        # We pass the POST data AND the specific user instance to update
         user_form = UserUpdateForm(request.POST, instance=request.user)
         profile_form = ProfileUpdateForm(request.POST, instance=request.user.profile)
 
-        # If BOTH forms pass validation, save them both to the database
         if user_form.is_valid() and profile_form.is_valid():
             user_form.save()
             profile_form.save()
             messages.success(request, "Your profile has been updated successfully.")
-            return redirect(
-                "settings"
-            )  # Reload the page to show the green success message
-
+            return redirect("settings")
     else:
-        # GET request: Load the forms pre-filled with the user's current data
         user_form = UserUpdateForm(instance=request.user)
         profile_form = ProfileUpdateForm(instance=request.user.profile)
 
@@ -279,28 +255,34 @@ def settings_view(request):
     return render(request, "choir/settings.html", context)
 
 
-@login_required
-@require_POST  # Security: Forbids people from typing the URL directly to change RSVPs
-def update_rsvp_view(request, attendance_id):
-    """Catches the silent JS fetch request and updates the database without a page reload."""
+def custom_logout_view(request):
+    """Safely logs the user out and redirects to the home page."""
+    logout(request)
+    messages.info(request, "You have been securely logged out.")
+    return redirect("home")
 
-    # Securely fetch the record, ensuring it actually belongs to the logged-in user
+
+# ==============================================================================
+# 3. UTILITY & API VIEWS (Background processes)
+# ==============================================================================
+
+
+@login_required
+@require_POST
+def update_rsvp_view(request, attendance_id):
+    """Asynchronous API endpoint to update RSVP status without page reloads."""
     attendance = get_object_or_404(Attendance, id=attendance_id, user=request.user)
 
-    # 1. Parse the JSON packet sent by our JavaScript in the template
     try:
         data = json.loads(request.body)
         new_status = data.get("status")
     except json.JSONDecodeError:
         return JsonResponse({"success": False, "error": "Invalid payload"}, status=400)
 
-    # 2. Validate the data against our allowed choices
     valid_choices = [choice[0] for choice in Attendance.STATUS_CHOICES]
     if new_status in valid_choices:
         attendance.status = new_status
         attendance.save()
-
-        # 3. Return a silent success signal instead of a page redirect
         return JsonResponse({"success": True, "new_status": new_status})
 
     return JsonResponse({"success": False, "error": "Invalid status"}, status=400)
@@ -308,28 +290,23 @@ def update_rsvp_view(request, attendance_id):
 
 @login_required
 def download_ics(request, event_id):
-    """Generates an iCalendar (.ics) file for a specific event."""
-
-    # 1. Securely fetch the requested event
+    """Generates an iCalendar (.ics) file for one-click calendar syncing."""
     event = get_object_or_404(Event, id=event_id)
 
-    # 2. Format timestamps into strict UTC strings (YYYYMMDDThhmmssZ)
+    # Format timestamps strictly into UTC strings (YYYYMMDDThhmmssZ)
     start_utc = event.date_time.astimezone(py_timezone.utc)
     start_str = start_utc.strftime("%Y%m%dT%H%M%SZ")
 
-    # We assume a 2-hour default duration since there is no end_time field
     end_utc = start_utc + timedelta(hours=2)
     end_str = end_utc.strftime("%Y%m%dT%H%M%SZ")
 
-    # Clean the HTML from TinyMCE so the calendar description looks neat
     clean_notes = (
         strip_tags(event.additional_notes)
         if event.additional_notes
         else "Clent Consort Rehearsal/Event"
     )
 
-    # 3. Build the raw iCalendar text string
-    # The lack of indentation here is intentional! ICS files hate leading spaces.
+    # ICS file strings cannot contain arbitrary indentation
     ics_content = f"""BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//Clent Consort//Members Portal//EN
@@ -344,8 +321,6 @@ DESCRIPTION:{clean_notes}
 END:VEVENT
 END:VCALENDAR"""
 
-    # 4. Package it into a custom HTTP Response
-    # This tells the browser "This is a calendar file, please download it"
     response = HttpResponse(ics_content, content_type="text/calendar")
     response["Content-Disposition"] = (
         f'attachment; filename="clent_consort_{start_utc.strftime("%b%d")}.ics"'
@@ -354,23 +329,30 @@ END:VCALENDAR"""
     return response
 
 
-# --- 1. The Security Test ---
+# ==============================================================================
+# 4. COMMITTEE / ADMIN VIEWS (Requires Staff Privileges)
+# ==============================================================================
+
+
 def is_committee(user):
-    """Checks if the user has been granted 'Staff' status in the admin panel."""
+    """Helper gatekeeper: Checks for administrative privileges."""
     return user.is_staff or user.is_superuser
 
 
-# --- 2. The View ---
 @login_required
-@user_passes_test(is_committee)  # Bounces anyone who isn't on the committee
-def committee_rsvp_report(request):
-    """A high-level dashboard showing missing RSVPs for the next 30 days."""
+@user_passes_test(is_committee)
+def committee_hub(request):
+    """The central command center dashboard for choir administration."""
+    return render(request, "choir/committee_hub.html")
 
+
+@login_required
+@user_passes_test(is_committee)
+def committee_rsvp_report(request):
+    """Administrative report flagging missing RSVPs for the next 30 days."""
     today = timezone.now()
     window_end = today + timedelta(days=30)
 
-    # The Query: Find pending RSVPs for active members within the next 30 days
-    # We use select_related to grab the user and event data in a single, fast SQL hit
     pending_rsvps = (
         Attendance.objects.filter(
             event__date_time__range=(today, window_end),
@@ -384,36 +366,24 @@ def committee_rsvp_report(request):
     context = {
         "pending_rsvps": pending_rsvps,
     }
-
     return render(request, "choir/committee_rsvps.html", context)
 
 
 @login_required
 @user_passes_test(is_committee)
-def committee_hub(request):
-    """The central command center for choir administration."""
-    return render(request, "choir/committee_hub.html")
-
-
-@login_required
-@user_passes_test(is_committee)
 def committee_documents_view(request):
-    """Unified view to list and upload committee documents."""
-
-    # Handle the incoming file upload
+    """Unified vault to upload and view secure committee documents."""
     if request.method == "POST":
-        # CRITICAL: request.FILES must be passed to handle the actual document data
         form = CommitteeDocumentForm(request.POST, request.FILES)
         if form.is_valid():
             document = form.save(commit=False)
-            document.uploaded_by = request.user  # Stamp it with the admin's name
+            document.uploaded_by = request.user
             document.save()
             messages.success(request, f"'{document.title}' uploaded successfully.")
             return redirect("committee_documents")
     else:
         form = CommitteeDocumentForm()
 
-    # Fetch all existing documents to display on the page
     documents = CommitteeDocument.objects.all()
 
     context = {
@@ -423,10 +393,82 @@ def committee_documents_view(request):
     return render(request, "choir/committee_documents.html", context)
 
 
+@login_required
+@user_passes_test(is_committee)
+def committee_financials_view(request):
+    """Unified ledger to track and log termly subscriptions."""
+
+    current_term = "Autumn 2026"  # Must match the string in dashboard_view!
+
+    # --- 1. HANDLE INCOMING PAYMENTS (POST) ---
+    if request.method == "POST":
+        member_id = request.POST.get("member_id")
+        amount = request.POST.get("amount")
+        method = request.POST.get("method", "BACS")
+        notes = request.POST.get("notes", "")
+
+        # Fetch the specific member's profile
+        from .models import MemberProfile
+
+        profile = get_object_or_404(MemberProfile, id=member_id)
+
+        # Log the payment into the database
+        SubscriptionPayment.objects.create(
+            member=profile,
+            amount=amount,
+            date_paid=timezone.now().date(),
+            term_reference=current_term,
+            payment_method=method,
+            notes=notes,
+        )
+
+        messages.success(
+            request, f"Payment successfully logged for {profile.user.get_full_name()}."
+        )
+        return redirect("committee_financials")
+
+    # --- 2. BUILD THE ROSTER DISPLAY (GET) ---
+    # Fetch all active singers and pre-fetch their profiles to save database hits
+    active_users = (
+        User.objects.filter(is_active=True)
+        .select_related("profile")
+        .order_by("first_name")
+    )
+
+    roster = []
+    for user in active_users:
+        if hasattr(user, "profile"):
+            payment = SubscriptionPayment.objects.filter(
+                member=user.profile, term_reference=current_term
+            ).first()
+
+            # THE NEW CHECK: Does a Gift Aid declaration exist for this profile?
+            # We use .exists() because it is much faster than fetching the whole document
+            has_gift_aid = GiftAidDeclaration.objects.filter(
+                member=user.profile
+            ).exists()
+
+            roster.append(
+                {
+                    "user": user,
+                    "profile": user.profile,
+                    "payment": payment,
+                    "has_gift_aid": has_gift_aid,  # <-- Add this to the dictionary!
+                }
+            )
+
+    context = {
+        "roster": roster,
+        "current_term": current_term,
+    }
+    return render(request, "choir/committee_financials.html", context)
+
+
 # ==============================================================================
-# SYSTEM ERROR HANDLERS
+# 5. SYSTEM ERROR HANDLERS
 # ==============================================================================
 
 
 def custom_404(request, exception):
+    """Overrides the default 404 page with a branded template."""
     return render(request, "404.html", status=404)

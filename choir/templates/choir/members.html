@@ -7,7 +7,14 @@
 {% block content %}
 <div class="l-center l-stack section-padding">
   <div class="text-center">
-    <h1>Members Area</h1>
+    <h1>
+      Members Area
+      {% if has_paid_current_term %}
+        <span style="font-size: 0.8rem; background-color: #2e7d32; color: white; padding: 0.2rem 0.6rem; border-radius: 12px; vertical-align: middle; margin-left: 0.5rem; display: inline-block;">
+          ✓ {{ current_term }} Paid
+        </span>
+      {% endif %}
+    </h1>
     <p>Welcome back, {{ user.first_name|default:user.username }}.</p>
     
     <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 1rem; margin-top: 1rem;">
@@ -26,7 +33,19 @@
       </a>
     </div>
   </div>
-
+{% if not has_paid_current_term %}
+    <div class="box invert l-stack text-center mt-s2" style="border: 1px solid #f57f17; background-color: rgba(245, 127, 23, 0.05); max-width: 40rem; margin-inline: auto;">
+      <h3 style="color: #f57f17;">{{ current_term }} Subscriptions Due</h3>
+      <p class="text-small mt-s-min">Please settle your termly subscription via BACS transfer.</p>
+      
+      <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; margin-top: 1rem; text-align: left; display: inline-block;">
+        <p class="mb-0 text-small"><strong>Account Name:</strong> Clent Consort</p>
+        <p class="mb-0 text-small"><strong>Sort Code:</strong> 12-34-56</p>
+        <p class="mb-0 text-small"><strong>Account No:</strong> 12345678</p>
+        <p class="mb-0 text-small text-muted mt-s-min"><em>Reference: {{ user.last_name|upper }} SUBS</em></p>
+      </div>
+    </div>
+    {% endif %}
   <div class="l-switcher mt-s2">
     <section class="box invert l-stack">
   <h2 class="text-primary">Upcoming Schedule</h2>
