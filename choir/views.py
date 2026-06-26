@@ -5,7 +5,10 @@ from datetime import timezone as py_timezone
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import logout
-from django.contrib.auth.decorators import login_required  # Imports the security lock
+from django.contrib.auth.decorators import (  # Imports the security lock
+    login_required,
+    user_passes_test,
+)
 from django.core.mail import send_mail
 from django.http import (
     HttpResponse,
@@ -342,6 +345,40 @@ END:VCALENDAR"""
     )
 
     return response
+
+
+# --- 1. The Security Test ---
+def is_committee(user):
+    """Checks if the user has been granted 'Staff' status in the admin panel."""
+    return user.is_staff or user.is_superuser
+
+
+# --- 2. The View ---
+@login_required
+@user_passes_test(is_committee)  # Bounces anyone who isn't on the committee
+def committee_rsvp_report(request):
+    """A high-level dashboard showing missing RSVPs for the next 30 days."""
+
+    today = timezone.now()
+    window_end = today + timedelta(days=30)
+
+    # The Query: Find pending RSVPs for active members within the next 30 days
+    # We use select_related to grab the user and event data in a single, fast SQL hit
+    pending_rsvps = (
+        Attendance.objects.filter(
+            event__date_time__range=(today, window_end),
+            status="PENDING",
+            user__is_active=True,
+        )
+        .select_related("event", "user")
+        .order_by("event__date_time", "user__first_name")
+    )
+
+    context = {
+        "pending_rsvps": pending_rsvps,
+    }
+
+    return render(request, "choir/committee_rsvps.html", context)
 
 
 # ==============================================================================

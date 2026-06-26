@@ -1,0 +1,50 @@
+{% extends 'choir/base.html' %}
+
+{% block title %}Committee RSVP Report - Clent Consort{% endblock title %}
+
+{% block content %}
+<div class="l-center l-stack section-padding">
+  <div class="text-center">
+    <h1 class="text-primary">Missing RSVP Report</h1>
+    <p>Singers who have not responded to events in the next 30 days.</p>
+    
+    <a href="{% url 'members' %}" class="cta-button-outline btn-small mt-s-1" style="text-decoration: none; display: inline-block;">
+      ← Back to Dashboard
+    </a>
+  </div>
+
+  <div class="l-stack l-stack--large mt-s2" style="max-width: 40rem; margin-inline: auto;">
+    
+    {% regroup pending_rsvps by event as event_list %}
+
+    {% for event_group in event_list %}
+    <article class="box invert l-stack card-flex">
+      
+      <div class="repertoire-header" style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem; margin-bottom: 1rem;">
+        <h3 class="text-primary mb-0">{{ event_group.grouper.get_event_type_display }}</h3>
+        <p class="mt-s-min text-muted"><em>{{ event_group.grouper.date_time|date:"l, j F Y - g:i A" }}</em></p>
+      </div>
+
+      <div class="l-stack l-stack--small">
+        <ul class="list-unstyled" style="columns: 2; column-gap: 2rem;">
+          {% for attendance in event_group.list %}
+            <li style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+              <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #f57f17;"></span>
+              {{ attendance.user.first_name }} {{ attendance.user.last_name }}
+              <span class="text-muted text-small">({{ attendance.user.profile.get_voice_part_display }})</span>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+      
+    </article>
+
+    {% empty %}
+    <div class="box invert full-width text-center">
+      <p class="text-primary" style="font-size: 1.5rem;">🎉</p>
+      <p>All active singers have responded to all events in the next 30 days!</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock content %}
