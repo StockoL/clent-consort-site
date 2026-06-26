@@ -1,14 +1,19 @@
 import json  # <-- Added here
+from datetime import timedelta
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required  # Imports the security lock
 from django.core.mail import send_mail
-from django.http import JsonResponse  # <-- Added here
+from django.http import (
+    HttpResponse,
+    JsonResponse,  # <-- Added here
+)
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.html import strip_tags
 from django.views.decorators.http import require_POST
 
 from .forms import (
@@ -288,6 +293,54 @@ def update_rsvp_view(request, attendance_id):
         return JsonResponse({"success": True, "new_status": new_status})
 
     return JsonResponse({"success": False, "error": "Invalid status"}, status=400)
+
+
+@login_required
+def download_ics(request, event_id):
+    """Generates an iCalendar (.ics) file for a specific event."""
+
+    # 1. Securely fetch the requested event
+    event = get_object_or_404(Event, id=event_id)
+
+    # 2. Format timestamps into strict UTC strings (YYYYMMDDThhmmssZ)
+    start_utc = event.date_time.astimezone(timezone.utc)
+    start_str = start_utc.strftime("%Y%m%dT%H%M%SZ")
+
+    # We assume a 2-hour default duration since there is no end_time field
+    end_utc = start_utc + timedelta(hours=2)
+    end_str = end_utc.strftime("%Y%m%dT%H%M%SZ")
+
+    # Clean the HTML from TinyMCE so the calendar description looks neat
+    clean_notes = (
+        strip_tags(event.additional_notes)
+        if event.additional_notes
+        else "Clent Consort Rehearsal/Event"
+    )
+
+    # 3. Build the raw iCalendar text string
+    # The lack of indentation here is intentional! ICS files hate leading spaces.
+    ics_content = f"""BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Clent Consort//Members Portal//EN
+BEGIN:VEVENT
+UID:event-{event.id}@clentconsort.org
+DTSTAMP:{start_str}
+DTSTART:{start_str}
+DTEND:{end_str}
+SUMMARY:Clent Consort: {event.get_event_type_display()}
+LOCATION:{event.location}
+DESCRIPTION:{clean_notes}
+END:VEVENT
+END:VCALENDAR"""
+
+    # 4. Package it into a custom HTTP Response
+    # This tells the browser "This is a calendar file, please download it"
+    response = HttpResponse(ics_content, content_type="text/calendar")
+    response["Content-Disposition"] = (
+        f'attachment; filename="clent_consort_{start_utc.strftime("%b%d")}.ics"'
+    )
+
+    return response
 
 
 # ==============================================================================

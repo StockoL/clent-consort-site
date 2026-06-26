@@ -45,6 +45,10 @@
       <strong>{{ attendance.event.get_event_type_display }}</strong> |
       {{ attendance.event.date_time|time:"g:i A" }} <br />📍 {{ attendance.event.location }}
     </p>
+    
+    <a href="{% url 'download_ics' attendance.event.id %}" class="cta-button-outline" style="padding: 0.5rem 1rem; font-size: 0.75rem; align-self: flex-start; margin-top: 0.5rem;">
+      📅 Add to Calendar
+    </a>
   </div>
   
   {% if attendance.event.additional_notes %}

@@ -19,6 +19,8 @@ from choir.views import (
     update_rsvp_view,  # <-- Added here
 )
 
+from . import views
+
 urlpatterns = [
     # --- Django Admin ---
     path("admin/", admin.site.urls),
@@ -41,6 +43,7 @@ urlpatterns = [
     path(
         "rsvp/<int:attendance_id>/", update_rsvp_view, name="update_rsvp"
     ),  # <-- Cleaned up here
+    path("event/<int:event_id>/calendar/", views.download_ics, name="download_ics"),
     # --- Utilities ---
     path(
         "favicon.ico",
