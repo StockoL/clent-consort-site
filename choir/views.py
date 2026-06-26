@@ -1,5 +1,6 @@
 import json  # <-- Added here
 from datetime import timedelta
+from datetime import timezone as py_timezone
 
 from django.conf import settings
 from django.contrib import messages
@@ -303,7 +304,7 @@ def download_ics(request, event_id):
     event = get_object_or_404(Event, id=event_id)
 
     # 2. Format timestamps into strict UTC strings (YYYYMMDDThhmmssZ)
-    start_utc = event.date_time.astimezone(timezone.utc)
+    start_utc = event.date_time.astimezone(py_timezone.utc)
     start_str = start_utc.strftime("%Y%m%dT%H%M%SZ")
 
     # We assume a 2-hour default duration since there is no end_time field
