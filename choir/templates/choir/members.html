@@ -10,12 +10,21 @@
     <h1>Members Area</h1>
     <p>Welcome back, {{ user.first_name|default:user.username }}.</p>
     
-    <a href="{% url 'settings' %}" class="cta-button btn-small mt-s-1" style="text-decoration: none; display: inline-block;">
-      Update Profile
-    </a>
-    <a href="#repertoire-section" class="cta-button-outline hide-on-desktop">
-      ↓ Jump to Music
-    </a>
+    <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 1rem; margin-top: 1rem;">
+      <a href="{% url 'settings' %}" class="cta-button btn-small">
+        Update Profile
+      </a>
+      
+      {% if user.is_staff or user.is_superuser %}
+        <a href="{% url 'committee_hub' %}" class="cta-button-outline btn-small" style="border-color: #f57f17; color: #f57f17;">
+          ⚙️ Committee Hub
+        </a>
+      {% endif %}
+      
+      <a href="#repertoire-section" class="cta-button-outline hide-on-desktop">
+        ↓ Jump to Music
+      </a>
+    </div>
   </div>
 
   <div class="l-switcher mt-s2">

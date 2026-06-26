@@ -9,6 +9,7 @@ from django.views.generic import RedirectView, TemplateView
 # Explicitly import all custom view functions
 from choir.views import (
     about_view,
+    committee_hub,  # <-- Import the new committee_hub view
     committee_rsvp_report,
     contact_view,
     dashboard_view,
@@ -39,6 +40,8 @@ urlpatterns = [
     path("members/giftaid/", giftaid_view, name="giftaid"),
     path("members/hub/<str:voice_part>/", hub_view, name="hub"),
     path("members/settings/", settings_view, name="settings"),
+    # --- Committee Area ---
+    path("members/committee/", committee_hub, name="committee_hub"),
     path("members/committee/rsvps/", committee_rsvp_report, name="committee_rsvps"),
     # --- Action Handlers ---
     path("rsvp/<int:attendance_id>/", update_rsvp_view, name="update_rsvp"),

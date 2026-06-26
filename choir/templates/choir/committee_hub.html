@@ -1,0 +1,38 @@
+{% extends 'choir/base.html' %}
+
+{% block title %}Committee Hub - Clent Consort{% endblock title %}
+
+{% block content %}
+<div class="l-center l-stack section-padding">
+  <div class="text-center">
+    <h1 class="text-primary">Committee Hub</h1>
+    <p>Administrative tools and reporting.</p>
+    
+    <a href="{% url 'members' %}" class="cta-button-outline btn-small mt-s-1" style="text-decoration: none; display: inline-block;">
+      ← Back to Members Area
+    </a>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
+    
+    <a href="{% url 'committee_rsvps' %}" class="box invert l-stack text-center" style="text-decoration: none; transition: transform 0.2s ease;">
+      <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📅</div>
+      <h3 class="text-primary">Missing RSVPs</h3>
+      <p class="text-small text-muted" style="margin-top: 0.5rem;">View singers who have not responded to upcoming events.</p>
+    </a>
+
+    <div class="box invert l-stack text-center" style="opacity: 0.5; cursor: not-allowed;">
+      <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">💷</div>
+      <h3 class="text-primary">Financials</h3>
+      <p class="text-small text-muted" style="margin-top: 0.5rem;">Coming soon: Subscription and Gift Aid tracking.</p>
+    </div>
+
+    <div class="box invert l-stack text-center" style="opacity: 0.5; cursor: not-allowed;">
+      <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📝</div>
+      <h3 class="text-primary">Meeting Minutes</h3>
+      <p class="text-small text-muted" style="margin-top: 0.5rem;">Coming soon: Secure committee document storage.</p>
+    </div>
+
+  </div>
+</div>
+{% endblock content %}

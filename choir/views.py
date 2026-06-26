@@ -381,6 +381,13 @@ def committee_rsvp_report(request):
     return render(request, "choir/committee_rsvps.html", context)
 
 
+@login_required
+@user_passes_test(is_committee)
+def committee_hub(request):
+    """The central command center for choir administration."""
+    return render(request, "choir/committee_hub.html")
+
+
 # ==============================================================================
 # SYSTEM ERROR HANDLERS
 # ==============================================================================
