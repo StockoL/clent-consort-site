@@ -53,6 +53,7 @@ class MemberProfile(models.Model):
         null=True,
         help_text="Optional: Please share any health, medical, or accessibility requirements (e.g., mobility needs, severe allergies) that the committee should be aware of to support you during rehearsals and events.",
     )
+    is_under_18 = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.user.get_full_name()} ({self.get_voice_part_display()})"

@@ -46,7 +46,11 @@
           </td>
           
           <td style="padding: 1rem;">
-            {% if row.payment %}
+            {% if row.is_exempt %}
+              <span style="background: rgba(255,255,255,0.1); color: #aaa; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">
+                Exempt
+              </span>
+            {% elif row.payment %}
               <span style="background: #2e7d32; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">
                 Paid (£{{ row.payment.amount }})
               </span>

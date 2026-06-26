@@ -435,15 +435,21 @@ def committee_financials_view(request):
         .order_by("first_name")
     )
 
+    # Build a clean data structure for the template
     roster = []
     for user in active_users:
+        # 1. ONLY include users that actually have a profile (Fixes the empty rows)
         if hasattr(user, "profile"):
+            # 2. Check for exemption (You can add a field 'is_exempt' to your Profile model later)
+            # For now, we manually exempt your account and any future 'Under 18' flag
+            is_exempt = (
+                user.is_staff or user.profile.is_under_18
+            )  # Assuming you add this boolean later
+
             payment = SubscriptionPayment.objects.filter(
                 member=user.profile, term_reference=current_term
             ).first()
 
-            # THE NEW CHECK: Does a Gift Aid declaration exist for this profile?
-            # We use .exists() because it is much faster than fetching the whole document
             has_gift_aid = GiftAidDeclaration.objects.filter(
                 member=user.profile
             ).exists()
@@ -453,7 +459,8 @@ def committee_financials_view(request):
                     "user": user,
                     "profile": user.profile,
                     "payment": payment,
-                    "has_gift_aid": has_gift_aid,  # <-- Add this to the dictionary!
+                    "has_gift_aid": has_gift_aid,
+                    "is_exempt": is_exempt,  # Pass this to the template
                 }
             )
 

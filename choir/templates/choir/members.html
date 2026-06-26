@@ -34,18 +34,19 @@
     </div>
   </div>
 {% if not has_paid_current_term %}
-    <div class="box invert l-stack text-center mt-s2" style="border: 1px solid #f57f17; background-color: rgba(245, 127, 23, 0.05); max-width: 40rem; margin-inline: auto;">
-      <h3 style="color: #f57f17;">{{ current_term }} Subscriptions Due</h3>
-      <p class="text-small mt-s-min">Please settle your termly subscription via BACS transfer.</p>
-      
-      <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; margin-top: 1rem; text-align: left; display: inline-block;">
-        <p class="mb-0 text-small"><strong>Account Name:</strong> Clent Consort</p>
-        <p class="mb-0 text-small"><strong>Sort Code:</strong> 12-34-56</p>
-        <p class="mb-0 text-small"><strong>Account No:</strong> 12345678</p>
-        <p class="mb-0 text-small text-muted mt-s-min"><em>Reference: {{ user.last_name|upper }} SUBS</em></p>
-      </div>
+  <div class="box invert l-stack text-center mt-s2" style="border: 2px solid #c9a45e; max-width: 40rem; margin-inline: auto;">
+    <h3 class="text-primary">{{ current_term }} Subscriptions Due</h3>
+    <p class="text-small mt-s-min">Please settle your termly subscription via BACS transfer.</p>
+    
+    <!-- Removed the gray background, replaced with a subtle gold border -->
+    <div style="margin-top: 1rem; padding: 1rem; border: 1px solid rgba(201, 164, 94, 0.3); border-radius: 8px; text-align: left; display: inline-block;">
+      <p class="mb-0 text-small"><strong>Account Name:</strong> Clent Consort</p>
+      <p class="mb-0 text-small"><strong>Sort Code:</strong> 12-34-56</p>
+      <p class="mb-0 text-small"><strong>Account No:</strong> 12345678</p>
+      <p class="mb-0 text-small text-muted mt-s-min"><em>Reference: {{ user.last_name|upper }} SUBS</em></p>
     </div>
-    {% endif %}
+  </div>
+  {% endif %}
   <div class="l-switcher mt-s2">
     <section class="box invert l-stack">
   <h2 class="text-primary">Upcoming Schedule</h2>
