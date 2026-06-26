@@ -47,10 +47,6 @@ urlpatterns = [
         RedirectView.as_view(url="/static/images/favicon.ico", permanent=True),
     ),
     path(
-        "favicon.ico",
-        RedirectView.as_view(url="/static/images/favicon.ico", permanent=True),
-    ),
-    path(
         "robots.txt",
         TemplateView.as_view(template_name="robots.txt", content_type="text/plain"),
     ),

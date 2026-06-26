@@ -4,6 +4,7 @@ from django.core.mail import send_mail
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils.html import strip_tags
 from tinymce.models import HTMLField
 
 # ==============================================================================
@@ -282,9 +283,8 @@ class ChoirCommunication(models.Model):
     audience = models.CharField(max_length=3, choices=AUDIENCE_CHOICES, default="ALL")
     subject = models.CharField(max_length=200)
 
-    # Since you installed TinyMCE, you can change this to an HTMLField later
-    # if you want to send bold/italic/formatted emails!
-    message = models.TextField(help_text="The body of your email.")
+    # UPGRADED: This tells the admin panel to render the TinyMCE editor
+    message = HTMLField(help_text="The body of your email.")
 
     sent_at = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
@@ -293,32 +293,33 @@ class ChoirCommunication(models.Model):
         return f"[{self.get_audience_display()}] {self.subject} ({self.sent_at.strftime('%d %b %Y')})"
 
     def save(self, *args, **kwargs):
-        # We check if self.pk is None. This means the object is brand new and
-        # hasn't been saved to the database yet. We only want to send the email ONCE.
         is_new = self.pk is None
 
-        super().save(*args, **kwargs)  # Save the record to the database first
+        super().save(*args, **kwargs)
 
         if is_new:
-            # 1. Gather the recipients based on the dropdown choice
+            # 1. Gather the recipients
             if self.audience == "ALL":
                 recipients = User.objects.filter(is_active=True)
             else:
-                # We traverse the relationship from User -> Profile to check the voice part
                 recipients = User.objects.filter(
                     is_active=True, profile__voice_part=self.audience[0]
                 )
 
-            # Extract just the email addresses into a clean list
             email_list = list(recipients.values_list("email", flat=True))
 
             # 2. Fire the email via Brevo
             if email_list:
+                # Create a clean, stripped-down version of the email for older email clients
+                # or strict spam filters that reject HTML.
+                plain_message = strip_tags(self.message)
+
                 send_mail(
                     subject=self.subject,
-                    message=self.message,
+                    message=plain_message,  # The plain-text fallback
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=email_list,
+                    html_message=self.message,  # THE MAGIC: Injects your TinyMCE formatting!
                     fail_silently=False,
                 )
 
