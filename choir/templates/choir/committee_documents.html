@@ -1,0 +1,68 @@
+{% extends 'choir/base.html' %}
+
+{% block title %}Document Vault - Clent Consort{% endblock title %}
+
+{% block content %}
+<div class="l-center l-stack section-padding">
+  <div class="text-center">
+    <h1 class="text-primary">Committee Document Vault</h1>
+    <p>Secure storage for minutes, policies, and reports.</p>
+    
+    <a href="{% url 'committee_hub' %}" class="cta-button-outline btn-small mt-s-1" style="text-decoration: none; display: inline-block;">
+      ← Back to Hub
+    </a>
+  </div>
+
+  <div class="l-switcher mt-s2">
+    <section class="box invert l-stack">
+      <h3 class="text-primary border-bottom pb-s-min">Upload Document</h3>
+      
+      <form method="POST" enctype="multipart/form-data" class="l-stack l-stack--small mt-s1">
+        {% csrf_token %}
+        
+        <div>
+          <label class="form-label text-small">{{ form.title.label }}</label>
+          {{ form.title }}
+        </div>
+        
+        <div style="display: flex; gap: 1rem;">
+          <div style="flex: 1;">
+            <label class="form-label text-small">{{ form.doc_type.label }}</label>
+            {{ form.doc_type }}
+          </div>
+          <div style="flex: 2;">
+            <label class="form-label text-small">{{ form.file.label }}</label>
+            {{ form.file }}
+          </div>
+        </div>
+
+        <button type="submit" class="cta-button mt-s1 w-100">📤 Upload to Vault</button>
+      </form>
+    </section>
+
+    <section class="box invert l-stack">
+      <h3 class="text-primary border-bottom pb-s-min">Archive</h3>
+      
+      {% if documents %}
+        <ul class="list-unstyled l-stack l-stack--small mt-s1">
+          {% for doc in documents %}
+          <li style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <div>
+              <strong>{{ doc.title }}</strong><br>
+              <span class="text-small text-muted">{{ doc.get_doc_type_display }} | Uploaded {{ doc.uploaded_at|date:"j M Y" }}</span>
+            </div>
+            
+            <a href="{{ doc.file.url }}" target="_blank" class="cta-button-outline btn-small" style="padding: 0.25rem 0.75rem;">
+              📄 View
+            </a>
+          </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted mt-s1">The vault is currently empty.</p>
+      {% endif %}
+    </section>
+  </div>
+
+</div>
+{% endblock content %}

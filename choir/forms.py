@@ -1,7 +1,13 @@
 from django import forms
 from django.contrib.auth.models import User
 
-from .models import AuditionApplication, Enquiry, GiftAidDeclaration, MemberProfile
+from .models import (
+    AuditionApplication,
+    CommitteeDocument,
+    Enquiry,
+    GiftAidDeclaration,
+    MemberProfile,
+)
 
 
 class EnquiryForm(forms.ModelForm):
@@ -135,4 +141,17 @@ class ProfileUpdateForm(forms.ModelForm):
                     "placeholder": "Optional: Let us know how we can best support you during rehearsals...",
                 }
             ),
+        }
+
+
+class CommitteeDocumentForm(forms.ModelForm):
+    class Meta:
+        model = CommitteeDocument
+        fields = ["title", "doc_type", "file"]
+        widgets = {
+            "title": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "Document Title"}
+            ),
+            "doc_type": forms.Select(attrs={"class": "form-control"}),
+            "file": forms.ClearableFileInput(attrs={"class": "form-control"}),
         }

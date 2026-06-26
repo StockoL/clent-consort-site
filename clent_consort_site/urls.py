@@ -9,6 +9,7 @@ from django.views.generic import RedirectView, TemplateView
 # Explicitly import all custom view functions
 from choir.views import (
     about_view,
+    committee_documents_view,  # <-- Import the new committee_documents_view
     committee_hub,  # <-- Import the new committee_hub view
     committee_rsvp_report,
     contact_view,
@@ -43,6 +44,11 @@ urlpatterns = [
     # --- Committee Area ---
     path("members/committee/", committee_hub, name="committee_hub"),
     path("members/committee/rsvps/", committee_rsvp_report, name="committee_rsvps"),
+    path(
+        "members/committee/documents/",
+        committee_documents_view,
+        name="committee_documents",
+    ),
     # --- Action Handlers ---
     path("rsvp/<int:attendance_id>/", update_rsvp_view, name="update_rsvp"),
     # The calendar path now cleanly points straight to the function

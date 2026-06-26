@@ -22,12 +22,19 @@ from django.views.decorators.http import require_POST
 
 from .forms import (
     AuditionForm,
+    CommitteeDocumentForm,
     EnquiryForm,
     GiftAidForm,
     ProfileUpdateForm,
     UserUpdateForm,
 )
-from .models import Attendance, Event, GiftAidDeclaration, LearningAsset
+from .models import (
+    Attendance,
+    CommitteeDocument,
+    Event,
+    GiftAidDeclaration,
+    LearningAsset,
+)
 
 # ==============================================================================
 # PUBLIC VIEWS
@@ -386,6 +393,34 @@ def committee_rsvp_report(request):
 def committee_hub(request):
     """The central command center for choir administration."""
     return render(request, "choir/committee_hub.html")
+
+
+@login_required
+@user_passes_test(is_committee)
+def committee_documents_view(request):
+    """Unified view to list and upload committee documents."""
+
+    # Handle the incoming file upload
+    if request.method == "POST":
+        # CRITICAL: request.FILES must be passed to handle the actual document data
+        form = CommitteeDocumentForm(request.POST, request.FILES)
+        if form.is_valid():
+            document = form.save(commit=False)
+            document.uploaded_by = request.user  # Stamp it with the admin's name
+            document.save()
+            messages.success(request, f"'{document.title}' uploaded successfully.")
+            return redirect("committee_documents")
+    else:
+        form = CommitteeDocumentForm()
+
+    # Fetch all existing documents to display on the page
+    documents = CommitteeDocument.objects.all()
+
+    context = {
+        "form": form,
+        "documents": documents,
+    }
+    return render(request, "choir/committee_documents.html", context)
 
 
 # ==============================================================================

@@ -216,6 +216,34 @@ class Event(models.Model):
         )
 
 
+class CommitteeDocument(models.Model):
+    """Secure vault for committee-only files and meeting minutes."""
+
+    DOC_TYPES = [
+        ("MIN", "Meeting Minutes"),
+        ("POL", "Policy / Governance"),
+        ("FIN", "Financial Report"),
+        ("GEN", "General Document"),
+    ]
+
+    title = models.CharField(max_length=200, help_text="e.g., AGM Minutes - June 2026")
+    doc_type = models.CharField(max_length=3, choices=DOC_TYPES, default="MIN")
+
+    # Files will securely upload to a dedicated folder in your cloud bucket
+    file = models.FileField(upload_to="committee_docs/")
+
+    uploaded_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True
+    )
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-uploaded_at"]  # Automatically sorts newest first
+
+    def __str__(self):
+        return f"{self.title} ({self.get_doc_type_display()})"
+
+
 # ==============================================================================
 # 4. CONTACT
 # ==============================================================================
