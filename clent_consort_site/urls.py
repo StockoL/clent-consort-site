@@ -11,15 +11,14 @@ from choir.views import (
     about_view,
     contact_view,
     dashboard_view,
+    download_ics,  # <-- Cleanly imported here!
     events_view,
     giftaid_view,
     home_view,
     hub_view,
     settings_view,
-    update_rsvp_view,  # <-- Added here
+    update_rsvp_view,
 )
-
-from . import views
 
 urlpatterns = [
     # --- Django Admin ---
@@ -40,10 +39,9 @@ urlpatterns = [
     path("members/hub/<str:voice_part>/", hub_view, name="hub"),
     path("members/settings/", settings_view, name="settings"),
     # --- Action Handlers ---
-    path(
-        "rsvp/<int:attendance_id>/", update_rsvp_view, name="update_rsvp"
-    ),  # <-- Cleaned up here
-    path("event/<int:event_id>/calendar/", views.download_ics, name="download_ics"),
+    path("rsvp/<int:attendance_id>/", update_rsvp_view, name="update_rsvp"),
+    # The calendar path now cleanly points straight to the function
+    path("event/<int:event_id>/calendar/", download_ics, name="download_ics"),
     # --- Utilities ---
     path(
         "favicon.ico",
