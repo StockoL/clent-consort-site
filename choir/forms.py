@@ -5,6 +5,7 @@ from .models import (
     AuditionApplication,
     CommitteeDocument,
     Enquiry,
+    Event,
     GiftAidDeclaration,
     MemberProfile,
 )
@@ -154,4 +155,24 @@ class CommitteeDocumentForm(forms.ModelForm):
             ),
             "doc_type": forms.Select(attrs={"class": "form-control"}),
             "file": forms.ClearableFileInput(attrs={"class": "form-control"}),
+        }
+
+
+class QuickEventScheduleForm(forms.ModelForm):
+    """Frontend form allowing committee members to quickly schedule future dates."""
+
+    class Meta:
+        model = Event
+        # We explicitly expose ONLY the logistical essentials they need to schedule a date
+        fields = ["event_type", "date_time", "location"]
+
+        widgets = {
+            "event_type": forms.Select(attrs={"class": "form-control"}),
+            # This html5 datetime-local input provides a clean pop-up calendar/clock on mobile devices
+            "date_time": forms.DateTimeInput(
+                attrs={"type": "datetime-local", "class": "form-control"}
+            ),
+            "location": forms.TextInput(
+                attrs={"placeholder": "e.g., St Leonard's Church"}
+            ),
         }

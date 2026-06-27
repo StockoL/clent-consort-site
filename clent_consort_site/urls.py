@@ -6,20 +6,22 @@ from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import RedirectView, TemplateView
 
-# Explicitly import all custom view functions
+# 1. ADD 'committee_schedule_event' TO YOUR EXPLICIT IMPORTS TUPLE BELOW
 from choir.views import (
     about_view,
-    committee_documents_view,  # <-- Import the new committee_documents_view
-    committee_financials_view,  # <-- Import the new committee_financials_view
-    committee_hub,  # <-- Import the new committee_hub view
+    committee_documents_view,
+    committee_financials_view,
+    committee_hub,
     committee_rsvp_report,
+    committee_schedule_event,  # <-- ADD THIS IMPORT LINE HERE
     contact_view,
     dashboard_view,
-    download_ics,  # <-- Cleanly imported here!
+    download_ics,
     events_view,
     giftaid_view,
     home_view,
     hub_view,
+    login_redirect_router,
     settings_view,
     update_rsvp_view,
 )
@@ -45,6 +47,13 @@ urlpatterns = [
     # --- Committee Area ---
     path("members/committee/", committee_hub, name="committee_hub"),
     path("members/committee/rsvps/", committee_rsvp_report, name="committee_rsvps"),
+    # 2. ADD THE ROUTING PATH PATTERN EXACTLY HERE
+    path("accounts/profile/", login_redirect_router, name="login_redirect"),
+    path(
+        "members/committee/schedule/",
+        committee_schedule_event,
+        name="committee_schedule",
+    ),
     path(
         "members/committee/documents/",
         committee_documents_view,
@@ -57,7 +66,6 @@ urlpatterns = [
     ),
     # --- Action Handlers ---
     path("rsvp/<int:attendance_id>/", update_rsvp_view, name="update_rsvp"),
-    # The calendar path now cleanly points straight to the function
     path("event/<int:event_id>/calendar/", download_ics, name="download_ics"),
     # --- Utilities ---
     path(

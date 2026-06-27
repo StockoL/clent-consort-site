@@ -428,6 +428,9 @@ def committee_rsvp_report(request):
     return render(request, "choir/committee_rsvps.html", context)
 
 
+# =============================================================================
+# 4.2 COMMITTEE DOCUMENTS
+# =============================================================================
 @login_required
 @user_passes_test(is_committee)
 def committee_documents_view(request):
@@ -452,6 +455,9 @@ def committee_documents_view(request):
     return render(request, "choir/committee_documents.html", context)
 
 
+# =============================================================================
+# 4.2 COMMITTEE FINANCIALS
+# =============================================================================
 @login_required
 @user_passes_test(is_committee)
 def committee_financials_view(request):
@@ -525,6 +531,40 @@ def committee_financials_view(request):
         "current_term": current_term,
     }
     return render(request, "choir/committee_financials.html", context)
+
+
+# ==============================================================================
+# 4.1 COMMITTEE EVENT SCHEDULING
+# =============================================================================
+
+
+def is_committee_staff(user):
+    """Gatekeeper: Verifies the user is an active member of the committee staff."""
+    return user.is_active and user.is_staff
+
+
+@login_required
+@user_passes_test(is_committee_staff)
+def committee_schedule_event(request):
+    """Processes frontend form submissions to schedule new rehearsals or residencies."""
+    from .forms import QuickEventScheduleForm  # Local import to prevent circular traps
+
+    if request.method == "POST":
+        form = QuickEventScheduleForm(request.POST)
+        if form.is_valid():
+            new_event = form.save()
+            messages.success(
+                request,
+                f"Successfully scheduled {new_event.get_event_type_display()} for {new_event.date_time.strftime('%A, %d %B')}.",
+            )
+            return redirect("committee_hub")
+    else:
+        form = QuickEventScheduleForm()
+
+    context = {
+        "form": form,
+    }
+    return render(request, "choir/committee_schedule.html", context)
 
 
 # ==============================================================================

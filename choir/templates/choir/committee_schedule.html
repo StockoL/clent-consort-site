@@ -1,0 +1,46 @@
+{% extends 'choir/base.html' %}
+
+{% block title %}Schedule Event - Clent Consort{% endblock title %}
+
+{% block content %}
+<div class="l-center section-padding container-narrow mx-auto">
+  <div class="login-wrapper l-stack">
+    
+    <div class="login-nav">
+      <a href="{% url 'committee_hub' %}" class="back-link">← Back to Hub</a>
+    </div>
+
+    <section class="box invert" style="padding: 2rem;">
+      <div class="login-header mb-s1">
+        <h1 class="text-primary">Schedule New Event</h1>
+        <p class="text-small" style="color: #aaa;">Publish a date to the choir calendar and initialize the membership RSVP matrix.</p>
+      </div>
+
+      <form method="POST" class="l-stack">
+        {% csrf_token %}
+        
+        <div class="form-group l-stack l-stack--small">
+          <label style="color: #c9a45e; font-family: var(--font-heading); font-size: 0.8rem; text-transform: uppercase;">Event Type</label>
+          {{ form.event_type }}
+          {{ form.event_type.errors }}
+        </div>
+
+        <div class="form-group l-stack l-stack--small">
+          <label style="color: #c9a45e; font-family: var(--font-heading); font-size: 0.8rem; text-transform: uppercase;">Date & Time</label>
+          {{ form.date_time }}
+          {{ form.date_time.errors }}
+        </div>
+
+        <div class="form-group l-stack l-stack--small">
+          <label style="color: #c9a45e; font-family: var(--font-heading); font-size: 0.8rem; text-transform: uppercase;">Location</label>
+          {{ form.location }}
+          {{ form.location.errors }}
+        </div>
+
+        <button type="submit" class="cta-button">Publish Event</button>
+      </form>
+    </section>
+
+  </div>
+</div>
+{% endblock content %}

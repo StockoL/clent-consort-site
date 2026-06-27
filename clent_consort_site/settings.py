@@ -179,7 +179,7 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 LOGIN_URL = "account_login"
 
 # Where to send users immediately after a successful login:
-LOGIN_REDIRECT_URL = "members"
+LOGIN_REDIRECT_URL = "login_redirect"
 
 # Where to send users immediately after logging out:
 LOGOUT_REDIRECT_URL = "home"
@@ -221,10 +221,6 @@ ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 
 # Require members to click the link in their email before gaining access
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
-
-# Where to send the user after they successfully log in or log out
-LOGIN_REDIRECT_URL = "members"  # Assuming your dashboard url name is 'members'
-ACCOUNT_LOGOUT_REDIRECT_URL = "home"
 
 # ==============================================================================
 # SECURE INVITATION PROTOCOL
