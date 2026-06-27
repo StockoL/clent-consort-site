@@ -195,3 +195,47 @@ function switchTab(eventId, targetTab) {
     activeBtn.classList.add("active");
   }
 }
+
+/**
+ * RSVP Dashboard: Master View Switcher
+ * Toggles between the Event Logistics card and the Member Overview table.
+ * * @param {string} view - The requested view ('events' or 'stats')
+ */
+function switchMasterView(view) {
+  // Toggle Panels
+  document.getElementById("panel-events").style.display =
+    view === "events" ? "block" : "none";
+  document.getElementById("panel-stats").style.display =
+    view === "stats" ? "block" : "none";
+
+  // Toggle Button Styles
+  const btnEvents = document.getElementById("master-btn-events");
+  const btnStats = document.getElementById("master-btn-stats");
+
+  if (view === "events") {
+    btnEvents.className = "cta-button btn-small";
+    btnStats.className = "cta-button-outline btn-small";
+  } else {
+    btnEvents.className = "cta-button-outline btn-small";
+    btnStats.className = "cta-button btn-small";
+  }
+}
+
+/**
+ * RSVP Dashboard: Event Switcher
+ * Swaps the visible event data within the single card structure based on the dropdown selection.
+ * * @param {string} eventId - The database ID of the selected event
+ */
+function switchEvent(eventId) {
+  // Hide all event wrappers
+  const wrappers = document.querySelectorAll(".event-wrapper");
+  wrappers.forEach((wrapper) => (wrapper.style.display = "none"));
+
+  // Show the selected event wrapper (if one is selected)
+  if (eventId) {
+    const targetWrapper = document.getElementById("event-wrapper-" + eventId);
+    if (targetWrapper) {
+      targetWrapper.style.display = "block";
+    }
+  }
+}

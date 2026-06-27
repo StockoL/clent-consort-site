@@ -31,6 +31,16 @@ body {
   line-height: 1.5;
   color: #333;
   margin: 0;
+
+  /* The Magic Sticky Footer Flexbox */
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  overflow-y: auto;
+}
+
+main {
+  flex: 1 0 auto; /* Forces the main content to stretch, pushing the footer down */
 }
 
 h1,
@@ -43,11 +53,6 @@ h3 {
 html {
   scroll-behavior: smooth;
   scroll-padding-top: 5rem; /* Accounts for the sticky header height */
-}
-
-body {
-  height: 100%;
-  overflow-y: auto;
 }
 
 /* Ensure the scrollytelling section also respects it */
@@ -332,48 +337,42 @@ body {
 }
 
 /* CTA Button */
-.cta-button {
-  display: inline-block;
-  background-color: #c9a45e; /* Gold */
-  color: #1a1a1a; /* Dark Charcoal for contrast */
-  padding: 1rem 2rem;
-  text-align: center;
-  text-decoration: none;
-  border-radius: 2px;
-  font-family:
-    "Cinzel", serif; /* Using the display font for buttons feels more premium */
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  transition:
-    transform 0.2s ease,
-    background-color 0.3s;
-  margin-top: var(--s1);
-}
-
-.cta-button:hover {
-  background-color: #dcb97a; /* A lighter gold for the hover state */
-  transform: translateY(-2px); /* A subtle 'lift' effect */
-}
-
-/* --- SECONDARY OUTLINE BUTTON --- */
+.cta-button,
 .cta-button-outline {
-  display: inline-block;
-  background-color: transparent;
-  color: var(--primary); /* Gold text */
-  border: 2px solid var(--primary); /* Gold border */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 1rem 2rem;
-  text-align: center;
-  text-decoration: none;
-  border-radius: 2px;
   font-family: var(--font-heading);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 2px;
+  cursor: pointer;
   transition:
     transform 0.2s ease,
     background-color 0.3s,
-    color 0.3s;
+    color 0.3s,
+    box-shadow 0.2s ease;
+}
+
+.cta-button {
+  background-color: var(--primary);
+  color: #1a1a1a;
+  border: 2px solid transparent;
+}
+
+.cta-button:hover {
+  background-color: #dcb97a;
+  transform: translateY(-2px);
+}
+
+.cta-button-outline {
+  background-color: transparent;
+  color: var(--primary);
+  border: 2px solid var(--primary);
 }
 
 .cta-button-outline:hover {
@@ -392,8 +391,10 @@ body {
 
 /* Global Footer Wrapper */
 footer {
-  padding: var(--s2) var(--s1);
+  /* Reduced from var(--s2) var(--s1) to uniformly use var(--s1) */
+  padding: var(--s1);
   border-top: 1px solid #eee;
+  flex-shrink: 0; /* Prevents the flexbox from squishing the footer */
 }
 
 /* The Grid Architecture */
@@ -972,7 +973,7 @@ footer a:hover,
   flex: 1 1 auto; /* Allows buttons to stretch and fill the space evenly */
   text-align: center;
   padding: 0.5rem 1rem;
-  border: 1px solid var(--color-gold, #c9a45e); /* Falling back to your hex if var isn't set */
+  border: 1px solid var(--color-gold, #c9a45e); /* Falling back to the hex if var isn't set */
   background: transparent;
   color: var(--color-gold, #c9a45e);
   border-radius: 4px;
@@ -1143,7 +1144,7 @@ footer a:hover,
 /* --- Layout Settings (Pure CSS Thresholds) --- */
 .dashboard-sidebar {
   --gap: var(--s2);
-  --sidebar-width: 25rem; /* Prevents squishing by prioritizing the list side */
+  --sidebar-width: 25rem; /* Prevents squishing by prioritising the list side */
 }
 
 .dashboard-switcher {
@@ -1327,7 +1328,7 @@ footer a:hover,
 .text-primary {
   color: var(
     --primary
-  ); /* Assumes you have a CSS variable for your brand color */
+  ); /* Assumes you have a CSS variable for the brand color */
 }
 
 .text-error {
@@ -1385,14 +1386,14 @@ footer a:hover,
   flex-direction: column;
   gap: 1rem;
 
-  /* Spacing: 1.5rem top/right/bottom, keeping your custom spacing variable on the left */
+  /* Spacing: 1.5rem top/right/bottom, keeping the custom spacing variable on the left */
   padding: 1.5rem 1.5rem 1.5rem var(--s0);
 
   /* Card Aesthetics */
   background-color: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
 
-  /* Borders: General subtle outline first, then your brand highlight override! */
+  /* Borders: General subtle outline first, then the brand highlight override! */
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-left: 3px solid var(--primary);
 }
@@ -1451,29 +1452,11 @@ select.rsvp-toggle.rsvp-absent {
   background-color: #c62828;
 }
 
-/* 3. The Options Panel Fix (Keep this from earlier!) */
+/* 3. The Options Panel Fix */
 select.rsvp-toggle option {
   background-color: #1a1a1a;
   color: #ffffff;
   font-weight: 500;
-}
-
-/* Fix for invisible dropdown options: forces a dark background and white text */
-.rsvp-toggle option {
-  background-color: #1a1a1a; /* Matches the dark card background */
-  color: #ffffff; /* Forces the text to be visible */
-  font-weight: 500; /* Slightly bumps the weight for readability */
-}
-
-/* Dynamic Status Colors injected by Django */
-.rsvp-pending {
-  background-color: #f57f17;
-}
-.rsvp-attending {
-  background-color: #2e7d32;
-}
-.rsvp-absent {
-  background-color: #c62828;
 }
 
 /* Card Body (Location and Time) */
