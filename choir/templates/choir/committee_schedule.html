@@ -3,17 +3,22 @@
 {% block title %}Schedule Event - Clent Consort{% endblock title %}
 
 {% block content %}
-<div class="l-center section-padding container-narrow mx-auto">
-  <div class="login-wrapper l-stack">
+<div class="l-center l-stack section-padding">
+  <div class="text-center">
+    <h1 class="text-primary">Committee Event Scheduler</h1>
+    <p>Plan and schedule events for the choir.</p>
     
     <a href="{% url 'committee_hub' %}" class="cta-button-outline btn-small mt-s-1" style="text-decoration: none; display: inline-block;">
       ← Back to Hub
     </a>
+  </div>
+<div class="l-center section-padding container-narrow mx-auto">
+  <div class="login-wrapper l-stack">
 
     <section class="box invert" style="padding: 2rem;">
       <div class="login-header mb-s1">
-        <h1 class="text-primary">Schedule New Event</h1>
-        <p class="text-small" style="color: #aaa;">Publish a date to the choir calendar and initialize the membership RSVP matrix.</p>
+        <h2 class="text-primary">Schedule New Event</h2>
+        <p class="text-small" style="color: #aaa;">Publish a date to the choir calendar and initialise the membership RSVP matrix.</p>
       </div>
 
       <form method="POST" class="l-stack">
