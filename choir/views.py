@@ -349,23 +349,49 @@ def committee_hub(request):
 @login_required
 @user_passes_test(is_committee)
 def committee_rsvp_report(request):
-    """Administrative report flagging missing RSVPs for the next 30 days."""
-    today = timezone.now()
-    window_end = today + timedelta(days=30)
+    """A high-level dashboard showing complete attendance data for all upcoming events."""
 
-    pending_rsvps = (
-        Attendance.objects.filter(
-            event__date_time__range=(today, window_end),
-            status="PENDING",
-            user__is_active=True,
-        )
+    today = timezone.now()
+
+    # 1. Fetch all upcoming events, ordered chronologically
+    upcoming_events = Event.objects.filter(date_time__gte=today).order_by("date_time")
+
+    # 2. Fetch all attendances for these events in one fast query
+    all_attendances = (
+        Attendance.objects.filter(event__in=upcoming_events, user__is_active=True)
         .select_related("event", "user")
-        .order_by("event__date_time", "user__first_name")
+        .order_by("user__first_name")
     )
 
+    # 3. Process the data into a clean list for the template
+    report_data = []
+    for event in upcoming_events:
+        event_rsvps = all_attendances.filter(event=event)
+
+        # Group by status (Ensure these strings match your Attendance.STATUS_CHOICES exactly!)
+        attending = event_rsvps.filter(status="ATTENDING")
+        declined = event_rsvps.filter(status="ABSENT")
+        pending = event_rsvps.filter(status="PENDING")
+
+        # Create a comma-separated list of emails for the "BCC" mailto link
+        pending_emails = ",".join(
+            [rsvp.user.email for rsvp in pending if rsvp.user.email]
+        )
+
+        report_data.append(
+            {
+                "event": event,
+                "attending": attending,
+                "declined": declined,
+                "pending": pending,
+                "pending_emails": pending_emails,
+            }
+        )
+
     context = {
-        "pending_rsvps": pending_rsvps,
+        "report_data": report_data,
     }
+
     return render(request, "choir/committee_rsvps.html", context)
 
 

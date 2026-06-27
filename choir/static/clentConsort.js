@@ -162,3 +162,40 @@ const initProjectCarousel = () => {
   window.addEventListener("resize", checkMobileViewport);
   checkMobileViewport();
 };
+
+/* ==========================================================================
+    RSVP DASHBOARD TAB SWITCHER
+   ========================================================================== */
+/**
+ * Toggles the visibility of attendance lists and updates the active state styling of the buttons.
+ *
+ * @param {string|number} eventId - The unique database ID of the event section.
+ * @param {string} targetTab - The target tab to display ('attending', 'absent', 'pending').
+ */
+function switchTab(eventId, targetTab) {
+  // 1. Hide all lists for this specific event
+  const lists = document.querySelectorAll(".rsvp-list-" + eventId);
+  lists.forEach((list) => (list.style.display = "none"));
+
+  // 2. Remove the solid "active" styling from all buttons for this event
+  const buttons = document.querySelectorAll(".rsvp-btn-" + eventId);
+  buttons.forEach((btn) => {
+    btn.classList.remove("cta-button");
+    btn.classList.add("cta-button-outline");
+  });
+
+  // 3. Show the target list
+  const targetList = document.getElementById(
+    "list-" + eventId + "-" + targetTab,
+  );
+  if (targetList) {
+    targetList.style.display = "block";
+  }
+
+  // 4. Add the solid "active" styling to the clicked button
+  const activeBtn = document.getElementById("btn-" + eventId + "-" + targetTab);
+  if (activeBtn) {
+    activeBtn.classList.remove("cta-button-outline");
+    activeBtn.classList.add("cta-button");
+  }
+}
