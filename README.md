@@ -4,7 +4,7 @@
 [![Lighthouse Performance](https://img.shields.io/badge/Lighthouse_Performance-98%25-brightgreen)](#testing)
 [![Lighthouse Accessibility](https://img.shields.io/badge/Lighthouse_Accessibility-100%25-brightgreen)](#testing)
 
-**[🔴 LIVE APPLICATION: Click here to view the deployed application on Render (Staging)](www.clentconsort.org)**
+**[🔴 LIVE APPLICATION: Click here to view the deployed application on Render (Staging)](https://www.clentconsort.org)**
 
 The Clent Consort is a bespoke, full-stack web application developed for an amateur choral ensemble based in the Clent Hills, Worcestershire.
 
