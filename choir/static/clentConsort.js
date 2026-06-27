@@ -177,12 +177,9 @@ function switchTab(eventId, targetTab) {
   const lists = document.querySelectorAll(".rsvp-list-" + eventId);
   lists.forEach((list) => (list.style.display = "none"));
 
-  // 2. Remove the solid "active" styling from all buttons for this event
+  // 2. Remove the 'active' class from all buttons for this event
   const buttons = document.querySelectorAll(".rsvp-btn-" + eventId);
-  buttons.forEach((btn) => {
-    btn.classList.remove("cta-button");
-    btn.classList.add("cta-button-outline");
-  });
+  buttons.forEach((btn) => btn.classList.remove("active"));
 
   // 3. Show the target list
   const targetList = document.getElementById(
@@ -192,10 +189,9 @@ function switchTab(eventId, targetTab) {
     targetList.style.display = "block";
   }
 
-  // 4. Add the solid "active" styling to the clicked button
+  // 4. Add the 'active' class to the clicked button
   const activeBtn = document.getElementById("btn-" + eventId + "-" + targetTab);
   if (activeBtn) {
-    activeBtn.classList.remove("cta-button-outline");
-    activeBtn.classList.add("cta-button");
+    activeBtn.classList.add("active");
   }
 }

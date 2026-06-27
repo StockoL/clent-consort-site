@@ -356,6 +356,40 @@ body {
   transform: translateY(-2px); /* A subtle 'lift' effect */
 }
 
+/* --- SECONDARY OUTLINE BUTTON --- */
+.cta-button-outline {
+  display: inline-block;
+  background-color: transparent;
+  color: var(--primary); /* Gold text */
+  border: 2px solid var(--primary); /* Gold border */
+  padding: 1rem 2rem;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 2px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition:
+    transform 0.2s ease,
+    background-color 0.3s,
+    color 0.3s;
+}
+
+.cta-button-outline:hover {
+  background-color: var(--primary);
+  color: #1a1a1a;
+  transform: translateY(-2px);
+}
+
+/* --- MOBILE ONLY UTILITY CLASS --- */
+/* Using your existing 45rem (720px) breakpoint from your global styles */
+@media (min-width: 45rem) {
+  .hide-on-desktop {
+    display: none !important;
+  }
+}
+
 /* Global Footer Wrapper */
 footer {
   padding: var(--s2) var(--s1);
@@ -926,6 +960,36 @@ footer a:hover,
 .align-start {
   align-self: flex-start;
 }
+
+/* RSVP Interactive Tabs (Committee Hub) */
+.rsvp-tab-container {
+  display: flex;
+  flex-wrap: wrap; /* Fixes mobile overflow by allowing tabs to stack */
+  gap: 0.5rem;
+}
+
+.rsvp-tab {
+  flex: 1 1 auto; /* Allows buttons to stretch and fill the space evenly */
+  text-align: center;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--color-gold, #c9a45e); /* Falling back to your hex if var isn't set */
+  background: transparent;
+  color: var(--color-gold, #c9a45e);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  font-weight: normal;
+  transition: all 0.2s ease;
+}
+
+/* The unified active state */
+.rsvp-tab.active {
+  background: var(--color-gold, #c9a45e);
+  color: var(--color-dark, #1a1a1a);
+  font-weight: bold;
+}
+
 /* ==========================================================================
    5. ANIMATIONS
    ========================================================================== */
@@ -1310,21 +1374,129 @@ footer a:hover,
 .mt-s-1 {
   margin-top: var(--s-1);
 }
-/* Event Cards */
+/* ==========================================================================
+   EVENT DASHBOARD CARDS
+   ========================================================================== */
+
+/* The Main Card Boundary */
 .event-card-highlight {
+  /* Flexbox Layout */
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  /* Spacing: 1.5rem top/right/bottom, keeping your custom spacing variable on the left */
+  padding: 1.5rem 1.5rem 1.5rem var(--s0);
+
+  /* Card Aesthetics */
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+
+  /* Borders: General subtle outline first, then your brand highlight override! */
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-left: 3px solid var(--primary);
-  padding-left: var(--s0);
+}
+
+/* Card Header (Date and RSVP Button) */
+.event-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--s0);
+  flex-wrap: wrap; /* Allows the RSVP button to drop below on smaller screens */
 }
 
 .event-date {
-  margin-bottom: 0;
-  font-size: var(--s1);
+  margin: 0;
+  line-height: 1.2;
+}
+
+/* Base RSVP Dropdown Styling */
+/* 1. Base Select Styling */
+select.rsvp-toggle {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: bold;
+  padding: 8px 30px 8px 12px; /* Extra padding on the right for the arrow */
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  text-align: left; /* Left alignment looks better with the new arrow */
+  color: white !important; /* Force text to be white */
+  flex-shrink: 0; /* Prevents the select from shrinking in flex layouts */
+
+  /* Fallback dark background just in case */
+  background-color: #333333;
+
+  /* Injecting a custom white dropdown arrow */
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px top 50%;
+  background-size: 10px auto;
+}
+
+/* 2. Dynamic Status Colors (High Specificity) */
+/* Adding 'select' guarantees these colors beat the browser defaults */
+select.rsvp-toggle.rsvp-pending {
+  background-color: #f57f17;
+}
+select.rsvp-toggle.rsvp-attending {
+  background-color: #2e7d32;
+}
+select.rsvp-toggle.rsvp-absent {
+  background-color: #c62828;
+}
+
+/* 3. The Options Panel Fix (Keep this from earlier!) */
+select.rsvp-toggle option {
+  background-color: #1a1a1a;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+/* Fix for invisible dropdown options: forces a dark background and white text */
+.rsvp-toggle option {
+  background-color: #1a1a1a; /* Matches the dark card background */
+  color: #ffffff; /* Forces the text to be visible */
+  font-weight: 500; /* Slightly bumps the weight for readability */
+}
+
+/* Dynamic Status Colors injected by Django */
+.rsvp-pending {
+  background-color: #f57f17;
+}
+.rsvp-attending {
+  background-color: #2e7d32;
+}
+.rsvp-absent {
+  background-color: #c62828;
+}
+
+/* Card Body (Location and Time) */
+.event-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .event-meta {
-  margin-top: 0;
-  color: #ccc;
-  font-size: 0.9em;
+  margin: 0;
+}
+
+/* Optional Additional Notes */
+.event-card-notes {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 0.75rem;
+}
+
+.event-card-notes .text-small {
+  color: #aaa;
+  margin: 0;
+  line-height: 1.5;
 }
 
 /* Repertoire List */

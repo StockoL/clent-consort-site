@@ -24,14 +24,15 @@
         </div>
         
         <!-- The Tab Controls -->
-        <div style="display: flex; gap: 0.5rem;">
-          <button id="btn-{{ data.event.id }}-attending" onclick="switchTab('{{ data.event.id }}', 'attending')" class="cta-button btn-small rsvp-btn-{{ data.event.id }}">
+        <div class="rsvp-tab-container">
+          <!-- Note the addition of the 'active' class on the default Attend tab -->
+          <button id="btn-{{ data.event.id }}-attending" onclick="switchTab('{{ data.event.id }}', 'attending')" class="rsvp-tab rsvp-btn-{{ data.event.id }} active">
             Attend ({{ data.attending.count }})
           </button>
-          <button id="btn-{{ data.event.id }}-absent" onclick="switchTab('{{ data.event.id }}', 'absent')" class="cta-button-outline btn-small rsvp-btn-{{ data.event.id }}">
+          <button id="btn-{{ data.event.id }}-absent" onclick="switchTab('{{ data.event.id }}', 'absent')" class="rsvp-tab rsvp-btn-{{ data.event.id }}">
             Absent ({{ data.absent.count }})
           </button>
-          <button id="btn-{{ data.event.id }}-pending" onclick="switchTab('{{ data.event.id }}', 'pending')" class="cta-button-outline btn-small rsvp-btn-{{ data.event.id }}">
+          <button id="btn-{{ data.event.id }}-pending" onclick="switchTab('{{ data.event.id }}', 'pending')" class="rsvp-tab rsvp-btn-{{ data.event.id }}">
             Pending ({{ data.pending.count }})
           </button>
         </div>

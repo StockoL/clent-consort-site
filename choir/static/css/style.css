@@ -960,6 +960,36 @@ footer a:hover,
 .align-start {
   align-self: flex-start;
 }
+
+/* RSVP Interactive Tabs (Committee Hub) */
+.rsvp-tab-container {
+  display: flex;
+  flex-wrap: wrap; /* Fixes mobile overflow by allowing tabs to stack */
+  gap: 0.5rem;
+}
+
+.rsvp-tab {
+  flex: 1 1 auto; /* Allows buttons to stretch and fill the space evenly */
+  text-align: center;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--color-gold, #c9a45e); /* Falling back to your hex if var isn't set */
+  background: transparent;
+  color: var(--color-gold, #c9a45e);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  font-weight: normal;
+  transition: all 0.2s ease;
+}
+
+/* The unified active state */
+.rsvp-tab.active {
+  background: var(--color-gold, #c9a45e);
+  color: var(--color-dark, #1a1a1a);
+  font-weight: bold;
+}
+
 /* ==========================================================================
    5. ANIMATIONS
    ========================================================================== */
