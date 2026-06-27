@@ -33,6 +33,17 @@
       <p class="text-small text-muted" style="margin-top: 0.5rem;">Secure storage for meeting minutes and committee policies.</p>
     </a>
 
+    <a href="{% url 'committee_schedule' %}" class="box invert l-stack text-center" style="text-decoration: none; transition: transform 0.2s ease;">
+      <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📅</div>
+      <h3 class="text-primary">Schedule</h3>
+      <p class="text-small text-muted" style="margin-top: 0.5rem;">Manage and view events.</p>
+    </a>
+
+    <a href="{% url 'committee_broadcast' %}" class="box invert l-stack text-center" style="text-decoration: none; transition: transform 0.2s ease;">
+      <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📢</div>
+      <h3 class="text-primary">Broadcast</h3>
+      <p class="text-small text-muted" style="margin-top: 0.5rem;">Send announcements to all members.</p>
+    </a>
   </div>
 </div>
 {% endblock content %}

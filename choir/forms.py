@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 
 from .models import (
     AuditionApplication,
+    ChoirCommunication,
     CommitteeDocument,
     Enquiry,
     Event,
@@ -174,5 +175,25 @@ class QuickEventScheduleForm(forms.ModelForm):
             ),
             "location": forms.TextInput(
                 attrs={"placeholder": "e.g., St Leonard's Church"}
+            ),
+        }
+
+
+class BroadcastForm(forms.ModelForm):
+    """Frontend form to allow the committee to send choir-wide communications."""
+
+    class Meta:
+        model = ChoirCommunication
+        fields = ["audience", "subject", "message"]
+        widgets = {
+            "subject": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "Subject line"}
+            ),
+            "message": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 8,
+                    "placeholder": "Enter your update here...",
+                }
             ),
         }

@@ -9,6 +9,7 @@ from django.views.generic import RedirectView, TemplateView
 # 1. ADD 'committee_schedule_event' TO YOUR EXPLICIT IMPORTS TUPLE BELOW
 from choir.views import (
     about_view,
+    committee_broadcast,
     committee_documents_view,
     committee_financials_view,
     committee_hub,
@@ -47,6 +48,9 @@ urlpatterns = [
     # --- Committee Area ---
     path("members/committee/", committee_hub, name="committee_hub"),
     path("members/committee/rsvps/", committee_rsvp_report, name="committee_rsvps"),
+    path(
+        "members/committee/broadcast/", committee_broadcast, name="committee_broadcast"
+    ),
     # 2. ADD THE ROUTING PATH PATTERN EXACTLY HERE
     path("accounts/profile/", login_redirect_router, name="login_redirect"),
     path(

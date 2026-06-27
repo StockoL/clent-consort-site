@@ -577,6 +577,31 @@ def login_redirect_router(request):
 
 
 # ==============================================================================
+# 4.3 COMMITTEE BROADCASTS
+# =============================================================================
+
+
+@login_required
+@user_passes_test(is_committee_staff)
+def committee_broadcast(request):
+    """Processes frontend mass-email dispatch."""
+    from .forms import BroadcastForm
+
+    if request.method == "POST":
+        form = BroadcastForm(request.POST)
+        if form.is_valid():
+            broadcast = form.save(commit=False)
+            broadcast.sent_by = request.user  # Ensure your model tracks the sender
+            broadcast.save()
+            messages.success(request, "Communication broadcasted to the ensemble.")
+            return redirect("committee_hub")
+    else:
+        form = BroadcastForm()
+
+    return render(request, "choir/committee_broadcast.html", {"form": form})
+
+
+# ==============================================================================
 # 5. SYSTEM ERROR HANDLERS
 # ==============================================================================
 

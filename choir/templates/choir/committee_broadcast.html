@@ -1,0 +1,13 @@
+{% extends 'choir/base.html' %}
+{% block content %}
+<div class="l-center section-padding">
+  <section class="box invert">
+    <h1>Send Choir Broadcast</h1>
+    <form method="POST">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="cta-button">Send Email</button>
+    </form>
+  </section>
+</div>
+{% endblock %}
