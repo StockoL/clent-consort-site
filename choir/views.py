@@ -349,31 +349,26 @@ def committee_hub(request):
 @login_required
 @user_passes_test(is_committee)
 def committee_rsvp_report(request):
-    """A high-level dashboard showing complete attendance data for all upcoming events."""
+    """A dual-panel dashboard showing Event RSVPs and Member Attendance Stats."""
 
     today = timezone.now()
 
-    # 1. Fetch all upcoming events, ordered chronologically
+    # --- DATASET 1: EVENT-BY-EVENT DATA ---
     upcoming_events = Event.objects.filter(date_time__gte=today).order_by("date_time")
-
-    # 2. Fetch all attendances for these events in one fast query
     all_attendances = (
         Attendance.objects.filter(event__in=upcoming_events, user__is_active=True)
         .select_related("event", "user")
         .order_by("user__first_name")
     )
 
-    # 3. Process the data into a clean list for the template
     report_data = []
     for event in upcoming_events:
         event_rsvps = all_attendances.filter(event=event)
 
-        # Group by status (Ensure these strings match your Attendance.STATUS_CHOICES exactly!)
         attending = event_rsvps.filter(status="ATTENDING")
-        declined = event_rsvps.filter(status="ABSENT")
+        absent = event_rsvps.filter(status="ABSENT")
         pending = event_rsvps.filter(status="PENDING")
 
-        # Create a comma-separated list of emails for the "BCC" mailto link
         pending_emails = ",".join(
             [rsvp.user.email for rsvp in pending if rsvp.user.email]
         )
@@ -382,14 +377,52 @@ def committee_rsvp_report(request):
             {
                 "event": event,
                 "attending": attending,
-                "declined": declined,
+                "absent": absent,
                 "pending": pending,
                 "pending_emails": pending_emails,
             }
         )
 
+    # --- DATASET 2: INDIVIDUAL MEMBER STATISTICS ---
+    active_users = User.objects.filter(is_active=True).prefetch_related("attendances")
+    member_stats = []
+
+    for user in active_users:
+        if hasattr(user, "profile"):
+            user_rsvps = user.attendances.all()
+            total_events = user_rsvps.count()
+
+            # Calculate all-time totals
+            total_attending = user_rsvps.filter(status="ATTENDING").count()
+            total_absent = user_rsvps.filter(status="ABSENT").count()
+            total_pending = user_rsvps.filter(status="PENDING").count()
+
+            # Calculate an "All Time Attendance Rate" (ignoring pending events)
+            resolved_events = total_attending + total_absent
+            attendance_rate = (
+                int((total_attending / resolved_events) * 100)
+                if resolved_events > 0
+                else 0
+            )
+
+            member_stats.append(
+                {
+                    "user": user,
+                    "profile": user.profile,
+                    "total": total_events,
+                    "attending": total_attending,
+                    "absent": total_absent,
+                    "pending": total_pending,
+                    "rate": attendance_rate,
+                }
+            )
+
+    # Sort the stats so the lowest attendance rates appear at the top for committee review
+    member_stats = sorted(member_stats, key=lambda k: k["rate"])
+
     context = {
         "report_data": report_data,
+        "member_stats": member_stats,
     }
 
     return render(request, "choir/committee_rsvps.html", context)
