@@ -4,7 +4,7 @@
 [![Lighthouse Performance](https://img.shields.io/badge/Lighthouse_Performance-98%25-brightgreen)](#testing)
 [![Lighthouse Accessibility](https://img.shields.io/badge/Lighthouse_Accessibility-100%25-brightgreen)](#testing)
 
-**[🔴 LIVE APPLICATION: Click here to view the deployed application on Render (Staging)](clentconsort.org)**
+**[🔴 LIVE APPLICATION: Click here to view the deployed application on Render (Staging)](www.clentconsort.org)**
 
 The Clent Consort is a bespoke, full-stack web application developed for an amateur choral ensemble based in the Clent Hills, Worcestershire.
 
@@ -180,84 +180,91 @@ When deployed to production (where `DEBUG` evaluates to `False`), the configurat
 
 <p align="right">(<a href="#top">Back to top</a>)</p>
 
-## 5. <a name="features"></a> ✨ Core Features & Page Implementations
+## 5. <a name="features"></a> ✨ Core Features & The Private Members Area
 
-The application bridges high-end, performant frontend UX with a robust backend utility, ensuring both the public and private sides of the platform serve their specific target audiences without friction.
+Because the core utility of this application sits behind a secure authentication wall, this section serves as an architectural tour of the private Member Dashboard and Committee Hub, detailing how backend logic actively solves real-world organizational bottlenecks[cite: 13].
 
-### The Public Entrypoint (`index.html`)
+### 1. The Public Entrypoint & Native CSS Scrollytelling
 
-Features a high-performance Hero Section utilizing fluid typography (`clamp()`) and `<link rel="preload">` to ensure near-instant Largest Contentful Paint (LCP) times.
+_(Accessible via the public-facing URL)_[cite: 13]
 
-<details>
-<summary><b>🔍 Expand Engineering Case Study: Critical Rendering Path Optimization</b></summary>
+- **Critical Rendering Path:** Features a high-performance Hero Section utilizing fluid typography (`clamp()`) and `<link rel="preload">` to ensure near-instant Largest Contentful Paint (LCP) times[cite: 13].
+- **Progressive Scrollytelling:** Employs experimental pure CSS "Scrollytelling" using the `view-timeline` API[cite: 13]. As users swipe horizontally, background videos provide atmospheric context while text performs scroll-driven animations—entirely bypassing heavy JS scroll-hijacking libraries[cite: 13].
 
-#### Guarantees Over JavaScript
-
-Standard browser behavior discovers background images defined in CSS relatively late in the rendering lifecycle. By explicitly preloading the primary hero asset in the HTML `<head>` with `fetchpriority="high"`, I forced the browser to download the heaviest visual element immediately, drastically cutting down the LCP time.
-
-Furthermore, to guarantee strict WCAG 2.1 AA text-contrast compliance across unpredictable dynamic images, I applied a semi-transparent linear-gradient overlay directly within the CSS. This guarantees legibility at the architectural level without requiring heavy, client-side JavaScript contrast-checking libraries.
-
-</details>
-
-### Native CSS Scrollytelling (`about.html`)
-
-Employs experimental pure CSS "Scrollytelling" using the `view-timeline` API. As users swipe horizontally through the "Project Rhythm," background videos provide atmospheric context while text performs scroll-driven reveal animations.
-
-<details>
-<summary><b>🔍 Expand Engineering Case Study: Progressive Enhancement</b></summary>
-
-#### Dropping the JavaScript Scroll-Hijackers
-
-Traditional "scrollytelling" relies heavily on JavaScript intersection observers or heavy libraries (like GSAP or ScrollMagic), which often hijack native scrolling, drop frame rates, and bloat the initial payload.
-
-I opted for the emerging CSS Animation Level 4 specification (`animation-timeline: view()`). This offloads the animation calculations entirely to the browser's compositor thread, resulting in silky 60fps hardware-accelerated animations. Because it is built as a progressive enhancement, legacy browsers simply ignore the property and gracefully degrade to a highly readable, static layout without breaking the user experience.
-
-</details>
-
-### The Ergonomic Dashboard (`members.html`)
-
-Engineered as a high-density logistics hub. It employs progressive disclosure `<details>` accordions and utilizes a "Clickable Row" pattern designed specifically around Fitts's Law.
-
-<details>
-<summary><b>🔍 Expand Engineering Case Study: Payload Mitigation & Fitts's Law</b></summary>
-
-#### Designing for the Rehearsal Room
-
-A chorister accessing the dashboard is likely standing in a rehearsal room, holding a physical folder, and trying to download a PDF on a small mobile screen with one hand. Following Fitts's Law (which dictates that the time required to move to a target is a function of the target size and distance), I transformed the entire `.music-row-link` into a massive 48px-tall flexbox touch target, eliminating "fat-finger" errors.
-
-#### The Iframe Payload Trap
-
-The Voice Part Hubs require multiple embedded YouTube rehearsal tracks. Loading 10 YouTube iframes simultaneously on page load would force the browser to download megabytes of third-party tracking scripts, tanking the performance score. By wrapping these iframes inside semantic HTML `<details>` and `<summary>` accordions, the browser defers the rendering of the iframe until the user explicitly clicks to open it—a strategy known as Progressive Disclosure.
-
-</details>
-
-### Dual-Stream Contact Gateways (`contact.html`)
+### 2. Dual-Stream Contact Gateways
 
 Utilises the `.l-switcher` primitive (`--threshold: 60rem`). Booking and Audition forms sit side-by-side on wide screens but mathematically stack on mobile devices.
 
 <details>
-<summary><b>🔍 Expand Engineering Case Study: Intrinsic Form Architecture</b></summary>
+<summary><b>🔍 Expand Engineering Case Study: Zero-Friction Security UX</b></summary>
 
-#### Reducing Cognitive Friction
+#### The Custom Honeypot Protocol
 
-Users visiting the contact page have two entirely different goals: booking the choir (Stakeholders) or joining the choir (Singers). By splitting these into a dual-stream layout using the Switcher primitive, the application significantly reduces cognitive load.
+Securing public-facing forms (like the Audition and Booking endpoints) against automated spam bots usually involves implementing a CAPTCHA. However, CAPTCHAs introduce significant cognitive friction, degrade the aesthetic experience, and can cause severe accessibility hurdles for users with screen readers.
 
-To exceed accessibility standards, the forms are styled with high-contrast "White Well" inputs against the dark theme. I implemented robust `:focus-visible` states with custom gold box-shadows to ensure users relying on keyboard navigation have absolute parity with mouse-driven users.
+Instead of relying on a third-party CAPTCHA, I engineered a bespoke "Honeypot" field directly within `forms.py`[cite: 6]. A visually hidden input field (labeled `website`) is injected into the form markup[cite: 6]. Legitimate human users cannot see or tab into this field, leaving it blank. Automated bots, however, scan the raw HTML and reflexively populate it.
+
+Before the backend processes the submission or fires an email via SMTP, Django runs a custom `clean_website` validation check[cite: 6]. If _any_ data is detected in that field, the system instantly intercepts the request, raising a `ValidationError` and silently dropping the spam payload without impacting the experience of genuine users[cite: 6].
 
 </details>
 
-### The Command Center (Django Admin)
+### 3. The Ergonomic Dashboard & Progressive Disclosure
+
+![Screenshot: The Member Dashboard showing the Welcome screen and auto-healing RSVP matrix](path/to/your/dashboard_screenshot.png)
+
+The primary member dashboard is engineered as a high-density logistics hub[cite: 13]. To prevent visual clutter, the UI strictly adheres to **Progressive Disclosure**, meaning users only see actionable information exactly when they need it[cite: 13].
+
+- **Fitts's Law in Action:** A chorister accessing the dashboard is likely standing in a rehearsal room, holding a physical folder, and trying to download a PDF on a small mobile screen with one hand[cite: 13]. I transformed the entire `.music-row-link` into a massive 48px-tall flexbox touch target, eliminating "fat-finger" errors[cite: 13].
+- **Conditional Subscription UI:** Rather than cluttering the screen with permanent financial boxes, the dashboard queries the `SubscriptionPayment` database[cite: 13]. If a user owes termly fees, a high-contrast BACS instruction card appears[cite: 13]. The exact moment an administrator logs their payment, the card vanishes, replaced by a subtle green "Paid" badge in the header[cite: 13].
+
+### 4. The Auto-Healing RSVP Matrix
+
+Logistics management typically relies on static spreadsheets[cite: 13]. I engineered an auto-healing matrix within the `dashboard_view`[cite: 13].
+
+When the page loads, the backend queries all upcoming events[cite: 13]. If it detects a missing `Attendance` record for the logged-in user, it executes an instantaneous `bulk_create` SQL query to generate a "PENDING" row[cite: 13]. This guarantees the dashboard never falls out of sync when administrators add new rehearsal dates mid-season[cite: 13].
+
+<details>
+<summary><b>🔍 Expand Engineering Case Study: Event-Driven Automation</b></summary>
+
+#### Decoupling Logic with Django Signals
+
+Handling complex logistical triggers within standard view functions often leads to bloated, fragile code ("Fat Views"). To ensure the database remains fully synchronized without tightly coupling the code, I implemented an Event-Driven Architecture utilizing Django's Signal dispatcher[cite: 8].
+
+By writing isolated observer functions in `signals.py` decorated with `@receiver(post_save)`, the application listens for state changes asynchronously[cite: 8]. For example, when a new `Event` is created in the database, the `auto_add_existing_users_to_new_event` signal intercepts the save confirmation[cite: 8]. It then queries all active singers and executes a highly performant `bulk_create` SQL query to instantly generate their 'PENDING' RSVP rows[cite: 8]. This architectural Separation of Concerns ensures that creating a concert and generating its logistical scaffolding operate independently but flawlessly in tandem.
+
+</details>
+
+### 5. The Committee Hub & Financial Ledger
+
+![Screenshot: The Committee Hub Financial Ledger showing Paid, Unpaid, and Exempt users](path/to/your/ledger_screenshot.png)
+
+The Committee Hub replaces disparate Excel sheets with a centralized, secure command center[cite: 13]. A key architectural decision was made regarding payment processing:[cite: 13]
+
+- **Zero-Fee Infrastructure:** Instead of integrating the Stripe API (which sacrifices 1.5% of choir funds to processing fees), the application acts as a manual BACS ledger[cite: 13]. This architectural tradeoff intentionally prioritizes the organization's financial health over flashy tech integrations[cite: 13].
+- **Separation of Concerns:** The database normalizes user data by separating `is_under_18` (a strict Safeguarding flag) from `is_exempt_from_subs` (a Financial business logic flag)[cite: 13]. This allows the committee to grant a low-income adult a financial bursary without corrupting child-protection protocols[cite: 13].
+- **Compliance Tracking:** The ledger seamlessly integrates with the `GiftAidDeclaration` model, providing admins with an instant visual queue of whose payments are eligible for the 25% HMRC tax top-up[cite: 13].
+
+### 6. Interactive RSVP Tracking (Vanilla JS)
+
+![Screenshot: The Committee RSVP report showing the JavaScript tab switcher](path/to/your/rsvp_report_screenshot.png)
+
+To prevent the administrative RSVP report from becoming an endlessly scrolling, unreadable list, the view was refactored using an external Vanilla JavaScript tab switcher[cite: 13].
+
+- **DOM Manipulation:** The script toggles display states (`'attending'`, `'absent'`, `'pending'`) locally in the browser, keeping data access instantaneous without requiring heavy page reloads[cite: 13].
+- **Automated Communication Protocol:** The backend concatenates the emails of all "PENDING" users into a single string[cite: 13]. The frontend utilizes a semantic HTML `mailto:?bcc=...` link to generate a pre-formatted email in the admin's default client, securely hiding member addresses while allowing instant follow-ups[cite: 13].
+
+### 7. The Command Center (Django Admin)
 
 Leveraged and heavily customized Django's built-in Admin panel for the ensemble director, providing a secure GUI to perform CRUD operations on chorister profiles and event dates.
 
 <details>
-<summary><b>🔍 Expand Engineering Case Study: Eradicating Developer Bottlenecks</b></summary>
+<summary><b>🔍 Expand Engineering Case Study: Immutable State & Internal Tooling</b></summary>
 
-#### Transitioning to a True CMS
+#### Engineering Fail-Safe Administration
 
-A static site requires a developer to manually alter HTML every time the choir schedules a new concert or uploads a new piece of sheet music. By wiring the frontend templates directly into Django's Object-Relational Mapper (ORM), the application functions as a true Content Management System (CMS).
+A common pitfall in internal tooling is allowing administrative users to accidentally overwrite or resend historical data. To mitigate this risk within the `ChoirCommunication` broadcast system, I engineered strict, state-dependent mutability rules[cite: 4].
 
-The ensemble director can now log into the `/admin/` portal, create a new "Concert Event," and upload a PDF score. The Django backend automatically validates the data, routes the PDF to the AWS S3 cloud bucket via `boto3`, and dynamically generates the new HTML nodes on the live public site, completely removing the developer from the daily operational loop.
+By overriding the `get_readonly_fields` method in `admin.py`, the application dynamically assesses the object's lifecycle state[cite: 4]. When an administrator drafts a new email, all fields are open[cite: 4]. However, the millisecond the broadcast is saved and dispatched to the ensemble via the Brevo SMTP relay, the backend locks the `subject`, `message`, `audience`, and `author` fields[cite: 4]. This guarantees that sent communications become immutable historical records, completely neutralizing the risk of accidental modification or duplicate mass emails[cite: 4].
 
 </details>
 
@@ -265,42 +272,42 @@ The ensemble director can now log into the `/admin/` portal, create a new "Conce
 
 ## 6. <a name="dev-log"></a> 🏗️ Development Log & Engineering Phases
 
-To ensure a clean, maintainable, and scalable codebase, this application was built iteratively, resolving systemic layout and backend routing challenges at the architectural level rather than relying on brittle patches.
+To ensure a clean, maintainable, and scalable codebase, this application was built iteratively, resolving systemic layout and backend routing challenges at the architectural level rather than relying on brittle patches[cite: 13].
 
 ### Phase 1: Frontend Technical Log
 
-- **Mobile Viewport Overflow:** During iPhone SE testing, the layout broke horizontally, creating a "nested pressure cooker" effect that disabled vertical scrolling. _Fix:_ Refactored the global `<body>` to `min-height: 100vh` and applied `max-width: 100%` safety valves to all intrinsic child primitives.
-- **The Sticky Footer Anchoring:** On sparse pages (like the 404 error state), the footer floated awkwardly in the middle of the screen. _Fix:_ Engineered a flexbox global layout, applying `flex: 1` to the `<main>` element to act as a "greedy" container.
-- **Logo Aspect Ratio Distortion:** Identified that flexbox expansions were horizontally stretching the logo on the member dashboard. _Fix:_ Refactored the raw asset to a perfect 1:1 canvas size in GIMP and enforced strict `width/height` HTML attributes.
+- **Mobile Viewport Overflow:** During iPhone SE testing, the layout broke horizontally, creating a "nested pressure cooker" effect that disabled vertical scrolling[cite: 13]. _Fix:_ Refactored the global `<body>` to `min-height: 100vh` and applied `max-width: 100%` safety valves to all intrinsic child primitives[cite: 13].
+- **The Sticky Footer Anchoring:** On sparse pages (like the 404 error state), the footer floated awkwardly in the middle of the screen[cite: 13]. _Fix:_ Engineered a flexbox global layout, applying `flex: 1` to the `<main>` element to act as a "greedy" container[cite: 13].
+- **Logo Aspect Ratio Distortion:** Identified that flexbox expansions were horizontally stretching the logo on the member dashboard[cite: 13]. _Fix:_ Refactored the raw asset to a perfect 1:1 canvas size in GIMP and enforced strict `width/height` HTML attributes[cite: 13].
 
 <details>
 <summary><b>🔍 Expand Engineering Case Study: Resolving Viewport "Pressure Cookers"</b></summary>
 
 #### The `100vh` Flexbox Trap
 
-During initial mobile testing, the application exhibited a critical "vertical lock" where users could not scroll, accompanied by horizontal bleeding of UI elements. Using Chrome Developer Tools, I profiled the rendering tree and identified a conflict between the global wrapper and the CSS `min()` primitives.
+During initial mobile testing, the application exhibited a critical "vertical lock" where users could not scroll, accompanied by horizontal bleeding of UI elements[cite: 13]. Using Chrome Developer Tools, I profiled the rendering tree and identified a conflict between the global wrapper and the CSS `min()` primitives[cite: 13].
 
-By setting the global `<body>` to a strict `height: 100vh`, I had accidentally created a rigid container. When the internal `l-switcher` primitives required more height to stack their contents on narrow screens, they collided with the rigid `100vh` floor. The flex-engine panicked, forcing the content to overflow horizontally instead.
+By setting the global `<body>` to a strict `height: 100vh`, I had accidentally created a rigid container[cite: 13]. When the internal `l-switcher` primitives required more height to stack their contents on narrow screens, they collided with the rigid `100vh` floor[cite: 13]. The flex-engine panicked, forcing the content to overflow horizontally instead[cite: 13].
 
-**The Fix:** I refactored the global architecture to use `min-height: 100vh`. This allows the application to guarantee a full-screen presentation on sparse pages (perfectly pinning the footer via `flex: 1`), but allows the `<body>` to dynamically expand downwards to accommodate the intrinsic height requirements of dense, stacked mobile content, completely eliminating the horizontal overflow and restoring native scrolling.
+**The Fix:** I refactored the global architecture to use `min-height: 100vh`[cite: 13]. This allows the application to guarantee a full-screen presentation on sparse pages (perfectly pinning the footer via `flex: 1`), but allows the `<body>` to dynamically expand downwards to accommodate the intrinsic height requirements of dense, stacked mobile content, completely eliminating the horizontal overflow and restoring native scrolling[cite: 13].
 
 </details>
 
 ### Phase 2: Backend Technical Log
 
-- **Dynamic Email Routing:** A hardcoded `EMAIL_BACKEND` broke the application flow. If pushed to production, emails would silently print to the server log. _Fix:_ Refactored `settings.py` to intelligently poll the `DEBUG` state, fetching secure SMTP credentials dynamically only when in production.
-- **Allauth Security Feedback Loop:** The default Allauth login form lacked interactive user feedback. _Fix:_ Engineered a state-driven CSS border system using `:placeholder-shown`, `:valid`, and `:invalid` pseudo-classes to handle validation natively.
-- **ModuleNotFoundError during Deployment:** Python crashed when parsing the production `settings.py` on Render. _Fix:_ Synchronised the production virtual environment using `pip freeze > requirements.txt` to ensure cloud servers had access to the `dj-database-url` and `whitenoise` middleware packages.
+- **Dynamic Email Routing:** A hardcoded `EMAIL_BACKEND` broke the application flow[cite: 13]. If pushed to production, emails would silently print to the server log[cite: 13]. _Fix:_ Refactored `settings.py` to intelligently poll the `DEBUG` state, fetching secure SMTP credentials dynamically only when in production[cite: 13].
+- **Allauth Security Feedback Loop:** The default Allauth login form lacked interactive user feedback[cite: 13]. _Fix:_ Engineered a state-driven CSS border system using `:placeholder-shown`, `:valid`, and `:invalid` pseudo-classes to handle validation natively[cite: 13].
+- **ModuleNotFoundError during Deployment:** Python crashed when parsing the production `settings.py` on Render[cite: 13]. _Fix:_ Synchronised the production virtual environment using `pip freeze > requirements.txt` to ensure cloud servers had access to the `dj-database-url` and `whitenoise` middleware packages[cite: 13].
 
 <details>
 <summary><b>🔍 Expand Engineering Case Study: Environment-Aware Infrastructure</b></summary>
 
 #### Preventing Silent Failures in Production
 
-When integrating `django-invitations`, the system relies heavily on email delivery to provision user accounts. During local development, configuring Django to use an SMTP server is dangerous and slows down testing. However, leaving the development `console.EmailBackend` active in production results in a catastrophic silent failure—users request an invite, the server prints the token to a hidden backend log, and the user assumes the application is broken.
+When integrating `django-invitations`, the system relies heavily on email delivery to provision user accounts[cite: 13]. During local development, configuring Django to use an SMTP server is dangerous and slows down testing[cite: 13]. However, leaving the development `console.EmailBackend` active in production results in a catastrophic silent failure—users request an invite, the server prints the token to a hidden backend log, and the user assumes the application is broken[cite: 13].
 
-**The Fix:** I engineered an environment-aware routing switch in `settings.py`.
-When `DEBUG = True`, the system utilizes the `console` backend, allowing me to instantly click invitation tokens directly in my VS Code terminal. When `DEBUG = False`, the system automatically shifts to the `.smtp.EmailBackend` and queries the OS environment variables for the injected `EMAIL_HOST_USER` and `EMAIL_HOST_PASSWORD`. This ensures seamless parity between environments without ever exposing the ensemble's proprietary Gmail App Passwords to version control.
+**The Fix:** I engineered an environment-aware routing switch in `settings.py`[cite: 13].
+When `DEBUG = True`, the system utilizes the `console` backend, allowing me to instantly click invitation tokens directly in my VS Code terminal[cite: 13]. When `DEBUG = False`, the system automatically shifts to the `.smtp.EmailBackend` and queries the OS environment variables for the injected `EMAIL_HOST_USER` and `EMAIL_HOST_PASSWORD`[cite: 13]. This ensures seamless parity between environments without ever exposing the ensemble's proprietary Gmail App Passwords to version control[cite: 13].
 
 </details>
 
@@ -309,13 +316,13 @@ When `DEBUG = True`, the system utilizes the `console` backend, allowing me to i
 
 #### State-Driven UI with CSS Pseudo-Classes
 
-Standard form validation relies heavily on attaching JavaScript event listeners (`keyup`, `blur`) to input fields to toggle error classes. This adds unnecessary weight to the DOM and can cause execution delays.
+Standard form validation relies heavily on attaching JavaScript event listeners (`keyup`, `blur`) to input fields to toggle error classes[cite: 13]. This adds unnecessary weight to the DOM and can cause execution delays[cite: 13].
 
-To maintain a pristine Lighthouse Performance score while enhancing the security UX of the login page, I offloaded the validation logic entirely to the CSS rendering engine. By chaining high-specificity pseudo-classes (`input:not(:placeholder-shown):invalid`), the application suppresses default browser errors on empty fields. The moment a user types an invalid character format, the CSS engine instantly transitions the border to a pulsing crimson state. Once the HTML5 constraint API (`pattern` or `type="email"`) is satisfied, it locks to a green success state, providing instantaneous, haptic-like visual feedback with zero JavaScript overhead.
+To maintain a pristine Lighthouse Performance score while enhancing the security UX of the login page, I offloaded the validation logic entirely to the CSS rendering engine[cite: 13]. By chaining high-specificity pseudo-classes (`input:not(:placeholder-shown):invalid`), the application suppresses default browser errors on empty fields[cite: 13]. The moment a user types an invalid character format, the CSS engine instantly transitions the border to a pulsing crimson state[cite: 13]. Once the HTML5 constraint API (`pattern` or `type="email"`) is satisfied, it locks to a green success state, providing instantaneous, haptic-like visual feedback with zero JavaScript overhead[cite: 13].
 
 </details>
 
-## <p align="right">(<a href="#top">Back to top</a>)</p>
+<p align="right">(<a href="#top">Back to top</a>)</p>
 
 ## 7. <a name="testing"></a> 🧪 Testing & Quality Assurance Portfolio
 
