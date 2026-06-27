@@ -440,11 +440,8 @@ def committee_financials_view(request):
     for user in active_users:
         # 1. ONLY include users that actually have a profile (Fixes the empty rows)
         if hasattr(user, "profile"):
-            # 2. Check for exemption (You can add a field 'is_exempt' to your Profile model later)
-            # For now, we manually exempt your account and any future 'Under 18' flag
-            is_exempt = (
-                user.is_staff or user.profile.is_under_18
-            )  # Assuming you add this boolean later
+            # 2. Check for exemption
+            is_exempt = user.profile.is_exempt_from_subs
 
             payment = SubscriptionPayment.objects.filter(
                 member=user.profile, term_reference=current_term

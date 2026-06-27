@@ -53,7 +53,17 @@ class MemberProfile(models.Model):
         null=True,
         help_text="Optional: Please share any health, medical, or accessibility requirements (e.g., mobility needs, severe allergies) that the committee should be aware of to support you during rehearsals and events.",
     )
-    is_under_18 = models.BooleanField(default=False)
+    # Safeguarding Flag
+    is_under_18 = models.BooleanField(
+        default=False,
+        help_text="Flags member for safeguarding and duty of care protocols.",
+    )
+
+    # Financial Flag
+    is_exempt_from_subs = models.BooleanField(
+        default=False,
+        help_text="Exempts member from the termly financial ledger (e.g., scholars, bursaries, staff).",
+    )
 
     def __str__(self):
         return f"{self.user.get_full_name()} ({self.get_voice_part_display()})"

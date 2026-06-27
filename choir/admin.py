@@ -19,11 +19,22 @@ from .models import (
 # ==============================================================================
 @admin.register(MemberProfile)
 class MemberProfileAdmin(admin.ModelAdmin):
-    list_display = ("get_username", "get_full_name", "voice_part", "phone_number")
+    # Keep is_under_18 on the main spreadsheet view for quick safeguarding checks
+    list_display = (
+        "get_username",
+        "get_full_name",
+        "voice_part",
+        "phone_number",
+        "is_under_18",
+    )
+    list_editable = ("is_under_18",)
 
-    # We add the new consent booleans to the filter sidebar so you can instantly
-    # generate a list of "who cannot be photographed" before a concert.
-    list_filter = ("voice_part", "consent_audio_video", "consent_photography")
+    list_filter = (
+        "voice_part",
+        "is_under_18",
+        "is_exempt_from_subs",
+    )  # Added to filters!
+
     search_fields = (
         "user__username",
         "user__first_name",
@@ -31,14 +42,16 @@ class MemberProfileAdmin(admin.ModelAdmin):
         "phone_number",
     )
 
-    # This organizes the individual member page into clean, logical sections
     fieldsets = (
         ("User Link", {"fields": ("user",)}),
         ("Choir Details", {"fields": ("voice_part", "phone_number")}),
+        # New dedicated section for finances
+        ("Financial Settings", {"fields": ("is_exempt_from_subs",)}),
         (
-            "Duty of Care (Emergency Contact)",
+            "Duty of Care & Safeguarding",  # Renamed slightly for clarity
             {
                 "fields": (
+                    "is_under_18",
                     "emergency_contact_name",
                     "emergency_contact_relation",
                     "emergency_contact_phone",
