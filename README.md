@@ -210,7 +210,9 @@ Before the backend processes the submission or fires an email via SMTP, Django r
 
 ### 3. The Ergonomic Dashboard & Progressive Disclosure
 
-![Screenshots: The Member Dashboard showing the Welcome screen and auto-healing RSVP matrix](choir/static/documentation/members_dashboard_welcome.png)(choir\static\documentation\members_dashboard_rsvp_matrix.png)
+![Screenshot: The Member Dashboard showing the Welcome screen and auto-healing RSVP matrix](choir/static/documentation/members_dashboard_welcome.png)
+
+(choir/static/documentation/members_dashboard_rsvp_matrix.png)
 
 The primary member dashboard is engineered as a high-density logistics hub. To prevent visual clutter, the UI strictly adheres to **Progressive Disclosure**, meaning users only see actionable information exactly when they need it.
 
@@ -236,7 +238,7 @@ By writing isolated observer functions in `signals.py` decorated with `@receiver
 
 ### 5. The Committee Hub & Financial Ledger
 
-![Screenshot: The Committee Hub Financial Ledger showing Paid, Unpaid, and Exempt users](choir\static\documentation\ledger_screenshot.png)
+![Screenshot: The Committee Hub Financial Ledger showing Paid, Unpaid, and Exempt users](choir/static/documentation/ledger_screenshot.png)
 
 The Committee Hub replaces disparate Excel sheets with a centralised, secure command center. A key architectural decision was made regarding payment processing:
 
@@ -246,7 +248,7 @@ The Committee Hub replaces disparate Excel sheets with a centralised, secure com
 
 ### 6. Interactive RSVP Tracking (Vanilla JS)
 
-![Screenshot: The Committee RSVP report showing the JavaScript tab switcher](choir\static\documentation\rsvp_report_screenshot.png)
+![Screenshot: The Committee RSVP report showing the JavaScript tab switcher](choir/static/documentation/rsvp_report_screenshot.png)
 
 To prevent the administrative RSVP report from becoming an endlessly scrolling, unreadable list, the view was refactored using an external Vanilla JavaScript tab switcher.
 
