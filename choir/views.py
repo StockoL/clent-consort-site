@@ -567,6 +567,18 @@ def committee_schedule_event(request):
     return render(request, "choir/committee_schedule.html", context)
 
 
+@login_required
+def login_redirect_router(request):
+    """
+    Traffic controller that routes users to the correct dashboard
+    immediately upon successful authentication.
+    """
+    if request.user.is_staff:
+        return redirect("committee_hub")
+
+    return redirect("members")
+
+
 # ==============================================================================
 # 5. SYSTEM ERROR HANDLERS
 # ==============================================================================
