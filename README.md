@@ -210,9 +210,9 @@ Before the backend processes the submission or fires an email via SMTP, Django r
 
 ### 3. The Ergonomic Dashboard & Progressive Disclosure
 
-![Screenshot: The Member Dashboard showing the Welcome screen and auto-healing RSVP matrix](choir/static/documentation/members_dashboard_welcome.png)
+![Screenshot: The Member Dashboard showing the Welcome screen and conditional subscription UI](choir/static/documentation/members_dashboard_welcome.png)
 
-(choir/static/documentation/members_dashboard_rsvp_matrix.png)
+![Screenshot: The Member Dashboard showing the auto-healing RSVP matrix](choir/static/documentation/members_dashboard_rsvp_matrix.png)
 
 The primary member dashboard is engineered as a high-density logistics hub. To prevent visual clutter, the UI strictly adheres to **Progressive Disclosure**, meaning users only see actionable information exactly when they need it.
 
