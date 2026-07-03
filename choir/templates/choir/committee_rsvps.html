@@ -8,9 +8,10 @@
     <h1 class="text-primary">RSVP Dashboard</h1>
     <p>Live event logistics and overall membership attendance tracking.</p>
     
+    <a href="{% url 'committee_hub' %}" class="cta-button-outline btn-small mt-s-1" style="text-decoration: none; display: inline-block;">
+      ← Back to Hub
+    </a>
     <div style="margin-top: 1rem; display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap;">
-      <a href="{% url 'committee_hub' %}" class="cta-button-outline btn-small" style="text-decoration: none;">← Back to Hub</a>
-      
       <button onclick="switchMasterView('events')" id="master-btn-events" class="cta-button btn-small">Event Logistics</button>
       <button onclick="switchMasterView('stats')" id="master-btn-stats" class="cta-button-outline btn-small">Member Overview</button>
     </div>
