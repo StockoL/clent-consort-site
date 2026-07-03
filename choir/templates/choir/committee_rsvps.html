@@ -50,17 +50,22 @@
         <div id="list-{{ data.event.id }}-attending" class="rsvp-list-{{ data.event.id }}">
           {% if data.attending %}
             <ul style="column-count: 2; column-gap: 2rem; list-style-type: none; padding-left: 0;" class="text-small">
-              {% for rsvp in data.attending %}
-                <li style="padding: 0.5rem 0; display: flex; justify-content: space-between; align-items: center; break-inside: avoid;">
-                  <span>✅ {{ rsvp.user.first_name }} {{ rsvp.user.last_name }}</span>
-                  <select onchange="overrideRSVP({{ rsvp.id }}, this)" style="padding: 0.2rem; background: rgba(0,0,0,0.5); color: white; border: 1px solid #c9a45e; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">
-                    <option value="ATTENDING" selected>Attending</option>
-                    <option value="ABSENT">Absent</option>
-                    <option value="PENDING">Pending</option>
-                  </select>
-                </li>
-              {% endfor %}
-            </ul>
+  {% for rsvp in data.attending %}
+    <li style="padding: 0.5rem 0; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; break-inside: avoid;">
+      
+      <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1;">
+        ✅ {{ rsvp.user.first_name }} {{ rsvp.user.last_name }}
+      </span>
+      
+      <select onchange="overrideRSVP({{ rsvp.id }}, this)" style="flex-shrink: 0; min-width: 110px; padding: 0.3rem 0.5rem; background: rgba(0,0,0,0.5); color: white; border: 1px solid #c9a45e; border-radius: 4px; font-size: 0.85rem; cursor: pointer;">
+        <option value="ATTENDING" selected>Attending</option>
+        <option value="ABSENT">Absent</option>
+        <option value="PENDING">Pending</option>
+      </select>
+      
+    </li>
+  {% endfor %}
+</ul>
           {% else %}
             <p class="text-muted text-small text-center">No attendees confirmed yet.</p>
           {% endif %}
@@ -69,17 +74,22 @@
         <div id="list-{{ data.event.id }}-absent" class="rsvp-list-{{ data.event.id }}" style="display: none;">
           {% if data.absent %}
             <ul style="column-count: 2; column-gap: 2rem; list-style-type: none; padding-left: 0;" class="text-small">
-              {% for rsvp in data.absent %}
-                <li style="padding: 0.5rem 0; display: flex; justify-content: space-between; align-items: center; color: #ff4d4d; break-inside: avoid;">
-                  <span>❌ {{ rsvp.user.first_name }} {{ rsvp.user.last_name }}</span>
-                  <select onchange="overrideRSVP({{ rsvp.id }}, this)" style="padding: 0.2rem; background: rgba(0,0,0,0.5); color: white; border: 1px solid #c9a45e; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">
-                    <option value="ATTENDING">Attending</option>
-                    <option value="ABSENT" selected>Absent</option>
-                    <option value="PENDING">Pending</option>
-                  </select>
-                </li>
-              {% endfor %}
-            </ul>
+  {% for rsvp in data.absent %}
+    <li style="padding: 0.5rem 0; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; break-inside: avoid; color: #ff4d4d;">
+      
+      <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1;">
+        ❌ {{ rsvp.user.first_name }} {{ rsvp.user.last_name }}
+      </span>
+      
+      <select onchange="overrideRSVP({{ rsvp.id }}, this)" style="flex-shrink: 0; min-width: 110px; padding: 0.3rem 0.5rem; background: rgba(0,0,0,0.5); color: white; border: 1px solid #c9a45e; border-radius: 4px; font-size: 0.85rem; cursor: pointer;">
+        <option value="ATTENDING">Attending</option>
+        <option value="ABSENT" selected>Absent</option>
+        <option value="PENDING">Pending</option>
+      </select>
+      
+    </li>
+  {% endfor %}
+</ul>
           {% else %}
             <p class="text-muted text-small text-center">No members have marked absent.</p>
           {% endif %}
@@ -93,17 +103,22 @@
                </a>
             </div>
             <ul style="column-count: 2; column-gap: 2rem; list-style-type: none; padding-left: 0;" class="text-small">
-              {% for rsvp in data.pending %}
-                <li style="padding: 0.5rem 0; display: flex; justify-content: space-between; align-items: center; color: #f57f17; break-inside: avoid;">
-                  <span>⏳ {{ rsvp.user.first_name }} {{ rsvp.user.last_name }}</span>
-                  <select onchange="overrideRSVP({{ rsvp.id }}, this)" style="padding: 0.2rem; background: rgba(0,0,0,0.5); color: white; border: 1px solid #c9a45e; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">
-                    <option value="ATTENDING">Attending</option>
-                    <option value="ABSENT">Absent</option>
-                    <option value="PENDING" selected>Pending</option>
-                  </select>
-                </li>
-              {% endfor %}
-            </ul>
+  {% for rsvp in data.pending %}
+    <li style="padding: 0.5rem 0; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; break-inside: avoid; color: #f57f17;">
+      
+      <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1;">
+        ⏳ {{ rsvp.user.first_name }} {{ rsvp.user.last_name }}
+      </span>
+      
+      <select onchange="overrideRSVP({{ rsvp.id }}, this)" style="flex-shrink: 0; min-width: 110px; padding: 0.3rem 0.5rem; background: rgba(0,0,0,0.5); color: white; border: 1px solid #c9a45e; border-radius: 4px; font-size: 0.85rem; cursor: pointer;">
+        <option value="ATTENDING">Attending</option>
+        <option value="ABSENT">Absent</option>
+        <option value="PENDING" selected>Pending</option>
+      </select>
+      
+    </li>
+  {% endfor %}
+</ul>
           {% else %}
             <p class="text-muted text-small text-center">Everyone has responded. Great job!</p>
           {% endif %}
