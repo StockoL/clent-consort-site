@@ -419,7 +419,7 @@ def committee_rsvp_report(request):
 @login_required
 @user_passes_test(is_committee)
 @require_POST
-def committee_update_rsvp_override(request, event_id, attendance_id):
+def committee_update_rsvp_override(request, attendance_id):
     """
     API endpoint allowing staff to manually override any member's RSVP status
     for post-rehearsal reconciliation.
