@@ -11,6 +11,7 @@ from choir.views import (
     about_view,
     committee_broadcast,
     committee_documents_view,
+    committee_emergency_roster,
     committee_financials_view,
     committee_hub,
     committee_rsvp_report,
@@ -50,6 +51,11 @@ urlpatterns = [
     path("members/committee/rsvps/", committee_rsvp_report, name="committee_rsvps"),
     path(
         "members/committee/broadcast/", committee_broadcast, name="committee_broadcast"
+    ),
+    path(
+        "members/committee/roster/",
+        committee_emergency_roster,
+        name="committee_emergency",
     ),
     # 2. ADD THE ROUTING PATH PATTERN EXACTLY HERE
     path("accounts/profile/", login_redirect_router, name="login_redirect"),

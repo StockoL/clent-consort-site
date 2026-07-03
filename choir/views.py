@@ -455,6 +455,23 @@ def committee_documents_view(request):
     return render(request, "choir/committee_documents.html", context)
 
 
+@login_required
+@user_passes_test(is_committee)
+def committee_emergency_roster(request):
+    """
+    A highly restricted view displaying medical, emergency, and safeguarding
+    information for active choir members only.
+    """
+    # select_related prevents N+1 queries when fetching the attached profiles
+    roster = (
+        User.objects.filter(is_active=True)
+        .select_related("profile")
+        .order_by("first_name")
+    )
+
+    return render(request, "choir/committee_emergency.html", {"roster": roster})
+
+
 # =============================================================================
 # 4.2 COMMITTEE FINANCIALS
 # =============================================================================

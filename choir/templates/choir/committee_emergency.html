@@ -1,0 +1,63 @@
+{% extends 'choir/base.html' %}
+
+{% block content %}
+<div class="l-center section-padding">
+  <div class="box invert">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <div>
+        <h1 class="text-primary" style="margin-bottom: 0.25rem;">Duty of Care Roster</h1>
+        <p class="text-small text-muted">Strictly Confidential. Staff Access Only.</p>
+      </div>
+      <a href="{% url 'committee_hub' %}" class="back-link">← Back to Hub</a>
+    </div>
+    
+    <div style="overflow-x: auto; margin-top: 2rem;">
+      <table class="data-table" style="width: 100%; text-align: left; border-collapse: collapse;">
+        <thead>
+          <tr style="border-bottom: 2px solid var(--color-primary);">
+            <th style="padding: 1rem;">Singer</th>
+            <th style="padding: 1rem;">Voice</th>
+            <th style="padding: 1rem;">Emergency Contact</th>
+            <th style="padding: 1rem;">Medical & Access Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for member in roster %}
+            {% if hasattr member 'profile' %}
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+              
+              <td style="padding: 1rem;">
+                <strong>{{ member.get_full_name }}</strong>
+                {% if member.profile.is_under_18 %}
+                  <span style="background: #ff4444; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-left: 0.5rem; text-transform: uppercase; font-weight: bold;">Under 18</span>
+                {% endif %}
+              </td>
+              
+              <td style="padding: 1rem;">
+                {{ member.profile.get_voice_part_display|default:"-" }}
+              </td>
+              
+              <td style="padding: 1rem;">
+                {{ member.profile.emergency_contact_name }} 
+                {% if member.profile.emergency_contact_relation %}
+                  <span style="color: #aaa; font-size: 0.9em;">({{ member.profile.emergency_contact_relation }})</span>
+                {% endif %}
+                <br>
+                <a href="tel:{{ member.profile.emergency_contact_phone }}" style="color: var(--color-accent); text-decoration: none;">
+                  {{ member.profile.emergency_contact_phone }}
+                </a>
+              </td>
+              
+              <td style="padding: 1rem; color: #ff9999; max-width: 300px;">
+                {{ member.profile.medical_accessibility_notes|default:"None provided" }}
+              </td>
+              
+            </tr>
+            {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
