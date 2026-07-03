@@ -462,9 +462,12 @@ def committee_emergency_roster(request):
     A highly restricted view displaying medical, emergency, and safeguarding
     information for active choir members only.
     """
-    # select_related prevents N+1 queries when fetching the attached profiles
+    # The database now exclusively fetches active users who actually have a profile mapped to them
     roster = (
-        User.objects.filter(is_active=True)
+        User.objects.filter(
+            is_active=True,
+            profile__isnull=False,  # <-- THIS IS THE FIX
+        )
         .select_related("profile")
         .order_by("first_name")
     )
