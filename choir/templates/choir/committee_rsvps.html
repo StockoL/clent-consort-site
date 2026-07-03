@@ -19,6 +19,8 @@
   <div id="panel-events" class="mt-s2 l-stack">
     <section class="box invert" style="padding: 1.5rem; max-width: 60rem; margin-inline: auto; width: 100%;">
       
+      {% csrf_token %}
+
       <div style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1.5rem; margin-bottom: 1rem;">
         <label for="event-selector" class="text-small text-muted" style="display: block; margin-bottom: 0.5rem;">Select Event:</label>
         <select id="event-selector" onchange="switchEvent(this.value)" style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.3); border: 1px solid #c9a45e; color: white; border-radius: 4px; font-size: 1rem; cursor: pointer;">
@@ -49,7 +51,14 @@
           {% if data.attending %}
             <ul style="column-count: 2; column-gap: 2rem; list-style-type: none; padding-left: 0;" class="text-small">
               {% for rsvp in data.attending %}
-                <li style="padding: 0.25rem 0;">✅ {{ rsvp.user.first_name }} {{ rsvp.user.last_name }}</li>
+                <li style="padding: 0.5rem 0; display: flex; justify-content: space-between; align-items: center; break-inside: avoid;">
+                  <span>✅ {{ rsvp.user.first_name }} {{ rsvp.user.last_name }}</span>
+                  <select onchange="overrideRSVP({{ rsvp.id }}, this)" style="padding: 0.2rem; background: rgba(0,0,0,0.5); color: white; border: 1px solid #c9a45e; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">
+                    <option value="ATTENDING" selected>Attending</option>
+                    <option value="ABSENT">Absent</option>
+                    <option value="PENDING">Pending</option>
+                  </select>
+                </li>
               {% endfor %}
             </ul>
           {% else %}
@@ -61,7 +70,14 @@
           {% if data.absent %}
             <ul style="column-count: 2; column-gap: 2rem; list-style-type: none; padding-left: 0;" class="text-small">
               {% for rsvp in data.absent %}
-                <li style="padding: 0.25rem 0; color: #ff4d4d;">❌ {{ rsvp.user.first_name }} {{ rsvp.user.last_name }}</li>
+                <li style="padding: 0.5rem 0; display: flex; justify-content: space-between; align-items: center; color: #ff4d4d; break-inside: avoid;">
+                  <span>❌ {{ rsvp.user.first_name }} {{ rsvp.user.last_name }}</span>
+                  <select onchange="overrideRSVP({{ rsvp.id }}, this)" style="padding: 0.2rem; background: rgba(0,0,0,0.5); color: white; border: 1px solid #c9a45e; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">
+                    <option value="ATTENDING">Attending</option>
+                    <option value="ABSENT" selected>Absent</option>
+                    <option value="PENDING">Pending</option>
+                  </select>
+                </li>
               {% endfor %}
             </ul>
           {% else %}
@@ -78,7 +94,14 @@
             </div>
             <ul style="column-count: 2; column-gap: 2rem; list-style-type: none; padding-left: 0;" class="text-small">
               {% for rsvp in data.pending %}
-                <li style="padding: 0.25rem 0; color: #f57f17;">⏳ {{ rsvp.user.first_name }} {{ rsvp.user.last_name }}</li>
+                <li style="padding: 0.5rem 0; display: flex; justify-content: space-between; align-items: center; color: #f57f17; break-inside: avoid;">
+                  <span>⏳ {{ rsvp.user.first_name }} {{ rsvp.user.last_name }}</span>
+                  <select onchange="overrideRSVP({{ rsvp.id }}, this)" style="padding: 0.2rem; background: rgba(0,0,0,0.5); color: white; border: 1px solid #c9a45e; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">
+                    <option value="ATTENDING">Attending</option>
+                    <option value="ABSENT">Absent</option>
+                    <option value="PENDING" selected>Pending</option>
+                  </select>
+                </li>
               {% endfor %}
             </ul>
           {% else %}
@@ -133,4 +156,44 @@
   </div>
 
 </div>
+
+<script>
+function overrideRSVP(attendanceId, selectElement) {
+    const newStatus = selectElement.value;
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    // Visual feedback: dim the dropdown slightly while saving
+    selectElement.style.opacity = '0.5';
+
+    fetch(`/members/committee/rsvps/${attendanceId}/override/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({ status: newStatus })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Restore opacity and flash green to confirm the save worked
+            selectElement.style.opacity = '1';
+            selectElement.style.backgroundColor = '#2e7d32'; // Dark green flash for dark mode
+            selectElement.style.color = '#fff';
+            setTimeout(() => {
+                selectElement.style.backgroundColor = 'rgba(0,0,0,0.5)';
+                selectElement.style.color = 'white';
+            }, 1000);
+        } else {
+            alert('Failed to update RSVP. Please refresh and try again.');
+            selectElement.style.opacity = '1';
+        }
+    })
+    .catch(error => {
+        console.error("Error updating RSVP:", error);
+        alert("A network error occurred. Please try again.");
+        selectElement.style.opacity = '1';
+    });
+}
+</script>
 {% endblock content %}

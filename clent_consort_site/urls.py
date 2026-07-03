@@ -16,6 +16,7 @@ from choir.views import (
     committee_hub,
     committee_rsvp_report,
     committee_schedule_event,  # <-- ADD THIS IMPORT LINE HERE
+    committee_update_rsvp_override,
     contact_view,
     dashboard_view,
     download_ics,
@@ -56,6 +57,11 @@ urlpatterns = [
         "members/committee/roster/",
         committee_emergency_roster,
         name="committee_emergency",
+    ),
+    path(
+        "members/committee/rsvps/<int:attendance_id>/override/",
+        committee_update_rsvp_override,
+        name="committee_rsvp_override",
     ),
     # 2. ADD THE ROUTING PATH PATTERN EXACTLY HERE
     path("accounts/profile/", login_redirect_router, name="login_redirect"),

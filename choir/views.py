@@ -416,6 +416,32 @@ def committee_rsvp_report(request):
     return render(request, "choir/committee_rsvps.html", context)
 
 
+@login_required
+@user_passes_test(is_committee)
+@require_POST
+def committee_update_rsvp_override(request, attendance_id):
+    """
+    API endpoint allowing staff to manually override any member's RSVP status
+    for post-rehearsal reconciliation.
+    """
+    # Notice we removed the user=request.user check here so staff can edit anyone
+    attendance = get_object_or_404(Attendance, id=attendance_id)
+
+    try:
+        data = json.loads(request.body)
+        new_status = data.get("status")
+    except json.JSONDecodeError:
+        return JsonResponse({"success": False, "error": "Invalid payload"}, status=400)
+
+    valid_choices = [choice[0] for choice in Attendance.STATUS_CHOICES]
+    if new_status in valid_choices:
+        attendance.status = new_status
+        attendance.save()
+        return JsonResponse({"success": True, "new_status": new_status})
+
+    return JsonResponse({"success": False, "error": "Invalid status"}, status=400)
+
+
 # =============================================================================
 # 4.2 COMMITTEE DOCUMENTS
 # =============================================================================
