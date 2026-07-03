@@ -57,7 +57,7 @@
                     ✅ {{ rsvp.user.first_name }} {{ rsvp.user.last_name }}
                   </span>
                   
-                  <select onchange="overrideRSVP({{ rsvp.id }}, this)" style="width: auto; min-width: 110px; padding: 0.3rem 0.5rem; background: rgba(0,0,0,0.5); color: white; border: 1px solid #c9a45e; border-radius: 4px; font-size: 0.85rem; cursor: pointer;">
+                  <select onchange="overrideRSVP({{ data.event.id }}, {{ rsvp.id }}, this)" style="width: auto; min-width: 110px; padding: 0.3rem 0.5rem; background: rgba(0,0,0,0.5); color: white; border: 1px solid #c9a45e; border-radius: 4px; font-size: 0.85rem; cursor: pointer;">
                     <option value="ATTENDING" selected>Attending</option>
                     <option value="ABSENT">Absent</option>
                     <option value="PENDING">Pending</option>
@@ -81,7 +81,7 @@
                     ❌ {{ rsvp.user.first_name }} {{ rsvp.user.last_name }}
                   </span>
                   
-                  <select onchange="overrideRSVP({{ rsvp.id }}, this)" style="width: auto; min-width: 110px; padding: 0.3rem 0.5rem; background: rgba(0,0,0,0.5); color: white; border: 1px solid #c9a45e; border-radius: 4px; font-size: 0.85rem; cursor: pointer;">
+                  <select onchange="overrideRSVP({{ data.event.id }}, {{ rsvp.id }}, this)" style="width: auto; min-width: 110px; padding: 0.3rem 0.5rem; background: rgba(0,0,0,0.5); color: white; border: 1px solid #c9a45e; border-radius: 4px; font-size: 0.85rem; cursor: pointer;">
                     <option value="ATTENDING">Attending</option>
                     <option value="ABSENT" selected>Absent</option>
                     <option value="PENDING">Pending</option>
@@ -110,7 +110,7 @@
                     ⏳ {{ rsvp.user.first_name }} {{ rsvp.user.last_name }}
                   </span>
                   
-                  <select onchange="overrideRSVP({{ rsvp.id }}, this)" style="width: auto; min-width: 110px; padding: 0.3rem 0.5rem; background: rgba(0,0,0,0.5); color: white; border: 1px solid #c9a45e; border-radius: 4px; font-size: 0.85rem; cursor: pointer;">
+                  <select onchange="overrideRSVP({{ data.event.id }}, {{ rsvp.id }}, this)" style="width: auto; min-width: 110px; padding: 0.3rem 0.5rem; background: rgba(0,0,0,0.5); color: white; border: 1px solid #c9a45e; border-radius: 4px; font-size: 0.85rem; cursor: pointer;">
                     <option value="ATTENDING">Attending</option>
                     <option value="ABSENT">Absent</option>
                     <option value="PENDING" selected>Pending</option>
@@ -172,11 +172,13 @@
 
 </div>
 
+<!-- AJAX script to handle silent database updates and live DOM manipulation -->
 <script>
-function overrideRSVP(attendanceId, selectElement) {
-    const newStatus = selectElement.value;
+function overrideRSVP(eventId, attendanceId, selectElement) {
+    const newStatus = selectElement.value.toLowerCase(); // 'attending', 'absent', or 'pending'
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-    
+    const listItem = selectElement.closest('li'); // Grab the entire row for this singer
+
     // Visual feedback: dim the dropdown slightly while saving
     selectElement.style.opacity = '0.5';
 
@@ -186,19 +188,54 @@ function overrideRSVP(attendanceId, selectElement) {
             'Content-Type': 'application/json',
             'X-CSRFToken': csrfToken
         },
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify({ status: selectElement.value })
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Restore opacity and flash green to confirm the save worked
+            // 1. Success Flash
             selectElement.style.opacity = '1';
-            selectElement.style.backgroundColor = '#2e7d32'; // Dark green flash for dark mode
+            selectElement.style.backgroundColor = '#2e7d32'; 
             selectElement.style.color = '#fff';
             setTimeout(() => {
                 selectElement.style.backgroundColor = 'rgba(0,0,0,0.5)';
                 selectElement.style.color = 'white';
             }, 1000);
+
+            // 2. DOM Movement Logic
+            const targetContainer = document.getElementById(`list-${eventId}-${newStatus}`);
+            let targetUl = targetContainer.querySelector('ul');
+
+            // If the target list is currently displaying an "empty" message, remove it and create a fresh <ul>
+            if (!targetUl) {
+                const emptyMessage = targetContainer.querySelector('p');
+                if (emptyMessage) emptyMessage.remove();
+                
+                targetUl = document.createElement('ul');
+                targetUl.style.cssText = "column-count: 2; column-gap: 2rem; list-style-type: none; padding-left: 0;";
+                targetUl.className = "text-small";
+                targetContainer.appendChild(targetUl);
+            }
+
+            // appendChild natively removes the element from its old list and snaps it to the bottom of the new one
+            targetUl.appendChild(listItem);
+
+            // 3. Visual Polish: Update colors and emojis dynamically
+            const nameSpan = listItem.querySelector('span');
+            if (newStatus === 'attending') {
+                listItem.style.color = ''; // Reset to default white
+                nameSpan.innerHTML = nameSpan.innerHTML.replace(/^[❌⏳✅]\s*/, '✅ ');
+            } else if (newStatus === 'absent') {
+                listItem.style.color = '#ff4d4d'; // Red
+                nameSpan.innerHTML = nameSpan.innerHTML.replace(/^[❌⏳✅]\s*/, '❌ ');
+            } else if (newStatus === 'pending') {
+                listItem.style.color = '#f57f17'; // Orange
+                nameSpan.innerHTML = nameSpan.innerHTML.replace(/^[❌⏳✅]\s*/, '⏳ ');
+            }
+
+            // 4. Recalculate button counts and clean up empty lists
+            updateLiveCounts(eventId);
+
         } else {
             alert('Failed to update RSVP. Please refresh and try again.');
             selectElement.style.opacity = '1';
@@ -208,6 +245,37 @@ function overrideRSVP(attendanceId, selectElement) {
         console.error("Error updating RSVP:", error);
         alert("A network error occurred. Please try again.");
         selectElement.style.opacity = '1';
+    });
+}
+
+function updateLiveCounts(eventId) {
+    const statuses = ['attending', 'absent', 'pending'];
+    const labels = { 'attending': 'Attend', 'absent': 'Absent', 'pending': 'Pending' };
+    const emptyMessages = {
+        'attending': 'No attendees confirmed yet.',
+        'absent': 'No members have marked absent.',
+        'pending': 'Everyone has responded. Great job!'
+    };
+
+    statuses.forEach(status => {
+        const container = document.getElementById(`list-${eventId}-${status}`);
+        const ul = container.querySelector('ul');
+        const count = ul ? ul.querySelectorAll('li').length : 0;
+
+        // Update the numbers inside the tabs
+        const btn = document.getElementById(`btn-${eventId}-${status}`);
+        if (btn) {
+            btn.innerText = `${labels[status]} (${count})`;
+        }
+
+        // If a list just dropped to 0, destroy the <ul> and show the empty message
+        if (count === 0 && ul) {
+            ul.remove();
+            const p = document.createElement('p');
+            p.className = "text-muted text-small text-center";
+            p.innerText = emptyMessages[status];
+            container.appendChild(p);
+        }
     });
 }
 </script>
