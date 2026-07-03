@@ -119,21 +119,17 @@ def contact_view(request):
 def dashboard_view(request):
     """
     The primary member command center.
-    Handles the auto-healing RSVP matrix, repertoire loading, and subscription status.
     """
     # --- A. THE AUTO-HEALING MATRIX ---
-    # Fetch all events happening from right now into the future
-    upcoming_events = Event.objects.filter(date_time__gte=timezone.now())
+    # Fetch ALL events, past and future, to ensure late-joiners get complete records
+    all_events = Event.objects.all()
 
-    # Flatten the IDs of events this user ALREADY has an RSVP row for
     existing_rsvp_event_ids = Attendance.objects.filter(
-        user=request.user, event__in=upcoming_events
+        user=request.user, event__in=all_events
     ).values_list("event_id", flat=True)
 
-    # Isolate the events that are completely missing from their profile
-    missing_events = upcoming_events.exclude(id__in=existing_rsvp_event_ids)
+    missing_events = all_events.exclude(id__in=existing_rsvp_event_ids)
 
-    # Bulk-create 'PENDING' rows instantly for any missing events
     if missing_events.exists():
         new_attendances = [
             Attendance(user=request.user, event=event, status="PENDING")
@@ -142,13 +138,12 @@ def dashboard_view(request):
         Attendance.objects.bulk_create(new_attendances)
 
     # --- B. FETCH DASHBOARD DATA ---
+    # Remove the time filter and fetch everything chronologically
     user_attendances = (
-        Attendance.objects.filter(
-            user=request.user, event__date_time__gte=timezone.now()
-        )
+        Attendance.objects.filter(user=request.user)
         .select_related("event")
         .prefetch_related("event__pieces")
-        .order_by("event__date_time")[:5]
+        .order_by("event__date_time")
     )
 
     # Extract unique repertoire across all upcoming events
@@ -341,28 +336,21 @@ def is_committee(user):
 
 @login_required
 @user_passes_test(is_committee)
-def committee_hub(request):
-    """The central command center dashboard for choir administration."""
-    return render(request, "choir/committee_hub.html")
-
-
-@login_required
-@user_passes_test(is_committee)
 def committee_rsvp_report(request):
     """A dual-panel dashboard showing Event RSVPs and Member Attendance Stats."""
 
-    today = timezone.now()
-
     # --- DATASET 1: EVENT-BY-EVENT DATA ---
-    upcoming_events = Event.objects.filter(date_time__gte=today).order_by("date_time")
+    # Fetch ALL events, ordered backwards so the latest are at the top
+    all_events = Event.objects.all().order_by("-date_time")
+
     all_attendances = (
-        Attendance.objects.filter(event__in=upcoming_events, user__is_active=True)
+        Attendance.objects.filter(event__in=all_events, user__is_active=True)
         .select_related("event", "user")
         .order_by("user__first_name")
     )
 
     report_data = []
-    for event in upcoming_events:
+    for event in all_events:
         event_rsvps = all_attendances.filter(event=event)
 
         attending = event_rsvps.filter(status="ATTENDING")
@@ -432,10 +420,22 @@ def committee_rsvp_report(request):
 # 4.2 COMMITTEE DOCUMENTS
 # =============================================================================
 @login_required
-@user_passes_test(is_committee)
+# DELETED the @user_passes_test decorator here
+def committee_hub(request):
+    """The central command center dashboard, now acting as a shared workspace."""
+    return render(request, "choir/committee_hub.html")
+
+
+@login_required
+# DELETED the @user_passes_test decorator here
 def committee_documents_view(request):
-    """Unified vault to upload and view secure committee documents."""
+    """Unified vault to view secure documents. Uploading restricted to staff."""
     if request.method == "POST":
+        # HARD STOP: If they aren't staff, block the upload attempt
+        if not request.user.is_staff:
+            messages.error(request, "Only committee members have upload permissions.")
+            return redirect("committee_documents")
+
         form = CommitteeDocumentForm(request.POST, request.FILES)
         if form.is_valid():
             document = form.save(commit=False)
