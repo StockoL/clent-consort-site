@@ -1,0 +1,40 @@
+/* ==========================================================================
+   BLOCK: BUTTON (project overrides, extends the vendored button.css)
+   ==========================================================================
+   The vendored .button gives structure/interaction (padding, focus,
+   transition) but its default typography and single variant don't match
+   this site's distinctive look - preserved here rather than left behind:
+   - Cinzel/uppercase/bold/letter-spaced type on every button (was
+     .cta-button/.cta-button-outline's font-family: var(--font-heading);
+     font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;).
+   - The chunkier 1rem/2rem padding and 2px radius the old CTA buttons
+     used, rather than the vendored block's smaller defaults.
+   - A [data-variant="outline"] exception matching the old
+     .cta-button-outline exactly (transparent, gold border+text) - the
+     vendored .button's own unstyled default is a neutral border, not
+     gold - plus its hover fill-to-solid-gold behavior, redefining the
+     button's own --button-* props on :hover/:focus-visible rather than
+     duplicating the block's rules (same CUBE exception pattern the
+     vendored block already uses for [data-variant="primary"]).
+   ========================================================================== */
+
+.button {
+  font-family: var(--fonts-heading);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 1rem 2rem;
+  border-radius: 2px;
+}
+
+.button[data-variant="outline"] {
+  --button-bg: transparent;
+  --button-text: var(--colors-action-primary);
+  --button-border: var(--colors-action-primary);
+}
+
+.button[data-variant="outline"]:hover,
+.button[data-variant="outline"]:focus-visible {
+  --button-bg: var(--colors-action-primary);
+  --button-text: var(--colors-text-on-action);
+}

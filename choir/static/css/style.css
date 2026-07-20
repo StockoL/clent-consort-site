@@ -882,24 +882,6 @@ footer a:hover,
 
 /* FORM UTILITIES & SETTINGS */
 
-/* Alerts and Messages */
-.alert {
-  padding: var(--s-1);
-  text-align: center;
-  margin-bottom: var(--s1);
-  border-radius: 4px;
-}
-
-.alert--success {
-  border: 2px solid #4caf50;
-  color: #4caf50;
-}
-
-.alert--error {
-  border: 2px solid #ff4d4d;
-  color: #ff4d4d;
-}
-
 /* Form Typography & Structure */
 .section-heading {
   color: #c9a45e;
@@ -908,7 +890,7 @@ footer a:hover,
 }
 
 .form-error {
-  color: #ff4d4d;
+  color: var(--colors-danger-text);
   font-size: 0.85em;
 }
 
@@ -1065,19 +1047,19 @@ footer a:hover,
 /* 2. The 'Invalid' state: ONLY show red IF the user has started typing 
    AND the input is currently focused */
 .box.invert input[type="password"]:not(:placeholder-shown):focus:invalid {
-  border-color: #ff4d4d !important;
+  border-color: var(--colors-danger-text) !important;
   box-shadow: 0 0 0 4px rgba(255, 77, 77, 0.4);
 }
 
 /* 3. The 'Valid' state: Green Light when it matches perfectly */
 .box.invert input[type="password"]:focus:valid {
-  border-color: #4caf50 !important;
+  border-color: var(--colors-success-text) !important;
   box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.4);
 }
 
 /* 4. Persistence: Keep it green after they finish and click away */
 .box.invert input[type="password"]:valid:not(:placeholder-shown) {
-  border-color: #4caf50 !important;
+  border-color: var(--colors-success-text) !important;
 }
 
 /* 5. Suppress the 'Standard' browser red (Firefox especially) */
@@ -1125,7 +1107,7 @@ footer a:hover,
 }
 
 .text-error {
-  color: #ff4d4d;
+  color: var(--colors-danger-text);
 }
 
 /* Card Specific Styling */
@@ -1225,13 +1207,13 @@ select.rsvp-toggle {
 /* 2. Dynamic Status Colors (High Specificity) */
 /* Adding 'select' guarantees these colors beat the browser defaults */
 select.rsvp-toggle.rsvp-pending {
-  background-color: #f57f17;
+  background-color: var(--colors-warning);
 }
 select.rsvp-toggle.rsvp-attending {
-  background-color: #2e7d32;
+  background-color: var(--colors-success);
 }
 select.rsvp-toggle.rsvp-absent {
-  background-color: #c62828;
+  background-color: var(--colors-danger);
 }
 
 /* 3. The Options Panel Fix */
