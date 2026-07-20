@@ -723,34 +723,40 @@ def committee_emergency_roster(request):
 @user_passes_test(is_committee)
 def committee_financials_view(request):
     """Unified ledger to track and log termly subscriptions."""
+    from .forms import SubscriptionPaymentForm
+    from .models import MemberProfile
 
     current_term = settings.CURRENT_TERM
 
     # --- 1. HANDLE INCOMING PAYMENTS (POST) ---
     if request.method == "POST":
         member_id = request.POST.get("member_id")
-        amount = request.POST.get("amount")
-        method = request.POST.get("method", "BACS")
-        notes = request.POST.get("notes", "")
-
-        # Fetch the specific member's profile
-        from .models import MemberProfile
-
         profile = get_object_or_404(MemberProfile, id=member_id)
 
-        # Log the payment into the database
-        SubscriptionPayment.objects.create(
-            member=profile,
-            amount=amount,
-            date_paid=timezone.now().date(),
-            term_reference=current_term,
-            payment_method=method,
-            notes=notes,
-        )
+        # date_paid/term_reference are stamped server-side rather than left
+        # editable in the quick-log row - matches the old behaviour, but now
+        # goes through the ModelForm so amount is actually validated instead
+        # of being handed straight to the DB (a non-numeric amount used to
+        # 500 the whole view).
+        post_data = request.POST.copy()
+        post_data.setdefault("date_paid", timezone.now().date().isoformat())
+        post_data.setdefault("term_reference", current_term)
+        form = SubscriptionPaymentForm(post_data)
 
-        messages.success(
-            request, f"Payment successfully logged for {profile.user.get_full_name()}."
-        )
+        if form.is_valid():
+            payment = form.save(commit=False)
+            payment.member = profile
+            payment.save()
+            messages.success(
+                request,
+                f"Payment successfully logged for {profile.user.get_full_name()}.",
+            )
+        else:
+            messages.error(
+                request,
+                f"Could not log payment for {profile.user.get_full_name()}: "
+                f"{form.errors.as_text()}",
+            )
         return redirect("committee_financials")
 
     # --- 2. BUILD THE ROSTER DISPLAY (GET) ---
@@ -792,6 +798,64 @@ def committee_financials_view(request):
         "current_term": current_term,
     }
     return render(request, "choir/committee_financials.html", context)
+
+
+@login_required
+@user_passes_test(is_committee)
+def committee_financials_edit_view(request, payment_id):
+    """Lets the committee correct a logged payment - amount, date, term,
+    method, or notes - after the fact, e.g. a mis-keyed amount or a cash
+    payment later reconciled to a specific date."""
+    from .forms import SubscriptionPaymentForm
+
+    payment = get_object_or_404(SubscriptionPayment, id=payment_id)
+
+    if request.method == "POST":
+        form = SubscriptionPaymentForm(request.POST, instance=payment)
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request,
+                f"Payment for {payment.member.user.get_full_name()} updated.",
+            )
+            return redirect("committee_financials")
+    else:
+        form = SubscriptionPaymentForm(instance=payment)
+
+    return render(
+        request,
+        "choir/committee_financials_edit.html",
+        {"form": form, "payment": payment},
+    )
+
+
+@login_required
+@user_passes_test(is_committee)
+@require_POST
+def committee_financials_delete_view(request, payment_id):
+    """Removes a mistakenly logged payment (e.g. duplicate entry)."""
+    payment = get_object_or_404(SubscriptionPayment, id=payment_id)
+    member_name = payment.member.user.get_full_name()
+    payment.delete()
+    messages.success(request, f"Payment for {member_name} deleted.")
+    return redirect("committee_financials")
+
+
+@login_required
+@user_passes_test(is_committee)
+@require_POST
+def committee_toggle_exempt_view(request, profile_id):
+    """Manually flips a member's exempt-from-subs status - e.g. scholars,
+    bursaries, or staff who don't appear in the financial ledger."""
+    from .models import MemberProfile
+
+    profile = get_object_or_404(MemberProfile, id=profile_id)
+    profile.is_exempt_from_subs = not profile.is_exempt_from_subs
+    profile.save()
+
+    status = "exempted from" if profile.is_exempt_from_subs else "re-added to"
+    messages.success(request, f"{profile.user.get_full_name()} {status} the subs ledger.")
+    return redirect("committee_financials")
 
 
 # ==============================================================================

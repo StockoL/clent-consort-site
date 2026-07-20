@@ -12,6 +12,7 @@ from .models import (
     MemberProfile,
     Project,
     Repertoire,
+    SubscriptionPayment,
 )
 
 
@@ -209,6 +210,31 @@ class AvailabilityPollForm(forms.ModelForm):
                 attrs={"type": "date", "class": "form-control"}
             ),
             "notes": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+        }
+
+
+class SubscriptionPaymentForm(forms.ModelForm):
+    """
+    Replaces committee_financials_view's old raw request.POST.get("amount")
+    handling, which had zero validation - a non-numeric amount would 500
+    the whole view instead of re-rendering with an error. Excludes member,
+    same convention as GiftAidForm: it's stamped programmatically in the
+    view rather than editable through the form.
+    """
+
+    class Meta:
+        model = SubscriptionPayment
+        fields = ["amount", "date_paid", "term_reference", "payment_method", "notes"]
+        widgets = {
+            "amount": forms.NumberInput(
+                attrs={"class": "form-control", "step": "0.01"}
+            ),
+            "date_paid": forms.DateInput(
+                attrs={"type": "date", "class": "form-control"}
+            ),
+            "term_reference": forms.TextInput(attrs={"class": "form-control"}),
+            "payment_method": forms.Select(attrs={"class": "form-control"}),
+            "notes": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
         }
 
 

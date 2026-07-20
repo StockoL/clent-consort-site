@@ -12,6 +12,8 @@ from choir.views import (
     committee_broadcast,
     committee_documents_view,
     committee_emergency_roster,
+    committee_financials_delete_view,
+    committee_financials_edit_view,
     committee_financials_view,
     committee_hub,
     committee_poll_manage_view,
@@ -19,6 +21,7 @@ from choir.views import (
     committee_projects_view,
     committee_rsvp_report,
     committee_schedule_event,  # <-- ADD THIS IMPORT LINE HERE
+    committee_toggle_exempt_view,
     committee_update_rsvp_override,
     contact_view,
     dashboard_view,
@@ -99,6 +102,21 @@ urlpatterns = [
         "members/committee/financials/",
         committee_financials_view,
         name="committee_financials",
+    ),
+    path(
+        "members/committee/financials/<int:payment_id>/edit/",
+        committee_financials_edit_view,
+        name="committee_financials_edit",
+    ),
+    path(
+        "members/committee/financials/<int:payment_id>/delete/",
+        committee_financials_delete_view,
+        name="committee_financials_delete",
+    ),
+    path(
+        "members/committee/financials/<int:profile_id>/toggle-exempt/",
+        committee_toggle_exempt_view,
+        name="committee_toggle_exempt",
     ),
     # --- Action Handlers ---
     path("rsvp/<int:attendance_id>/", update_rsvp_view, name="update_rsvp"),

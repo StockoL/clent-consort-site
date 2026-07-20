@@ -53,25 +53,38 @@
             {% else %}
               <span class="badge" data-status="warning">Unpaid</span>
             {% endif %}
+            <form method="POST" action="{% url 'committee_toggle_exempt' row.profile.id %}" style="display: inline;">
+              {% csrf_token %}
+              <button type="submit" class="button btn-small" data-variant="outline" style="padding: 0.1rem 0.5rem; font-size: 0.7rem; margin-top: 0.35rem;">
+                {% if row.is_exempt %}Un-exempt{% else %}Mark Exempt{% endif %}
+              </button>
+            </form>
           </td>
-          
+
           <td style="padding: 1rem;">
             {% if not row.payment %}
             <form method="POST" style="display: flex; gap: 0.5rem; align-items: center;">
               {% csrf_token %}
               <input type="hidden" name="member_id" value="{{ row.profile.id }}">
-              
+
               <input type="number" name="amount" value="50.00" step="0.01" style="width: 80px; padding: 0.25rem; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.2); color: white;" required>
-              
-              <select name="method" style="padding: 0.25rem; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.2); color: white;">
+
+              <select name="payment_method" style="padding: 0.25rem; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.2); color: white;">
                 <option value="BACS">BACS</option>
                 <option value="CASH">Cash</option>
               </select>
-              
+
               <button type="submit" class="button btn-small" data-variant="primary" style="padding: 0.25rem 0.75rem;">Log</button>
             </form>
             {% else %}
-              <span class="text-small text-muted">Recorded: {{ row.payment.date_paid|date:"j M Y" }}</span>
+              <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <span class="text-small text-muted">Recorded: {{ row.payment.date_paid|date:"j M Y" }}</span>
+                <a href="{% url 'committee_financials_edit' row.payment.id %}" class="button btn-small" data-variant="outline" style="padding: 0.1rem 0.5rem; font-size: 0.7rem; text-decoration: none;">Edit</a>
+                <form method="POST" action="{% url 'committee_financials_delete' row.payment.id %}" style="display: inline;" onsubmit="return confirm('Delete this payment record?');">
+                  {% csrf_token %}
+                  <button type="submit" class="button btn-small" data-variant="outline" style="padding: 0.1rem 0.5rem; font-size: 0.7rem;">Delete</button>
+                </form>
+              </div>
             {% endif %}
           </td>
 

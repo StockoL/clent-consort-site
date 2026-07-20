@@ -16,6 +16,7 @@ from .models import (
     Event,
     Project,
     Repertoire,
+    SubscriptionPayment,
 )
 
 
@@ -521,3 +522,98 @@ class CommitteePollManagementTests(TestCase):
         self.assertEqual(row["yes_count"], 1)
         # self.staff never responded, so should appear as a non-responder
         self.assertIn(self.staff, row["non_responders"])
+
+
+class CommitteeFinancialsTests(TestCase):
+    """Guards the finance ledger CRUD: logging a payment now goes through
+    SubscriptionPaymentForm instead of a raw request.POST.get("amount")
+    with no validation - a non-numeric amount used to 500 the whole view.
+    Also covers editing, deleting, and the exempt-status toggle."""
+
+    def setUp(self):
+        self.staff = User.objects.create_user(
+            username="committee", password="pw", is_staff=True
+        )
+        self.client.login(username="committee", password="pw")
+
+        self.singer = User.objects.create_user(username="singer", password="pw")
+        self.profile = self.singer.profile
+
+    def test_create_payment_with_valid_amount_logs_it(self):
+        response = self.client.post(
+            reverse("committee_financials"),
+            {"member_id": self.profile.id, "amount": "45.00", "payment_method": "BACS"},
+        )
+        self.assertRedirects(response, reverse("committee_financials"))
+        payment = SubscriptionPayment.objects.get(member=self.profile)
+        self.assertEqual(str(payment.amount), "45.00")
+
+    def test_create_payment_with_invalid_amount_does_not_crash(self):
+        response = self.client.post(
+            reverse("committee_financials"),
+            {"member_id": self.profile.id, "amount": "not-a-number", "payment_method": "BACS"},
+        )
+        self.assertNotEqual(response.status_code, 500)
+        self.assertFalse(SubscriptionPayment.objects.filter(member=self.profile).exists())
+
+    def test_edit_payment_updates_amount(self):
+        payment = SubscriptionPayment.objects.create(
+            member=self.profile,
+            amount="50.00",
+            date_paid=timezone.now().date(),
+            term_reference="Autumn 2026",
+        )
+        response = self.client.post(
+            reverse("committee_financials_edit", args=[payment.id]),
+            {
+                "amount": "60.00",
+                "date_paid": payment.date_paid.isoformat(),
+                "term_reference": "Autumn 2026",
+                "payment_method": "CASH",
+            },
+        )
+        self.assertRedirects(response, reverse("committee_financials"))
+        payment.refresh_from_db()
+        self.assertEqual(str(payment.amount), "60.00")
+        self.assertEqual(payment.payment_method, "CASH")
+
+    def test_delete_payment_removes_it(self):
+        payment = SubscriptionPayment.objects.create(
+            member=self.profile,
+            amount="50.00",
+            date_paid=timezone.now().date(),
+            term_reference="Autumn 2026",
+        )
+        response = self.client.post(
+            reverse("committee_financials_delete", args=[payment.id])
+        )
+        self.assertRedirects(response, reverse("committee_financials"))
+        self.assertFalse(SubscriptionPayment.objects.filter(id=payment.id).exists())
+
+    def test_toggle_exempt_flips_status(self):
+        self.assertFalse(self.profile.is_exempt_from_subs)
+        self.client.post(reverse("committee_toggle_exempt", args=[self.profile.id]))
+        self.profile.refresh_from_db()
+        self.assertTrue(self.profile.is_exempt_from_subs)
+
+        self.client.post(reverse("committee_toggle_exempt", args=[self.profile.id]))
+        self.profile.refresh_from_db()
+        self.assertFalse(self.profile.is_exempt_from_subs)
+
+    def test_edit_delete_and_toggle_blocked_for_non_staff(self):
+        self.client.logout()
+        User.objects.create_user(username="member", password="pw")
+        self.client.login(username="member", password="pw")
+
+        payment = SubscriptionPayment.objects.create(
+            member=self.profile,
+            amount="50.00",
+            date_paid=timezone.now().date(),
+            term_reference="Autumn 2026",
+        )
+        for response in (
+            self.client.get(reverse("committee_financials_edit", args=[payment.id])),
+            self.client.post(reverse("committee_financials_delete", args=[payment.id])),
+            self.client.post(reverse("committee_toggle_exempt", args=[self.profile.id])),
+        ):
+            self.assertEqual(response.status_code, 302)
