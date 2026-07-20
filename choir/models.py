@@ -372,23 +372,24 @@ class ChoirCommunication(models.Model):
                     is_active=True, profile__voice_part=self.audience[0]
                 )
 
-            email_list = list(recipients.values_list("email", flat=True))
-
-            # 2. Fire the email via Brevo
+            # 2. Fire the email via Brevo - one send per recipient, not one
+            # shared recipient_list, so members' addresses stay private from
+            # each other.
             # Create a clean, stripped-down version of the email for older email clients
             # or strict spam filters that reject HTML.
-            for user in recipients:
-                if user.email:
-                    plain_message = strip_tags(self.message)
+            plain_message = strip_tags(self.message)
 
-            send_mail(
-                subject=self.subject,
-                message=plain_message,  # The plain-text fallback
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=email_list,
-                html_message=self.message,  # THE MAGIC: Injects your TinyMCE formatting!
-                fail_silently=False,
-            )
+            for user in recipients:
+                if not user.email:
+                    continue
+                send_mail(
+                    subject=self.subject,
+                    message=plain_message,  # The plain-text fallback
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email],
+                    html_message=self.message,  # THE MAGIC: Injects your TinyMCE formatting!
+                    fail_silently=False,
+                )
 
 
 # ==============================================================================
