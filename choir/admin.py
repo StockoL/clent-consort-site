@@ -142,8 +142,7 @@ class LearningAssetInline(admin.TabularInline):
 
 @admin.register(Repertoire)
 class RepertoireAdmin(admin.ModelAdmin):
-    list_display = ("composer", "title", "slug")
-    prepopulated_fields = {"slug": ("title",)}
+    list_display = ("composer", "title")
     inlines = [LearningAssetInline]
 
 

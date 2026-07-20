@@ -152,15 +152,6 @@ class Repertoire(models.Model):
     composer = models.CharField(max_length=100)
     title = models.CharField(max_length=200)
 
-    # 1. Removed unique=True for now
-    # 2. Added null=True, blank=True
-    slug = models.SlugField(
-        max_length=200,
-        null=True,
-        blank=True,
-        help_text="URL-friendly name (e.g., mozart-requiem)",
-    )
-
     def __str__(self):
         return f"{self.composer}: {self.title}"
 
