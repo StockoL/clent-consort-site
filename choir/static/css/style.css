@@ -73,23 +73,6 @@ html {
   padding-inline: var(--s1);
 }
 
-/* The Sidebar: General layout tool */
-.l-sidebar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s1);
-}
-
-.l-sidebar > :first-child {
-  flex-basis: 20rem;
-  flex-grow: 1;
-}
-
-.l-sidebar > :last-child {
-  flex-basis: 30rem;
-  flex-grow: 999;
-}
-
 /* The Reel: Horizontal scrolling logic */
 .l-reel {
   display: flex;
@@ -110,14 +93,6 @@ html {
   }
 }
 
-/* The Cluster: For row alignment */
-.l-cluster {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--s1);
-}
 /* The Switcher Pattern */
 .l-switcher {
   display: flex;
@@ -160,20 +135,6 @@ html {
     0 10px 15px -3px rgba(0, 0, 0, 0.3),
     0 40px 60px -15px rgba(0, 0, 0, 0.4);
 }
-.l-frame {
-  aspect-ratio: var(--aspect-ratio, 16/9);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden;
-}
-
-.l-frame > img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 /* ==========================================================================
    3. GLOBAL COMPONENTS (Header, Footer, Buttons)
    ========================================================================== */
@@ -1026,12 +987,6 @@ footer a:hover,
    6. LOGIN PAGE & SECURITY FEEDBACK
    ========================================================================== */
 
-.login-nav {
-  display: flex;
-  justify-content: flex-start;
-  margin-bottom: var(--s-1);
-}
-
 .back-link {
   color: #666;
   text-decoration: none;
@@ -1061,15 +1016,8 @@ footer a:hover,
 
 .login-header h1,
 .login-header p,
-.login-footer-text,
 .box.invert .form-group label {
   color: #c9a45e;
-}
-
-.login-footer-text {
-  font-size: 0.85rem;
-  text-align: center;
-  opacity: 0.8;
 }
 
 /* Fat-Finger Touch Targets */
@@ -1141,20 +1089,6 @@ footer a:hover,
    7. MEMBER DASHBOARD SPECIFICS
    ========================================================================== */
 
-/* --- Layout Settings (Pure CSS Thresholds) --- */
-.dashboard-sidebar {
-  --gap: var(--s2);
-  --sidebar-width: 25rem; /* Prevents squishing by prioritising the list side */
-}
-
-.dashboard-switcher {
-  --threshold: 60rem; /* Stacks sooner to allow full-width reading */
-}
-
-.voice-hub-switcher {
-  --threshold: 20rem;
-}
-
 .login-wrapper {
   --box-padding: var(--s1);
 }
@@ -1163,145 +1097,6 @@ footer a:hover,
   .login-wrapper {
     --box-padding: var(--s2); /* Desktop breathing room */
   }
-}
-
-/* --- Schedule List Styling --- */
-.schedule-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s0);
-  border-top: 1px solid #444;
-  padding-top: var(--s0);
-}
-
-.schedule-list div {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.schedule-list dt {
-  font-family: var(--font-heading);
-  color: #c9a45e;
-  font-weight: bold;
-  text-transform: uppercase;
-  font-size: 0.9rem;
-  min-width: 11rem; /* Keeps dates on one line */
-  flex-shrink: 0;
-}
-
-.schedule-list dd {
-  margin: 0;
-  color: #fff;
-  font-size: 1rem;
-}
-
-@media (min-width: 40rem) {
-  .schedule-list div {
-    flex-direction: row;
-    gap: var(--s1);
-  }
-}
-
-/* --- Music Library & PDF Buttons --- */
-.service-title {
-  font-family: var(--font-body);
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  color: #c9a45e;
-  border-bottom: 1px solid #444;
-  padding-bottom: 0.25rem;
-  margin-top: var(--s1);
-}
-
-.music-list {
-  list-style: none;
-  padding: 0;
-}
-
-.music-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.file-link {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.3rem 0.7rem;
-  background-color: rgba(201, 164, 94, 0.1);
-  color: #c9a45e;
-  border: 1px solid rgba(201, 164, 94, 0.5);
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-decoration: none;
-  gap: 0.5rem;
-}
-
-.file-link::before {
-  content: "PDF";
-  font-size: 0.6rem;
-  padding: 0.1rem 0.3rem;
-  background-color: #c9a45e;
-  color: #1a1a1a;
-  border-radius: 2px;
-}
-
-.featured-download {
-  background: rgba(201, 164, 94, 0.1);
-  padding: var(--s0);
-  border-left: 4px solid #c9a45e;
-}
-
-.featured-download a {
-  color: #fff;
-  text-decoration: none;
-}
-
-/* --- Sidebar Meta & Voice Hubs --- */
-.schedule-meta {
-  border-top: 1px solid #333;
-  padding-top: var(--s1);
-}
-.meta-block h4 {
-  color: #c9a45e;
-  text-transform: uppercase;
-  margin-bottom: 0.5rem;
-}
-
-@media (min-width: 50rem) {
-  .schedule-meta {
-    border-top: none;
-    border-left: 1px solid #333;
-    padding-top: 0;
-    padding-left: var(--s2);
-  }
-}
-
-.tracks-section {
-  margin-top: var(--s3);
-  padding-top: var(--s2);
-  border-top: 1px dashed rgba(201, 164, 94, 0.3);
-}
-
-.voice-card {
-  background: rgba(255, 255, 255, 0.03);
-  padding: var(--s1);
-  border: 1px solid #333;
-  text-align: center;
-}
-.voice-card h4 {
-  color: #c9a45e;
-  margin: 0;
-}
-.voice-card .cta-button {
-  width: 100%;
-  margin-top: var(--s0);
-  padding: 0.6rem;
-  font-size: 0.8rem;
 }
 
 /* Layout & Spacing */
@@ -1340,11 +1135,6 @@ footer a:hover,
   height: 100%; /* Ensures all cards in a row stretch to the same height */
 }
 
-.card-footer {
-  margin-top: auto; /* Pushes the button to the bottom of the card */
-  padding-top: var(--s1);
-}
-
 /* --- General Utilities --- */
 .u-measure {
   max-width: 65ch;
@@ -1354,12 +1144,6 @@ footer a:hover,
   line-height: 1.6;
   font-size: 0.9rem;
 }
-.dashboard-footer {
-  text-align: center;
-  border-top: 1px solid #eee;
-  padding-top: var(--s2);
-}
-
 /* Container & Margin Utilities */
 .container-narrow {
   max-width: 500px;
@@ -1493,11 +1277,6 @@ select.rsvp-toggle option {
 }
 
 /* Typography & Layout Tweaks */
-.text-warning {
-  color: #ffb74d;
-  font-size: 0.85em;
-}
-
 .subtitle-faded {
   font-size: 0.9em;
   margin-top: -1rem;
@@ -1507,10 +1286,6 @@ select.rsvp-toggle option {
 .text-muted {
   font-size: 0.85em;
   color: #aaa;
-}
-
-.mb-s-1 {
-  margin-bottom: var(--s-1);
 }
 
 /* Button Grouping */
@@ -1638,22 +1413,6 @@ footer.invert a:hover {
   text-decoration: none;
 }
 
-.btn-secondary {
-  background-color: transparent;
-  border: 1px solid currentColor;
-  color: inherit;
-}
-
-.btn-secondary:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.audio-player-wrapper audio {
-  display: block;
-  width: 100%;
-  border-radius: 4px;
-}
-
 /* Accessibility: Screen Reader Only helper */
 .sr-only {
   position: absolute;
@@ -1700,9 +1459,6 @@ footer.invert a:hover {
 /* Typography Spacing Fixes */
 .mb-0 {
   margin-bottom: 0;
-}
-.mt-0 {
-  margin-top: 0;
 }
 .mt-s-min {
   margin-top: var(--s-min);
