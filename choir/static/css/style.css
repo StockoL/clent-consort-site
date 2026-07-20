@@ -844,7 +844,7 @@ footer a:hover,
 }
 
 .contact-forms-layout {
-  --threshold: 60rem;
+  --switcher-threshold: 60rem;
   max-width: 75rem;
   margin-inline: auto;
   gap: var(--s2);
