@@ -577,6 +577,20 @@ def committee_rsvp_report(request):
     if selected_project_id.isdigit():
         all_events = all_events.filter(project_id=selected_project_id)
 
+    # The dropdown/wrapper list stays newest-first (matches the rest of the
+    # site), but the *default* selection should be the next upcoming event,
+    # not whichever happens to sort first in that list (which, for a
+    # project with several future dates already scheduled, was the last
+    # one in the cycle rather than the next rehearsal). Falls back to the
+    # most recent past event if nothing is upcoming.
+    default_event = (
+        all_events.filter(date_time__gte=timezone.now())
+        .order_by("date_time")
+        .first()
+        or all_events.first()
+    )
+    default_event_id = default_event.id if default_event else None
+
     all_attendances = (
         Attendance.objects.filter(event__in=all_events, user__is_active=True)
         .select_related("event", "user")
@@ -647,6 +661,7 @@ def committee_rsvp_report(request):
         "member_stats": member_stats,
         "projects": Project.objects.all(),
         "selected_project_id": selected_project_id,
+        "default_event_id": default_event_id,
     }
 
     return render(request, "choir/committee_rsvps.html", context)

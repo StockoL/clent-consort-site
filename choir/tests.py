@@ -732,3 +732,23 @@ class CommitteeRsvpProjectScopingTests(TestCase):
             return row["attending"]
 
         self.assertEqual(rate_for(default_response), rate_for(scoped_response))
+
+    def test_default_event_is_the_next_upcoming_one_not_the_last_in_the_list(self):
+        # report_data/the dropdown stay newest-first, but the *default*
+        # selection should be whichever event is soonest from now - not
+        # simply the first item in that descending list (which, with
+        # several future dates already on the calendar, was the last
+        # rehearsal in the cycle rather than the next one).
+        soon = Event.objects.create(
+            project=self.active_project,
+            date_time=timezone.now() + timedelta(days=1),
+            location="Next Rehearsal",
+        )
+        Event.objects.create(
+            project=self.active_project,
+            date_time=timezone.now() + timedelta(days=60),
+            location="Final Concert",
+        )
+
+        response = self.client.get(reverse("committee_rsvps"))
+        self.assertEqual(response.context["default_event_id"], soon.id)

@@ -10,12 +10,30 @@
     </a>
   </div>
 
-  <section class="card" data-variant="invert">
-    <h2 class="text-step-1">Send Choir Broadcast</h2>
-    <form method="POST">
+  <section class="card flow" data-variant="invert">
+    <h2 class="text-primary text-step-1" style="padding-bottom: var(--space-3xs); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">Send Choir Broadcast</h2>
+    <form method="POST" class="flow flow--small" style="margin-block-start: var(--space-s)">
       {% csrf_token %}
-      {{ form.as_p }}
-      <button type="submit" class="button" data-variant="primary">Send Email</button>
+
+      <div>
+        <label class="form-label text-small">{{ form.audience.label }}</label>
+        {{ form.audience }}
+        <div class="form-error">{{ form.audience.errors }}</div>
+      </div>
+
+      <div>
+        <label class="form-label text-small">{{ form.subject.label }}</label>
+        {{ form.subject }}
+        <div class="form-error">{{ form.subject.errors }}</div>
+      </div>
+
+      <div>
+        <label class="form-label text-small">{{ form.message.label }}</label>
+        {{ form.message }}
+        <div class="form-error">{{ form.message.errors }}</div>
+      </div>
+
+      <button type="submit" class="button w-100" data-variant="primary" style="--flow-space: var(--space-s)">Send Email</button>
     </form>
   </section>
 </div>

@@ -161,6 +161,21 @@
   width: 100%;
 }
 
+/* textarea was missing from the rule above - it inherited no background
+   or border at all inside dark cards, rendering as unstyled/invisible
+   text against the card's own dark background (first noticed on the
+   Broadcast message box, but affects every textarea in an invert card -
+   poll notes, project description, payment notes). */
+[data-variant="invert"] textarea {
+  font-size: 1.1rem;
+  padding: var(--space-xs);
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 [data-variant="invert"] .button {
   min-height: 3.5rem;
   font-size: 1.1rem;
@@ -180,6 +195,19 @@
 [data-variant="invert"] .button:hover {
   background-color: #c9a45e;
   color: #ffffff;
+}
+
+/* .btn-small is the established "compact, inline" button size exception
+   (button-overrides.css) - used throughout committee pages for row-level
+   actions (Edit, Delete, Mark Exempt, Back to Hub...), often sitting in a
+   flex row next to plain inputs/selects that don't get the margin-top
+   above. Exempt it from the full-width/tall/margin-top treatment, which
+   is meant for standalone stacked CTAs (Save Changes, Send Email, Log
+   In), not inline row buttons. */
+[data-variant="invert"] .button.btn-small {
+  min-height: auto;
+  width: auto;
+  margin-top: 0;
 }
 
 /* --- High-Visibility Security Visual Feedback (password field) --- */

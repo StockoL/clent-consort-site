@@ -6,6 +6,19 @@
   text-align: center;
 }
 
+/* p/li/dl/figcaption/blockquote are capped to the typographic measure
+   (global-styles.css) with no margin-inline: auto, so inside a
+   .text-center block a narrower-than-container element sits flush left
+   and only its own text is centered within that off-center box - it
+   reads as "not centered" even though text-align is correctly set. */
+.text-center p,
+.text-center li,
+.text-center dl,
+.text-center figcaption,
+.text-center blockquote {
+  margin-inline: auto;
+}
+
 .text-uppercase {
   text-transform: uppercase;
   letter-spacing: 0.04ch; /* Automatically applies kerning to prevent squishing */

@@ -1,17 +1,18 @@
 {% extends 'choir/base.html' %}
 
 {% block content %}
-<div class="wrapper section-padding">
+<div class="wrapper flow section-padding">
+  <div class="text-center">
+    <h1 class="text-primary">Duty of Care Roster</h1>
+    <p class="text-small text-muted">Strictly Confidential. Staff Access Only.</p>
+
+    <a href="{% url 'committee_hub' %}" class="button btn-small" data-variant="outline" style="text-decoration: none; display: inline-block; margin-block-start: var(--space-2xs);">
+      ← Back to Hub
+    </a>
+  </div>
+
   <div class="card" data-variant="invert">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-      <div>
-        <h1 class="text-primary" style="margin-bottom: 0.25rem;">Duty of Care Roster</h1>
-        <p class="text-small text-muted">Strictly Confidential. Staff Access Only.</p>
-      </div>
-      <a href="{% url 'committee_hub' %}" class="back-link">← Back to Hub</a>
-    </div>
-    
-    <div style="overflow-x: auto; margin-top: 2rem;">
+    <div style="overflow-x: auto;">
       <table class="data-table" style="width: 100%; text-align: left; border-collapse: collapse;">
         <thead>
           <tr style="border-bottom: 2px solid var(--primary);">

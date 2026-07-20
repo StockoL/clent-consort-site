@@ -36,7 +36,7 @@
         <label for="event-selector" class="text-small text-muted" style="display: block; margin-bottom: 0.5rem;">Select Event:</label>
         <select id="event-selector" onchange="switchEvent(this.value)" style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.3); border: 1px solid #c9a45e; color: white; border-radius: 4px; font-size: 1rem; cursor: pointer;">
           {% for data in report_data %}
-            <option value="{{ data.event.id }}">{{ data.event.date_time|date:"d M Y" }} - {{ data.event.get_event_type_display }} ({{ data.event.location }})</option>
+            <option value="{{ data.event.id }}" {% if data.event.id == default_event_id %}selected{% endif %}>{{ data.event.date_time|date:"d M Y" }} - {{ data.event.get_event_type_display }} ({{ data.event.location }})</option>
           {% empty %}
             <option value="">No upcoming events scheduled</option>
           {% endfor %}
@@ -44,7 +44,7 @@
       </div>
 
       {% for data in report_data %}
-      <div id="event-wrapper-{{ data.event.id }}" class="event-wrapper" {% if not forloop.first %}style="display: none;"{% endif %}>
+      <div id="event-wrapper-{{ data.event.id }}" class="event-wrapper" {% if data.event.id != default_event_id %}style="display: none;"{% endif %}>
         
         <div class="rsvp-tab-container" style="margin-bottom: 1.5rem;">
           <button id="btn-{{ data.event.id }}-attending" onclick="switchTab('{{ data.event.id }}', 'attending')" class="rsvp-tab rsvp-btn-{{ data.event.id }} active">
