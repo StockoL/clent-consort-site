@@ -103,19 +103,33 @@
       {% block content %} {% endblock content %}
     </main>
 
-    <footer class="invert footer-slim">
-      <div class="wrapper">
-        <div class="footer-grid">
-          <div class="footer-col-left">
-            {% if not user.is_authenticated %}
-            <a href="{% url 'account_login' %}" class="footer-btn">Member Login</a>
-            {% else %}
-            <a href="{% url 'account_logout' %}" class="footer-btn">Logout</a>
-            {% endif %}
+    <footer class="invert">
+      <div class="wrapper flow">
+        <div class="footer-primary switcher">
+          <div class="footer-brand flow flow--small">
+            <p class="footer-brand-name">Clent Consort</p>
+            <p class="footer-tagline">Ancient Spires, Modern Voices</p>
           </div>
 
-          <div class="footer-col-center">
-            <div class="social-group">
+          <nav class="footer-nav" aria-label="Footer">
+            <ul class="cluster">
+              <li><a href="{% url 'home' %}">Home</a></li>
+              <li><a href="{% url 'about' %}">About</a></li>
+              <li><a href="{% url 'events' %}">Events</a></li>
+              <li><a href="{% url 'contact' %}">Contact</a></li>
+              <li>
+                {% if user.is_authenticated %}
+                <a href="{% url 'members' %}">Members</a>
+                {% else %}
+                <a href="{% url 'account_login' %}">Member Login</a>
+                {% endif %}
+              </li>
+            </ul>
+          </nav>
+
+          <div class="footer-connect flow flow--small">
+            <span class="footer-connect-label">Follow Along</span>
+            <div class="social-group cluster">
               <a href="#" class="social-icon" aria-label="YouTube">
                 <svg viewBox="0 0 24 24" fill="currentColor">
                   <path
@@ -139,12 +153,12 @@
               </a>
             </div>
           </div>
-
-          <div class="footer-col-right">
-            <a href="#top" class="footer-btn">Top ↑</a>
-          </div>
         </div>
-        <p class="copyright">© 2026 Clent Consort</p>
+
+        <div class="footer-bottom cluster">
+          <p class="copyright">© 2026 Clent Consort</p>
+          <a href="#top" class="footer-top-link">Back to top ↑</a>
+        </div>
       </div>
     </footer>
 

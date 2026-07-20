@@ -1,75 +1,25 @@
 /* ==========================================================================
-   BLOCK: SITE FOOTER (decanted from style.css "v1")
+   BLOCK: SITE FOOTER
    ==========================================================================
-   .footer-btn used to be defined twice (a plain text-link style, then a
-   bordered-pill version later in the file that won on every overlapping
-   property via source order) - deduplicated here into the one style that
-   was actually rendering, not both.
+   Redesigned from the original three-column utility-link footer (login/
+   logout button, social icons, "Top" link - no site navigation at all)
+   into a proper closing section: brand mark + tagline, footer nav,
+   and a "connect" column, with a slim bottom bar for copyright and a
+   text back-to-top link (the floating .back-to-top button already
+   covers the same job while scrolling - this one is just for footer
+   completeness, understated rather than another bordered button).
    ========================================================================== */
 
 footer {
-  padding: var(--s1);
-  border-top: 1px solid #eee;
-  flex-shrink: 0; /* Prevents the flexbox from squishing the footer */
-}
-
-footer.invert {
   background-color: #1a1a1a;
   color: #ffffff;
-  border-top: none;
-}
-
-.footer-grid {
-  display: flex;
-  flex-direction: column; /* Mobile-first: stack everything vertically */
-  gap: var(--s2);
-  align-items: center;
-  margin-bottom: var(--s1);
-}
-
-@media (min-width: 45rem) {
-  .footer-grid {
-    flex-direction: row;
-    justify-content: space-between;
-  }
-
-  .footer-col-left,
-  .footer-col-center,
-  .footer-col-right {
-    flex: 1;
-  }
-
-  .footer-col-left {
-    text-align: left;
-  }
-
-  .footer-col-right {
-    text-align: right;
-  }
-}
-
-.social-group {
-  display: flex;
-  flex-direction: row;
-  gap: var(--s1);
-  justify-content: center;
-  align-items: center;
-}
-
-.social-icon svg {
-  width: 24px;
-  height: 24px;
-  display: block;
-  transition: transform 0.2s ease;
-}
-
-.social-icon:hover svg {
-  transform: scale(1.1);
+  padding-block: var(--s3) var(--s2);
+  border-top: 1px solid rgba(201, 164, 94, 0.25); /* Subtle gold hairline, echoing card-invert's border treatment */
 }
 
 footer a {
   text-decoration: none;
-  color: #555;
+  color: #e0e0e0;
   transition: color 0.2s ease;
 }
 
@@ -77,37 +27,93 @@ footer a:hover {
   color: #c9a45e;
 }
 
-footer.invert a,
-footer.invert .copyright {
-  color: #e0e0e0;
+/* --- Primary row: brand / nav / connect --- */
+.footer-primary {
+  --switcher-threshold: 55rem;
+  align-items: flex-start;
 }
 
-footer.invert a:hover {
-  color: #c9a45e;
-}
-
-.footer-btn {
-  display: inline-block;
-  padding: 0.5rem 1rem;
-  border: 1px solid rgba(201, 164, 94, 0.4); /* Subtle gold border */
-  text-decoration: none;
-  color: #c9a45e !important;
-  text-transform: uppercase;
+.footer-brand-name {
   font-family: var(--fonts-heading);
-  font-size: 0.8rem;
-  letter-spacing: 0.1ch;
-  transition: all 0.3s ease;
-  border-radius: 2px;
+  font-size: var(--typography-step-1);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #c9a45e;
+  margin: 0;
 }
 
-.footer-btn:hover {
+.footer-tagline {
+  color: #aaaaaa;
+  font-size: 0.9rem;
+  font-style: italic;
+  margin: 0;
+}
+
+.footer-nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-nav a {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05ch;
+}
+
+.footer-connect-label {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #888;
+}
+
+.social-group {
+  --gutter: 0.6rem;
+}
+
+.social-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  border: 1px solid rgba(201, 164, 94, 0.35);
+  color: #e0e0e0;
+  transition: all 0.2s ease;
+}
+
+.social-icon svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+.social-icon:hover {
   background-color: #c9a45e;
-  color: #1a1a1a !important;
+  border-color: #c9a45e;
+  color: #1a1a1a;
+  transform: translateY(-2px);
+}
+
+/* --- Bottom bar: copyright / back to top --- */
+.footer-bottom {
+  justify-content: space-between;
+  padding-top: var(--s1);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .copyright {
-  text-align: center;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: #888;
-  margin-top: var(--s1);
+  margin: 0;
+}
+
+.footer-top-link {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
