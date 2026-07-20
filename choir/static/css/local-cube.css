@@ -7,6 +7,17 @@
    artifact - do not hand-edit that one) so it survives re-vendoring.
    ========================================================================== */
 
+@layer global {
+  /* looseleaf-ui's fonts.heading/fonts.body tokens are brand-neutral
+     placeholders (system-ui) by design, meant to be overridden per-project
+     rather than edited in the shared design-tokens.json. This is Clent
+     Consort's override. */
+  :root {
+    --fonts-heading: "Cinzel", serif;
+    --fonts-body: "Inter", sans-serif;
+  }
+}
+
 @layer blocks {
   /* The site's dark/gold "invert" card treatment, previously .box.invert
      in css/style.css. Exception-layer pattern: same .card block, state via

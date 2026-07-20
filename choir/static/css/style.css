@@ -15,9 +15,11 @@
   --s-min: 0.5rem; /* A smaller spacing unit for tight layouts */
 
   --primary: #c9a45e; /* A warm gold for accents and highlights */
-  /* Font Stacks */
-  --font-heading: "Cinzel", serif;
-  --font-body: "Inter", sans-serif;
+  /* Font Stacks - aliased to looseleaf-ui's fonts.heading/fonts.body
+     tokens (overridden for this project in css/local-cube.css) so there's
+     one source of truth instead of the family names being duplicated here. */
+  --font-heading: var(--fonts-heading);
+  --font-body: var(--fonts-body);
 }
 
 *,
