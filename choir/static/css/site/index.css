@@ -20,6 +20,7 @@
 @import "01-global/variables.css" layer(global);
 @import "01-global/tokens.css" layer(global);
 @import "01-global/global-styles.css" layer(global);
+@import "01-global/base-overrides.css" layer(global);
 
 /* --------------------------------------------------------------------------
    LAYER 2: LAYOUT COMPOSITIONS (Aesthetics-Agnostic Structural Rules)
@@ -49,6 +50,16 @@
 @import "03-blocks/offcanvas.css" layer(blocks);
 @import "03-blocks/alert.css" layer(blocks);
 @import "03-blocks/bento.css" layer(blocks);
+@import "03-blocks/site-header.css" layer(blocks);
+@import "03-blocks/site-footer.css" layer(blocks);
+@import "03-blocks/hero.css" layer(blocks);
+@import "03-blocks/carousel.css" layer(blocks);
+@import "03-blocks/about-page.css" layer(blocks);
+@import "03-blocks/event-listing.css" layer(blocks);
+@import "03-blocks/forms.css" layer(blocks);
+@import "03-blocks/event-card-dashboard.css" layer(blocks);
+@import "03-blocks/rsvp-tabs.css" layer(blocks);
+@import "03-blocks/back-to-top.css" layer(blocks);
 
 /* --------------------------------------------------------------------------
    LAYER 4: UTILITIES (Single-Purpose Overrides)
@@ -58,4 +69,6 @@
 @import "04-utilities/text.css" layer(utilities);
 @import "04-utilities/colors.css" layer(utilities);
 @import "04-utilities/status-text.css" layer(utilities);
+@import "04-utilities/spacing.css" layer(utilities);
+@import "04-utilities/misc.css" layer(utilities);
 @import "04-utilities/animations.css" layer(utilities);

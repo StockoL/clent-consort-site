@@ -1,0 +1,80 @@
+/* ==========================================================================
+   BLOCK: HERO (decanted from style.css "v1", unchanged)
+   ========================================================================== */
+
+.hero-cover {
+  display: flex;
+  flex-direction: column;
+  min-height: 80vh;
+  padding: var(--s1);
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+    url("../../../images/hero_image_clent_consort.jpg") center/cover;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  text-align: center;
+  overflow: hidden;
+}
+
+.hero-cover h1 {
+  font-weight: 700;
+  margin-bottom: var(--s1);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.hero-cover p {
+  font-size: 1.4rem;
+  margin-bottom: var(--s2);
+  max-width: 60ch;
+  margin-inline: auto;
+}
+
+.mission-cover {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
+    url("../../../images/cathedral_choir.webp") center 25% / cover;
+  min-height: 50vh;
+  color: white;
+  text-align: center;
+  padding: var(--s1);
+}
+
+.mission-cover p {
+  font-family: var(--fonts-heading);
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  max-width: 40ch;
+  line-height: 1.2;
+}
+
+/* --- Entrance animation --- */
+@keyframes heroEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+    filter: blur(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.hero-cover h1 {
+  animation: heroEntrance 1.2s ease-out forwards;
+}
+
+.hero-cover p {
+  opacity: 0;
+  animation: heroEntrance 1.2s ease-out 0.4s forwards;
+}
+
+.hero-cover .button {
+  opacity: 0;
+  animation: heroEntrance 1.2s ease-out 0.8s forwards;
+}

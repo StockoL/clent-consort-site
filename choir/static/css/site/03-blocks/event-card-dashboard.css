@@ -1,0 +1,96 @@
+/* ==========================================================================
+   BLOCK: MEMBER DASHBOARD EVENT CARDS (decanted from style.css "v1")
+   ========================================================================== */
+
+.event-card-highlight {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5rem 1.5rem 1.5rem var(--s0);
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: 3px solid var(--primary);
+}
+
+.event-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--s0);
+  flex-wrap: wrap; /* Allows the RSVP button to drop below on smaller screens */
+}
+
+.event-date {
+  margin: 0;
+  line-height: 1.2;
+}
+
+/* --- RSVP dropdown --- */
+select.rsvp-toggle {
+  font-family: var(--fonts-body);
+  font-size: 0.75rem;
+  font-weight: bold;
+  padding: 8px 30px 8px 12px; /* Extra padding on the right for the arrow */
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  text-align: left;
+  color: white !important;
+  flex-shrink: 0;
+  background-color: #333333; /* Fallback dark background just in case */
+
+  /* Injecting a custom white dropdown arrow */
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px top 50%;
+  background-size: 10px auto;
+}
+
+/* Adding 'select' guarantees these colors beat the browser defaults */
+select.rsvp-toggle.rsvp-pending {
+  background-color: var(--colors-warning);
+}
+select.rsvp-toggle.rsvp-attending {
+  background-color: var(--colors-success);
+}
+select.rsvp-toggle.rsvp-absent {
+  background-color: var(--colors-danger);
+}
+
+select.rsvp-toggle option {
+  background-color: #1a1a1a;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.event-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.event-meta {
+  margin: 0;
+}
+
+.event-card-notes {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 0.75rem;
+}
+
+.event-card-notes .text-small {
+  color: #aaa;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.repertoire-item {
+  background: rgba(255, 255, 255, 0.05);
+  padding: var(--s-1);
+  border-radius: 4px;
+}

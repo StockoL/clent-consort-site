@@ -1,0 +1,124 @@
+/* ==========================================================================
+   BLOCK: EVENTS PAGE LISTING (decanted from style.css "v1", unchanged)
+   ========================================================================== */
+
+.featured-event .invert {
+  background-color: #1a1a1a;
+  color: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.featured-event .event-image {
+  aspect-ratio: 16 / 9;
+}
+
+.featured-event .event-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+@media (min-width: 50.1rem) {
+  .featured-event .event-image {
+    aspect-ratio: auto;
+    min-height: 100%;
+  }
+}
+
+.featured-event .event-details {
+  padding: var(--s2);
+}
+
+.featured-event h1 {
+  color: #c9a45e;
+  margin-top: 0;
+  line-height: 1.1;
+}
+
+.featured-event .label {
+  color: #c9a45e;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.2ch;
+  display: block;
+  margin-bottom: var(--s-1);
+}
+
+.featured-event ul {
+  list-style: none;
+  padding: 0;
+  margin: var(--s1) 0;
+}
+
+.featured-event ul li {
+  color: #e0e0e0;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: var(--s0);
+  align-items: flex-start;
+  margin-bottom: var(--s-1);
+  width: 100%;
+}
+
+.featured-event ul li strong {
+  color: #c9a45e;
+  flex-shrink: 0;
+  min-width: 4.5rem;
+}
+
+.featured-event ul li span {
+  flex-grow: 1;
+}
+
+.event-card {
+  background: white;
+  padding: var(--s2);
+  border: 1px solid #eee;
+  border-top: 4px solid #c9a45e;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.event-card h3 {
+  color: #1a1a1a;
+  margin-top: 0;
+}
+
+.event-card time,
+.archive-item time {
+  color: #c9a45e;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+}
+
+.event-archive h2 {
+  border-bottom: 2px solid #eee;
+  padding-bottom: var(--s0);
+  margin-bottom: var(--s1);
+}
+
+.archive-item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s0) var(--s2);
+  padding: var(--s1) 0;
+  border-bottom: 1px solid #eee;
+  align-items: baseline;
+}
+
+.archive-item time {
+  flex-basis: 10rem;
+  flex-grow: 1;
+}
+
+.archive-item span {
+  color: #555;
+  font-weight: 500;
+  flex-basis: 15rem;
+  flex-grow: 999;
+}

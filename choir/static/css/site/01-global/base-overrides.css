@@ -1,0 +1,84 @@
+/* ==========================================================================
+   GLOBAL: PROJECT BASE OVERRIDES (decanted from style.css "v1")
+   ==========================================================================
+   Ported verbatim from style.css's old section 1 (base) and section 10
+   (scrollbar) - same selectors, same behavior, just relocated. The
+   spacing scale (--s-1..--s5) stays here rather than being remapped onto
+   looseleaf's fluid spacing.* tokens - that's a value-changing decision
+   (looseleaf's scale is a different fluid curve), not a relocation, so
+   it's deliberately left alone for a later, dedicated pass.
+   ========================================================================== */
+
+:root {
+  /* Spacing Scale */
+  --s-1: 0.8rem;
+  --s0: 1rem;
+  --s1: 1.5rem;
+  --s2: 2.25rem;
+  --s3: 3.375rem;
+  --s4: 5.063rem;
+  --s5: 7.594rem;
+
+  --s-min: 0.5rem; /* A smaller spacing unit for tight layouts */
+
+  --primary: #c9a45e; /* A warm gold for accents and highlights */
+
+  /* TEMPORARY aliases so style.css's remaining, not-yet-decanted rules
+     (which still reference var(--font-heading)/var(--font-body)) keep
+     working during the migration - drop these once style.css is fully
+     drained and every reference points at --fonts-heading/--fonts-body
+     directly. */
+  --font-heading: var(--fonts-heading);
+  --font-body: var(--fonts-body);
+}
+
+body {
+  color: #333;
+
+  /* The Magic Sticky Footer Flexbox */
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  overflow-y: auto;
+}
+
+main {
+  flex: 1 0 auto; /* Forces the main content to stretch, pushing the footer down */
+}
+
+/* looseleaf-ui's global-styles.css already maps h1-h6 to
+   var(--fonts-heading) - only the uppercase/letter-spacing treatment
+   below is specific to this site and not covered there. */
+h1,
+h2,
+h3 {
+  text-transform: uppercase;
+  letter-spacing: 0.05ch;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem; /* Accounts for the sticky header height */
+}
+
+/* ==========================================================================
+   CUSTOM SCROLLBAR (Webkit Browsers)
+   ========================================================================== */
+::-webkit-scrollbar {
+  width: 12px; /* Width of the vertical scrollbar */
+}
+
+::-webkit-scrollbar-track {
+  background: #f4f4f4; /* Light grey track background */
+  border-left: 1px solid #ddd;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c9a45e; /* Your signature gold */
+  border-radius: 6px;
+  border: 3px solid #f4f4f4; /* Adds a clean border around the thumb */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a88544; /* Darkens slightly when clicked/hovered */
+}

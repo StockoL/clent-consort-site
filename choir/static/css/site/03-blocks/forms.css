@@ -1,0 +1,215 @@
+/* ==========================================================================
+   BLOCK: FORMS (decanted from style.css "v1", unchanged)
+   ==========================================================================
+   Scope-based input/button styling (targets bare <input>/<select>/
+   <button> elements within a container, rather than requiring an
+   explicit .input/.label class on every Django form field) - converting
+   to looseleaf's own .input/.label blocks would mean adding classes to
+   every form widget in forms.py and customizing django-allauth's own
+   form rendering, a larger, separate change out of scope here.
+   ========================================================================== */
+
+.contact-hero {
+  text-align: center;
+  max-width: 60ch;
+  margin-inline: auto;
+}
+
+.contact-forms-layout {
+  --switcher-threshold: 60rem;
+  max-width: 75rem;
+  margin-inline: auto;
+  gap: var(--s2);
+  align-items: flex-start;
+}
+
+.contact-form-container {
+  flex: 1 1 25rem;
+  max-width: 35rem;
+}
+
+.contact-form-container h2 {
+  color: #c9a45e;
+  margin-top: 0;
+  border-bottom: 1px solid rgba(201, 164, 94, 0.2);
+  padding-bottom: var(--s-1);
+}
+
+.contact-form-container .form-group label {
+  color: #c9a45e;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1ch;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.contact-form-container input,
+.contact-form-container select,
+.contact-form-container textarea {
+  width: 100%;
+  padding: var(--s0);
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  color: #1a1a1a;
+  font-family: var(--fonts-body);
+  border-radius: 4px;
+}
+
+.contact-form-container input:focus,
+.contact-form-container textarea:focus {
+  outline: none;
+  border-color: #c9a45e;
+  box-shadow: 0 0 0 3px rgba(201, 164, 94, 0.2);
+}
+
+.contact-form-container .button {
+  width: 100%;
+  border: 1px solid #ccc; /* Adds definition to the white button */
+  cursor: pointer;
+  background-color: #ffffff;
+  color: #1a1a1a;
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+  padding: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1ch;
+}
+
+.contact-form-container .button:hover {
+  background-color: #c9a45e;
+  color: #ffffff;
+  border-color: #c9a45e;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(201, 164, 94, 0.4);
+}
+
+.section-heading {
+  color: #c9a45e;
+  border-bottom: 1px solid #333;
+  padding-bottom: 0.5rem;
+}
+
+.form-error {
+  color: var(--colors-danger-text);
+  font-size: 0.85em;
+}
+
+.divider {
+  border: 0;
+  border-top: 1px solid #333;
+  margin: var(--s2) 0;
+}
+
+.align-start {
+  align-self: flex-start;
+}
+
+.back-link {
+  color: #666;
+  text-decoration: none;
+  font-family: var(--fonts-body);
+  font-weight: 500;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1ch;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.back-link:hover {
+  color: #c9a45e;
+  transform: translateX(-5px);
+}
+
+.login-wrapper {
+  margin-top: var(--s2);
+  --box-padding: var(--s1);
+}
+
+@media (min-width: 45rem) {
+  .login-wrapper {
+    --box-padding: var(--s2); /* Desktop breathing room */
+  }
+}
+
+.login-header {
+  text-align: center;
+}
+
+.login-header h1,
+.login-header p,
+[data-variant="invert"] .form-group label {
+  color: #c9a45e;
+}
+
+/* Fat-Finger Touch Targets */
+[data-variant="invert"] input,
+[data-variant="invert"] select {
+  min-height: 3.5rem; /* Large enough for thumbs */
+  font-size: 1.1rem; /* Prevents iOS zoom-on-focus */
+  padding: var(--s0);
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  width: 100%;
+}
+
+[data-variant="invert"] .button {
+  min-height: 3.5rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  border-radius: 8px;
+  margin-top: var(--s1);
+  background-color: #ffffff;
+  color: #1a1a1a;
+  border: none;
+  cursor: pointer;
+}
+
+[data-variant="invert"] .button:hover {
+  background-color: #c9a45e;
+  color: #ffffff;
+}
+
+/* --- High-Visibility Security Visual Feedback (password field) --- */
+
+/* 1. Neutral State: When the box is empty (placeholder is visible)
+   We use a high-specificity selector to force the grey border */
+[data-variant="invert"] input[type="password"] {
+  border: 2px solid #444 !important; /* Forces the neutral dark grey */
+  transition: all 0.2s ease-in-out;
+}
+
+/* 2. The 'Invalid' state: ONLY show red IF the user has started typing
+   AND the input is currently focused */
+[data-variant="invert"] input[type="password"]:not(:placeholder-shown):focus:invalid {
+  border-color: var(--colors-danger-text) !important;
+  box-shadow: 0 0 0 4px rgba(255, 77, 77, 0.4);
+}
+
+/* 3. The 'Valid' state: Green Light when it matches perfectly */
+[data-variant="invert"] input[type="password"]:focus:valid {
+  border-color: var(--colors-success-text) !important;
+  box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.4);
+}
+
+/* 4. Persistence: Keep it green after they finish and click away */
+[data-variant="invert"] input[type="password"]:valid:not(:placeholder-shown) {
+  border-color: var(--colors-success-text) !important;
+}
+
+/* 5. Suppress the 'Standard' browser red (Firefox especially) */
+[data-variant="invert"] input:invalid {
+  box-shadow: none;
+}

@@ -1,0 +1,37 @@
+/* ==========================================================================
+   BLOCK: RSVP TABS (committee dashboard, decanted from style.css "v1")
+   ==========================================================================
+   Was written as var(--color-gold, #c9a45e) / var(--color-dark, #1a1a1a) -
+   two custom properties that were never actually defined anywhere, always
+   falling back to the hardcoded hex. Now that --colors-action-primary/
+   --colors-text-on-action are real, defined tokens (same gold/charcoal
+   values), pointed at those directly instead of a permanently-unmet
+   fallback.
+   ========================================================================== */
+
+.rsvp-tab-container {
+  display: flex;
+  flex-wrap: wrap; /* Fixes mobile overflow by allowing tabs to stack */
+  gap: 0.5rem;
+}
+
+.rsvp-tab {
+  flex: 1 1 auto; /* Allows buttons to stretch and fill the space evenly */
+  text-align: center;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--colors-action-primary);
+  background: transparent;
+  color: var(--colors-action-primary);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  font-weight: normal;
+  transition: all 0.2s ease;
+}
+
+.rsvp-tab.active {
+  background: var(--colors-action-primary);
+  color: var(--colors-text-on-action);
+  font-weight: bold;
+}

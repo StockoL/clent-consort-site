@@ -1,0 +1,154 @@
+/* ==========================================================================
+   BLOCK: PROJECT RHYTHM CAROUSEL (decanted from style.css "v1", unchanged)
+   ==========================================================================
+   About page's swipe carousel, driven by js/project-carousel.js.
+   ========================================================================== */
+
+.project-rhythm-swipe-wrapper {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background-color: #000;
+}
+
+.project-rhythm-scroll {
+  display: flex;
+  flex-direction: row;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Hide standard scrollbar */
+}
+
+.project-rhythm-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.rhythm-slide {
+  flex: 0 0 100%;
+  width: 100%;
+  height: 75vh; /* Uniform viewport-relative height */
+  min-height: 500px;
+  position: relative;
+  scroll-snap-align: center;
+  overflow: hidden;
+}
+
+/* Fullscreen background videos */
+.slide-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.slide-bg video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.45) contrast(1.05); /* Built-in contrast layer for text readability */
+}
+
+/* Text content overlays */
+.slide-content-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s2, 2rem);
+  z-index: 2;
+  pointer-events: none; /* Allows swipe drag gestures to register through to container */
+}
+
+.slide-content-inner {
+  max-width: 65ch;
+  text-align: center;
+  color: #ffffff;
+  pointer-events: auto; /* Re-enables standard mouse interactions for content */
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  padding: var(--s2, 2rem);
+  border-radius: 6px;
+}
+
+.step-number {
+  font-family: var(--fonts-heading);
+  color: #c9a45e; /* Gold accent tone */
+  font-size: 1.25rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+/* Navigation menu overlay */
+.swipe-nav {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2.5rem;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.85));
+  padding: 2rem 1rem 1.5rem 1rem;
+  z-index: 10;
+}
+
+.nav-link {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-family: var(--fonts-heading);
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition:
+    color 0.3s ease,
+    transform 0.2s ease;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid transparent;
+}
+
+.nav-link span {
+  margin-right: 0.25rem;
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.nav-link:hover {
+  color: #ffffff;
+}
+
+.nav-link.is-active {
+  color: #c9a45e;
+  border-bottom-color: #c9a45e;
+}
+
+@media (max-width: 40rem) {
+  .swipe-nav {
+    gap: 1.5rem;
+  }
+
+  /* When the class is added by JS, clean up the button design to resemble dots */
+  .nav-link.is-dot-mode {
+    font-size: 0 !important; /* Hides raw text label string safely */
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.4);
+    padding: 0;
+    border: none;
+  }
+
+  .nav-link.is-dot-mode span {
+    display: none; /* Conceals numbers entirely */
+  }
+
+  .nav-link.is-dot-mode.is-active {
+    background-color: #c9a45e;
+    transform: scale(1.2);
+  }
+}

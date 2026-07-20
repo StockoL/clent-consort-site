@@ -8,6 +8,10 @@
    two fill out the set for success/warning to match.
    ========================================================================== */
 
+.text-error {
+  color: var(--colors-danger-text);
+}
+
 .text-success {
   color: var(--colors-success-text);
 }

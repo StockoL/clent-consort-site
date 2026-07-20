@@ -1,0 +1,34 @@
+/* ==========================================================================
+   UTILITY: SPACING (project addition, decanted from style.css "v1")
+   ==========================================================================
+   Scale-based margin/padding utilities keyed to this site's own --s-*
+   spacing scale (css/site/01-global/base-overrides.css) - looseleaf-ui
+   has no equivalent utility set (it expects compositions like .flow to
+   own spacing instead), so this stays a project-only file rather than
+   something to later delete in favor of a vendored equivalent.
+   ========================================================================== */
+
+.section-padding {
+  padding-top: var(--s3);
+  padding-bottom: var(--s4);
+}
+
+.mt-s2 {
+  margin-top: var(--s2);
+}
+
+.mt-s-1 {
+  margin-top: var(--s-1);
+}
+
+.mt-s-min {
+  margin-top: var(--s-min);
+}
+
+.mb-s-min {
+  margin-bottom: var(--s-min);
+}
+
+.mb-0 {
+  margin-bottom: 0;
+}

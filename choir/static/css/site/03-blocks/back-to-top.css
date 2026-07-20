@@ -1,0 +1,40 @@
+/* ==========================================================================
+   BLOCK: BACK TO TOP BUTTON (decanted from style.css "v1", unchanged)
+   ==========================================================================
+   NOTE (pre-existing, not introduced by this decanting pass):
+   js/back-to-top.js toggles an "is-visible" class plus aria-hidden/
+   tabindex based on scroll position, but no CSS rule anywhere actually
+   ties visual show/hide to that class - the button is always visually
+   present (position: fixed, no opacity/display toggle). Only the ARIA
+   state changes on scroll. Flagged, not fixed here - out of scope for a
+   content-preserving relocation.
+   ========================================================================== */
+
+.back-to-top {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 9999; /* Forces it above all other content */
+
+  background-color: #1a1a1a;
+  color: #c9a45e;
+  border: 1px solid rgba(201, 164, 94, 0.4);
+  width: 3rem;
+  height: 3rem;
+  border-radius: 4px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+
+.back-to-top:hover {
+  background-color: #c9a45e;
+  color: #1a1a1a;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}

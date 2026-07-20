@@ -1,0 +1,161 @@
+/* ==========================================================================
+   BLOCK: SITE HEADER (decanted from style.css "v1", unchanged)
+   ==========================================================================
+   The mobile nav markup/JS itself is untouched (still .menu-toggle/
+   #nav-list, driven by js/mobile-menu.js) - converting it to looseleaf's
+   .navbar block is flagged separately as higher-risk, needing
+   interactive verification this environment can't do.
+   ========================================================================== */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 1100;
+  background-color: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid #eee;
+  width: 100%;
+}
+
+.header-inner {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--s0) var(--s1);
+}
+
+.logo-link {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  text-decoration: none;
+  color: black;
+}
+
+.brand-name {
+  font-family: var(--fonts-heading);
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.1ch;
+  color: #1a1a1a;
+}
+
+.main-nav {
+  display: flex;
+  align-items: center;
+}
+
+.nav-list a {
+  font-family: var(--fonts-body);
+  font-size: var(--s0);
+  font-weight: 505;
+  color: #444;
+  transition: color 0.2s;
+  padding: 0.5rem;
+  text-decoration: none;
+}
+
+.nav-list a:hover {
+  color: #c9a45e;
+  text-decoration: underline;
+}
+
+.nav-list a[aria-current="page"] {
+  color: #c9a45e;
+  font-weight: 700;
+  border-bottom: 2px solid #c9a45e;
+}
+
+/* --- Mobile menu overlay --- */
+.menu-toggle {
+  display: block;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  z-index: 1200;
+}
+
+.hamburger,
+.hamburger::before,
+.hamburger::after {
+  display: block;
+  width: 25px;
+  height: 3px;
+  background-color: #1a1a1a;
+  transition:
+    transform 0.3s ease,
+    opacity 0.3s ease;
+}
+
+.hamburger {
+  position: relative;
+}
+
+.hamburger::before,
+.hamburger::after {
+  content: "";
+  position: absolute;
+  left: 0;
+}
+
+.hamburger::before {
+  top: -8px;
+}
+.hamburger::after {
+  top: 8px;
+}
+
+.nav-list {
+  display: none;
+  flex-direction: column;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.98);
+  border-bottom: 1px solid #eee;
+  padding: var(--s1);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  text-align: center;
+  list-style: none;
+  margin: 0;
+}
+
+.nav-list.is-open {
+  display: flex;
+}
+
+.nav-list li {
+  margin-bottom: var(--s0);
+}
+
+@media (min-width: 45rem) {
+  .menu-toggle {
+    display: none;
+  }
+
+  .main-nav {
+    flex-grow: 1;
+    justify-content: flex-end;
+  }
+
+  .nav-list {
+    display: flex;
+    flex-direction: row;
+    position: static;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+    border: none;
+    width: auto;
+    gap: var(--s0);
+  }
+
+  .nav-list li {
+    margin-bottom: 0;
+  }
+}

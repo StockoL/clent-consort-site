@@ -1,0 +1,113 @@
+/* ==========================================================================
+   BLOCK: SITE FOOTER (decanted from style.css "v1")
+   ==========================================================================
+   .footer-btn used to be defined twice (a plain text-link style, then a
+   bordered-pill version later in the file that won on every overlapping
+   property via source order) - deduplicated here into the one style that
+   was actually rendering, not both.
+   ========================================================================== */
+
+footer {
+  padding: var(--s1);
+  border-top: 1px solid #eee;
+  flex-shrink: 0; /* Prevents the flexbox from squishing the footer */
+}
+
+footer.invert {
+  background-color: #1a1a1a;
+  color: #ffffff;
+  border-top: none;
+}
+
+.footer-grid {
+  display: flex;
+  flex-direction: column; /* Mobile-first: stack everything vertically */
+  gap: var(--s2);
+  align-items: center;
+  margin-bottom: var(--s1);
+}
+
+@media (min-width: 45rem) {
+  .footer-grid {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .footer-col-left,
+  .footer-col-center,
+  .footer-col-right {
+    flex: 1;
+  }
+
+  .footer-col-left {
+    text-align: left;
+  }
+
+  .footer-col-right {
+    text-align: right;
+  }
+}
+
+.social-group {
+  display: flex;
+  flex-direction: row;
+  gap: var(--s1);
+  justify-content: center;
+  align-items: center;
+}
+
+.social-icon svg {
+  width: 24px;
+  height: 24px;
+  display: block;
+  transition: transform 0.2s ease;
+}
+
+.social-icon:hover svg {
+  transform: scale(1.1);
+}
+
+footer a {
+  text-decoration: none;
+  color: #555;
+  transition: color 0.2s ease;
+}
+
+footer a:hover {
+  color: #c9a45e;
+}
+
+footer.invert a,
+footer.invert .copyright {
+  color: #e0e0e0;
+}
+
+footer.invert a:hover {
+  color: #c9a45e;
+}
+
+.footer-btn {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border: 1px solid rgba(201, 164, 94, 0.4); /* Subtle gold border */
+  text-decoration: none;
+  color: #c9a45e !important;
+  text-transform: uppercase;
+  font-family: var(--fonts-heading);
+  font-size: 0.8rem;
+  letter-spacing: 0.1ch;
+  transition: all 0.3s ease;
+  border-radius: 2px;
+}
+
+.footer-btn:hover {
+  background-color: #c9a45e;
+  color: #1a1a1a !important;
+}
+
+.copyright {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #888;
+  margin-top: var(--s1);
+}
