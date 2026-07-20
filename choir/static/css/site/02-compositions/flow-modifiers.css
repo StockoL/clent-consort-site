@@ -1,0 +1,17 @@
+/* ==========================================================================
+   COMPOSITION: FLOW SIZE MODIFIERS (project extension of flow.css)
+   ==========================================================================
+   looseleaf-ui's .flow ships no size-modifier classes (--flow-space is
+   set per-instance) - these two match the old .l-stack--small/--large
+   exactly (--s-1 = 0.8rem, --s4 = 5.063rem) so every conversion from
+   l-stack to flow across templates is a pure class rename, not a
+   value change.
+   ========================================================================== */
+
+.flow--small {
+  --flow-space: var(--s-1);
+}
+
+.flow--large {
+  --flow-space: var(--s4);
+}

@@ -3,7 +3,7 @@
 {% block title %}Schedule Event - Clent Consort{% endblock title %}
 
 {% block content %}
-<div class="wrapper l-stack section-padding">
+<div class="wrapper flow section-padding">
   <div class="text-center">
     <h1 class="text-primary">Committee Event Scheduler</h1>
     <p>Plan and schedule events for the choir.</p>
@@ -13,7 +13,7 @@
     </a>
   </div>
 <div class="wrapper section-padding container-narrow mx-auto">
-  <div class="login-wrapper l-stack">
+  <div class="login-wrapper flow">
 
     <section class="card" data-variant="invert" style="padding: 2rem;">
       <div class="login-header mb-s1">
@@ -21,22 +21,22 @@
         <p class="text-small" style="color: #aaa;">Publish a date to the choir calendar and initialise the membership RSVP matrix.</p>
       </div>
 
-      <form method="POST" class="l-stack">
+      <form method="POST" class="flow">
         {% csrf_token %}
         
-        <div class="form-group l-stack l-stack--small">
+        <div class="form-group flow flow--small">
           <label style="color: #c9a45e; font-family: var(--font-heading); font-size: 0.8rem; text-transform: uppercase;">Event Type</label>
           {{ form.event_type }}
           {{ form.event_type.errors }}
         </div>
 
-        <div class="form-group l-stack l-stack--small">
+        <div class="form-group flow flow--small">
           <label style="color: #c9a45e; font-family: var(--font-heading); font-size: 0.8rem; text-transform: uppercase;">Date & Time</label>
           {{ form.date_time }}
           {{ form.date_time.errors }}
         </div>
 
-        <div class="form-group l-stack l-stack--small">
+        <div class="form-group flow flow--small">
           <label style="color: #c9a45e; font-family: var(--font-heading); font-size: 0.8rem; text-transform: uppercase;">Location</label>
           {{ form.location }}
           {{ form.location.errors }}

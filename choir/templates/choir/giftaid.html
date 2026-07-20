@@ -5,10 +5,10 @@
 
 {% block content %}
 <div
-  class="l-center l-stack l-stack--large form-page-wrapper"
+  class="wrapper flow flow--large form-page-wrapper"
   style="padding-top: var(--s3); padding-bottom: var(--s4)"
 >
-  <header class="u-text-center l-stack l-stack--small">
+  <header class="u-text-center flow flow--small">
     <h1>Member Registration</h1>
     <p class="u-measure u-margin-inline-auto u-muted">
       Please register your details with the Clent Consort. Completing this
@@ -40,7 +40,7 @@
   <div class="card u-measure--large-card u-margin-inline-auto" data-variant="invert">
     <form
       id="giftaid-form"
-      class="l-stack"
+      class="flow"
       action="{% url 'giftaid' %}"
       method="POST"
     >
@@ -50,8 +50,8 @@
       </div>
       {% endif %}
 
-      <fieldset class="form-section l-stack l-stack--small">
-        <div class="form-group l-stack l-stack--small">
+      <fieldset class="form-section flow flow--small">
+        <div class="form-group flow flow--small">
           <label for="{{ form.first_name.id_for_label }}">First Name</label>
           {{ form.first_name }}
           <div class="form-error">
@@ -59,7 +59,7 @@
           </div>
         </div>
 
-        <div class="form-group l-stack l-stack--small">
+        <div class="form-group flow flow--small">
           <label for="{{ form.last_name.id_for_label }}">Last Name</label>
           {{ form.last_name }}
           <div class="form-error">
@@ -70,8 +70,8 @@
 
       <hr class="form-divider" style="border-color: #444" />
 
-      <fieldset class="form-section l-stack l-stack--small">
-        <div class="form-group l-stack l-stack--small">
+      <fieldset class="form-section flow flow--small">
+        <div class="form-group flow flow--small">
           <label for="{{ form.address_line_1.id_for_label }}"
             >Home Address (Line 1)</label
           >
@@ -81,7 +81,7 @@
           </div>
         </div>
 
-        <div class="form-group l-stack l-stack--small">
+        <div class="form-group flow flow--small">
           <label for="{{ form.town_city.id_for_label }}">Town or City</label>
           {{ form.town_city }}
           <div class="form-error">
@@ -89,7 +89,7 @@
           </div>
         </div>
 
-        <div class="form-group l-stack l-stack--small">
+        <div class="form-group flow flow--small">
           <label for="{{ form.postcode.id_for_label }}">Postcode</label>
           {{ form.postcode }}
           <div class="form-error">
@@ -107,7 +107,7 @@
 
       <hr class="form-divider" style="border-color: #444" />
 
-      <div class="form-checkbox-container l-stack l-stack--small">
+      <div class="form-checkbox-container flow flow--small">
         <p
           class="form-hint"
           style="font-size: 0.8rem; color: #aaa; margin-bottom: 0.5rem"

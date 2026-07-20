@@ -5,7 +5,7 @@
 {% block extra_head %}{% endblock extra_head %}
 
 {% block content %}
-<div class="wrapper l-stack section-padding">
+<div class="wrapper flow section-padding">
   <div class="text-center">
     <h1>
       Members Area
@@ -36,7 +36,7 @@
     </div>
   </div>
 {% if not has_paid_current_term %}
-  <div class="card l-stack text-center mt-s2" data-variant="invert" style="border: 2px solid #c9a45e; max-width: 40rem; margin-inline: auto;">
+  <div class="card flow text-center mt-s2" data-variant="invert" style="border: 2px solid #c9a45e; max-width: 40rem; margin-inline: auto;">
     <h3 class="text-primary">{{ current_term }} Subscriptions Due</h3>
     <p class="text-small mt-s-min">Please settle your termly subscription via BACS transfer.</p>
     <p class="text-small mt-s-min">£50 by the end of July, please.</p>
@@ -51,11 +51,11 @@
   </div>
   {% endif %}
   <div class="switcher mt-s2">
-    <section class="card l-stack" data-variant="invert">
+    <section class="card flow" data-variant="invert">
   <h2 class="text-primary">Upcoming Schedule</h2>
 
   {% if user_attendances %}
-  <div class="l-stack l-stack--small">
+  <div class="flow flow--small">
     {% for attendance in user_attendances %}
     
     <article class="event-card-highlight">
@@ -100,12 +100,12 @@
   {% endif %}
 </section>
 
-    <section id="repertoire-section" class="card l-stack" data-variant="invert">
+    <section id="repertoire-section" class="card flow" data-variant="invert">
   <h2 class="text-primary">Current Repertoire</h2>
   <p class="subtitle-faded">Pieces scheduled for upcoming dates.</p>
 
   {% if current_repertoire %}
-  <ul class="l-stack l-stack--small list-unstyled">
+  <ul class="flow flow--small list-unstyled">
     {% for piece in current_repertoire %}
     <li class="repertoire-item" style="display: flex; justify-content: space-between; align-items: center;">
       

@@ -47,7 +47,6 @@
 
     {% block extra_head %}{% endblock extra_head %}
 
-    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
     <link rel="stylesheet" href="{% static 'css/site/index.css' %}" />
   </head>
 
@@ -100,7 +99,7 @@
       </div>
     </header>
 
-    <main class="l-stack l-stack--large {% block main_class %}{% endblock main_class %}">
+    <main class="flow flow--large {% block main_class %}{% endblock main_class %}">
       {% block content %} {% endblock content %}
     </main>
 

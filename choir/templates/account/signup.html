@@ -4,18 +4,18 @@
 {% block title %}Activate Account - Clent Consort{% endblock title %}
 
 {% block content %}
-<div class="l-stack section-padding container-narrow mx-auto">
-  <section class="card l-stack" data-variant="invert">
+<div class="flow section-padding container-narrow mx-auto">
+  <section class="card flow" data-variant="invert">
     <div class="text-center">
       <h1>Activate Your Account</h1>
       <p>Welcome! Please set your password to complete your registration.</p>
     </div>
 
-    <form method="POST" action="{% url 'account_signup' %}" class="l-stack">
+    <form method="POST" action="{% url 'account_signup' %}" class="flow">
       {% csrf_token %}
 
       {% for field in form %}
-        <div class="form-group l-stack l-stack--small">
+        <div class="form-group flow flow--small">
           <label for="{{ field.id_for_label }}">{{ field.label }}</label>
           {{ field }}
           

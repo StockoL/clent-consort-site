@@ -23,13 +23,13 @@
 {% endblock extra_head %}
 
 {% block content %}
-<div class="wrapper l-stack l-stack--large section-padding">
-  <section class="settings-hero l-stack l-stack--small text-center">
+<div class="wrapper flow flow--large section-padding">
+  <section class="settings-hero flow flow--small text-center">
     <h1>Account Settings</h1>
     <p>Update your personal details, contact information, and choir preferences below.</p>
   </section>
 
-  <div class="card l-stack" data-variant="invert">
+  <div class="card flow" data-variant="invert">
     {% if messages %} 
       {% for message in messages %}
         <div class="alert" data-status="success" role="alert">
@@ -38,43 +38,43 @@
       {% endfor %} 
     {% endif %}
 
-    <form action="{% url 'settings' %}" method="POST" class="l-stack">
+    <form action="{% url 'settings' %}" method="POST" class="flow">
       {% csrf_token %}
 
       <div class="switcher">
         
-        <div class="l-stack">
+        <div class="flow">
             <h3 class="section-heading">Core Details</h3>
             
-            <div class="form-group l-stack l-stack--small">
+            <div class="form-group flow flow--small">
                 <label for="{{ user_form.first_name.id_for_label }}">First Name</label>
                 {{ user_form.first_name }}
                 <div class="form-error">{{ user_form.first_name.errors }}</div>
             </div>
             
-            <div class="form-group l-stack l-stack--small">
+            <div class="form-group flow flow--small">
                 <label for="{{ user_form.last_name.id_for_label }}">Last Name</label>
                 {{ user_form.last_name }}
                 <div class="form-error">{{ user_form.last_name.errors }}</div>
             </div>
             
-            <div class="form-group l-stack l-stack--small">
+            <div class="form-group flow flow--small">
                 <label for="{{ user_form.email.id_for_label }}">Email Address</label>
                 {{ user_form.email }}
                 <div class="form-error">{{ user_form.email.errors }}</div>
             </div>
         </div>
 
-        <div class="l-stack">
+        <div class="flow">
             <h3 class="section-heading">Choir Profile</h3>
             
-            <div class="form-group l-stack l-stack--small">
+            <div class="form-group flow flow--small">
                 <label for="{{ profile_form.phone_number.id_for_label }}">Phone Number</label>
                 {{ profile_form.phone_number }}
                 <div class="form-error">{{ profile_form.phone_number.errors }}</div>
             </div>
             
-            <div class="form-group l-stack l-stack--small">
+            <div class="form-group flow flow--small">
                 <label for="{{ profile_form.voice_part.id_for_label }}">Voice Part</label>
                 {{ profile_form.voice_part }}
                 <div class="form-error">{{ profile_form.voice_part.errors }}</div>
@@ -86,30 +86,30 @@
 
       <div class="switcher">
         
-        <div class="l-stack">
+        <div class="flow">
             <h3 class="section-heading">Emergency Contact</h3>
             <p class="text-small" style="color: #aaa; margin-top: -0.5rem; margin-bottom: 1rem;">For duty of care during rehearsals and events.</p>
             
-            <div class="form-group l-stack l-stack--small">
+            <div class="form-group flow flow--small">
                 <label for="{{ profile_form.emergency_contact_name.id_for_label }}">Contact Name</label>
                 {{ profile_form.emergency_contact_name }}
                 <div class="form-error">{{ profile_form.emergency_contact_name.errors }}</div>
             </div>
 
-            <div class="form-group l-stack l-stack--small">
+            <div class="form-group flow flow--small">
                 <label for="{{ profile_form.emergency_contact_relation.id_for_label }}">Relationship to You</label>
                 {{ profile_form.emergency_contact_relation }}
                 <div class="form-error">{{ profile_form.emergency_contact_relation.errors }}</div>
             </div>
 
-            <div class="form-group l-stack l-stack--small">
+            <div class="form-group flow flow--small">
                 <label for="{{ profile_form.emergency_contact_phone.id_for_label }}">Contact Phone Number</label>
                 {{ profile_form.emergency_contact_phone }}
                 <div class="form-error">{{ profile_form.emergency_contact_phone.errors }}</div>
             </div>
         </div>
 
-        <div class="l-stack">
+        <div class="flow">
             <h3 class="section-heading">Media & Publicity</h3>
             <p class="text-small" style="color: #aaa; margin-top: -0.5rem; margin-bottom: 1rem;">Legal opt-ins for promotional material.</p>
             
@@ -139,7 +139,7 @@
 
       <hr class="divider" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
 
-      <div class="l-stack">
+      <div class="flow">
           <h3 class="section-heading">Medical & Accessibility Support</h3>
           <div class="form-group protected-textarea">
               <label for="{{ profile_form.medical_accessibility_notes.id_for_label }}" style="display: block; font-weight: normal; color: #aaa; margin-bottom: 0.5rem; line-height: 1.5;">

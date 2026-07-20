@@ -1,0 +1,27 @@
+/* ==========================================================================
+   COMPOSITION: REEL MODIFIERS (project extension of reel.css)
+   ==========================================================================
+   The old .l-reel sized its children explicitly (85% viewport width on
+   mobile, one-third minus the gap from 60rem up) so exactly ~1/~3 cards
+   show at a time - looseleaf-ui's own .reel only sets flex-shrink: 0,
+   leaving children sized to their content. Restores the old sizing
+   (currently the only .reel usage on the site is events.html's recent-
+   performances reel - if a second, differently-sized reel appears later,
+   this needs scoping to a specific class rather than staying a blanket
+   .reel override).
+   ========================================================================== */
+
+.reel {
+  gap: var(--s1);
+  padding-block-end: var(--s1);
+}
+
+.reel > * {
+  flex: 0 0 85%;
+}
+
+@media (min-width: 60rem) {
+  .reel > * {
+    flex: 0 0 calc(33.333% - var(--s1));
+  }
+}

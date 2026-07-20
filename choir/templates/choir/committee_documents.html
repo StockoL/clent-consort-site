@@ -3,7 +3,7 @@
 {% block title %}Document Vault - Clent Consort{% endblock title %}
 
 {% block content %}
-<div class="wrapper l-stack section-padding">
+<div class="wrapper flow section-padding">
   <div class="text-center">
     <h1 class="text-primary">Committee Document Vault</h1>
     <p>Secure storage for minutes, policies, and reports.</p>
@@ -14,10 +14,10 @@
   </div>
 
   <div class="switcher mt-s2">
-    <section class="card l-stack" data-variant="invert">
+    <section class="card flow" data-variant="invert">
       <h2 class="text-primary border-bottom pb-s-min">Upload Document</h2>
       
-      <form method="POST" enctype="multipart/form-data" class="l-stack l-stack--small mt-s1">
+      <form method="POST" enctype="multipart/form-data" class="flow flow--small mt-s1">
         {% csrf_token %}
         
         <div>
@@ -40,11 +40,11 @@
       </form>
     </section>
 
-    <section class="card l-stack" data-variant="invert">
+    <section class="card flow" data-variant="invert">
       <h2 class="text-primary border-bottom pb-s-min">Archive</h2>
       
       {% if documents %}
-        <ul class="list-unstyled l-stack l-stack--small mt-s1">
+        <ul class="list-unstyled flow flow--small mt-s1">
           {% for doc in documents %}
           <li style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
             <div>

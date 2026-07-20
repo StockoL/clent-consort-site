@@ -4,8 +4,8 @@
 {% block title %}Contact - Clent Consort{% endblock %} 
 
 {% block content %}
-<div class="l-stack l-stack--large" style="padding-bottom: var(--s4)">
-  <section class="contact-hero l-stack l-stack--small">
+<div class="flow flow--large" style="padding-bottom: var(--s4)">
+  <section class="contact-hero flow flow--small">
     <h1>Connect With Us</h1>
     <p>
       Whether you are looking to bring our music to your next event or you are a
@@ -14,10 +14,10 @@
     </p>
   </section>
 
-  <div id="form-section" class="l-stack">
+  <div id="form-section" class="flow">
     {% if messages %} 
       {% for message in messages %}
-        <div class="card l-stack" data-variant="invert" style="border: 2px solid {% if message.tags == 'error' %}var(--colors-danger-text){% else %}var(--colors-success-text){% endif %}; text-align: center; margin-bottom: var(--s2);" role="alert">
+        <div class="card flow" data-variant="invert" style="border: 2px solid {% if message.tags == 'error' %}var(--colors-danger-text){% else %}var(--colors-success-text){% endif %}; text-align: center; margin-bottom: var(--s2);" role="alert">
           <h2 style="color: {% if message.tags == 'error' %}var(--colors-danger-text){% else %}var(--colors-success-text){% endif %}; margin-bottom: 0;">
             {% if message.tags == 'error' %}Submission Error{% else %}Message Received!{% endif %}
           </h2>
@@ -28,30 +28,30 @@
 
     <div class="switcher contact-forms-layout">
       
-      <section class="card contact-form-container l-stack" data-variant="invert">
+      <section class="card contact-form-container flow" data-variant="invert">
         <h2>General Enquiry</h2>
-        <form action="{% url 'contact' %}" method="POST" class="l-stack">
+        <form action="{% url 'contact' %}" method="POST" class="flow">
           {% csrf_token %}
 
-          <div class="form-group l-stack l-stack--small">
+          <div class="form-group flow flow--small">
             <label for="{{ enquiry_form.subject.id_for_label }}">Subject</label>
             {{ enquiry_form.subject }}
             <div class="form-error">{{ enquiry_form.subject.errors }}</div>
           </div>
 
-          <div class="form-group l-stack l-stack--small">
+          <div class="form-group flow flow--small">
             <label for="{{ enquiry_form.name.id_for_label }}">Name</label>
             {{ enquiry_form.name }}
             <div class="form-error">{{ enquiry_form.name.errors }}</div>
           </div>
 
-          <div class="form-group l-stack l-stack--small">
+          <div class="form-group flow flow--small">
             <label for="{{ enquiry_form.email.id_for_label }}">Email</label>
             {{ enquiry_form.email }}
             <div class="form-error">{{ enquiry_form.email.errors }}</div>
           </div>
 
-          <div class="form-group l-stack l-stack--small">
+          <div class="form-group flow flow--small">
             <label for="{{ enquiry_form.message.id_for_label }}">Message</label>
             {{ enquiry_form.message }}
             <div class="form-error">{{ enquiry_form.message.errors }}</div>
@@ -61,30 +61,30 @@
         </form>
       </section>
 
-      <section class="card contact-form-container l-stack" data-variant="invert">
+      <section class="card contact-form-container flow" data-variant="invert">
         <h2>Join the Consort</h2>
-        <form action="{% url 'contact' %}" method="POST" class="l-stack">
+        <form action="{% url 'contact' %}" method="POST" class="flow">
           {% csrf_token %}
 
-          <div class="form-group l-stack l-stack--small">
+          <div class="form-group flow flow--small">
             <label for="{{ audition_form.name.id_for_label }}">Name</label>
             {{ audition_form.name }}
             <div class="form-error">{{ audition_form.name.errors }}</div>
           </div>
 
-          <div class="form-group l-stack l-stack--small">
+          <div class="form-group flow flow--small">
             <label for="{{ audition_form.email.id_for_label }}">Email</label>
             {{ audition_form.email }}
             <div class="form-error">{{ audition_form.email.errors }}</div>
           </div>
 
-          <div class="form-group l-stack l-stack--small">
+          <div class="form-group flow flow--small">
             <label for="{{ audition_form.voice_part.id_for_label }}">Voice Type</label>
             {{ audition_form.voice_part }}
             <div class="form-error">{{ audition_form.voice_part.errors }}</div>
           </div>
 
-          <div class="form-group l-stack l-stack--small">
+          <div class="form-group flow flow--small">
             <label for="{{ audition_form.experience.id_for_label }}">Choral Experience</label>
             {{ audition_form.experience }}
             <div class="form-error">{{ audition_form.experience.errors }}</div>
