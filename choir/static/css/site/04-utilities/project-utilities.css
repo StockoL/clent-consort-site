@@ -1,0 +1,176 @@
+/* ==========================================================================
+   UTILITY: PROJECT ADDITIONS (single file, not one-per-topic)
+   ==========================================================================
+   Single-purpose override classes that don't have a looseleaf-ui
+   equivalent to extend, kept in one file rather than split into
+   status-text/spacing/misc - these are all the same kind of thing
+   (small, unrelated, one-property-or-two overrides), and fragmenting
+   utilities into many topic-named files when there's no vendored
+   equivalent per topic just adds navigation overhead for no benefit.
+   Reserve separate files for rules that are actually markedly
+   different in shape or origin (e.g. status-text colors would only
+   deserve their own file if there were enough of them to matter).
+
+   .text-center and .text-primary used to be defined here too,
+   identically (in behavior, if not always token name) to looseleaf-ui's
+   own 04-utilities/text.css and colors.css - dropped in favor of the
+   vendored ones rather than kept as duplicates. Vendored colors.css/
+   text.css themselves are never touched here - this file only holds
+   what they don't already cover.
+   ========================================================================== */
+
+/* --- Status text colors (fill the gap - looseleaf's own .text-danger
+   maps to --colors-danger, the solid/badge shade; this site's plain-text
+   convention uses the brighter -text shade instead) --- */
+.text-error {
+  color: var(--colors-danger-text);
+}
+
+.text-success {
+  color: var(--colors-success-text);
+}
+
+.text-warning {
+  color: var(--colors-warning-text);
+}
+
+/* --- Spacing (keyed to this project's own --s-* scale in
+   01-global/base-overrides.css - looseleaf-ui has no equivalent set,
+   it expects compositions like .flow to own spacing instead) --- */
+.section-padding {
+  padding-top: var(--s3);
+  padding-bottom: var(--s4);
+}
+
+.mt-s2 {
+  margin-top: var(--s2);
+}
+
+.mt-s-1 {
+  margin-top: var(--s-1);
+}
+
+.mt-s-min {
+  margin-top: var(--s-min);
+}
+
+.mb-s-min {
+  margin-bottom: var(--s-min);
+}
+
+.mb-0 {
+  margin-bottom: 0;
+}
+
+/* --- Layout & sizing --- */
+.full-width {
+  grid-column: 1 / -1;
+}
+
+.card-flex {
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Ensures all cards in a row stretch to the same height */
+}
+
+.u-measure {
+  max-width: 65ch;
+}
+
+.container-narrow {
+  max-width: 500px;
+}
+
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.flex-center-wrap {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.media-flex-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem; /* Space between player/button and the download icon */
+}
+
+.w-100 {
+  width: 100%;
+  flex-grow: 1; /* Ensures the player or view button takes up the main space */
+}
+
+@media (min-width: 45rem) {
+  .hide-on-desktop {
+    display: none !important;
+  }
+}
+
+/* --- Text tweaks --- */
+.u-muted {
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.6;
+  font-size: 0.9rem;
+}
+
+.subtitle-faded {
+  font-size: 0.9em;
+  margin-top: -1rem;
+  color: #ccc;
+}
+
+.text-muted {
+  font-size: 0.85em;
+  color: #aaa;
+}
+
+/* --- Buttons (size modifiers, not variants - those live in
+   03-blocks/button-overrides.css) --- */
+.btn-small {
+  padding: 5px 15px;
+  font-size: 0.85em;
+}
+
+.btn-block {
+  display: block;
+  width: 100%;
+  text-align: center;
+  text-decoration: none;
+}
+
+.icon-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-size: 1.5rem;
+  padding: 0.25rem;
+  transition:
+    opacity 0.2s ease,
+    transform 0.1s ease;
+  flex-shrink: 0; /* Prevents the icon from getting squished */
+}
+
+.icon-action-btn:hover {
+  opacity: 0.7;
+  transform: translateY(-2px);
+}
+
+/* --- Accessibility: screen-reader-only helper. looseleaf-ui ships the
+   same technique under a different name (.visually-hidden) - kept as
+   its own class since templates already use .sr-only. --- */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
