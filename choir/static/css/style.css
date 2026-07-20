@@ -495,7 +495,6 @@ footer a:hover,
 }
 
 .hero-cover h1 {
-  font-size: clamp(2.5rem, 10vw, 5rem);
   font-weight: 700;
   margin-bottom: var(--s1);
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
@@ -747,7 +746,6 @@ footer a:hover,
   color: #c9a45e;
   margin-top: 0;
   line-height: 1.1;
-  font-size: clamp(1.5rem, 5vw, 2.5rem);
 }
 
 .featured-event .label {
@@ -1267,7 +1265,6 @@ footer a:hover,
   padding-top: var(--s1);
 }
 .meta-block h4 {
-  font-size: 0.75rem;
   color: #c9a45e;
   text-transform: uppercase;
   margin-bottom: 0.5rem;
@@ -1296,7 +1293,6 @@ footer a:hover,
 }
 .voice-card h4 {
   color: #c9a45e;
-  font-size: 0.9rem;
   margin: 0;
 }
 .voice-card .cta-button {
