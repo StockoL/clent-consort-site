@@ -12,8 +12,8 @@
    ========================================================================== */
 
 .reel {
-  gap: var(--s1);
-  padding-block-end: var(--s1);
+  gap: var(--space-s);
+  padding-block-end: var(--space-s);
 }
 
 .reel > * {
@@ -22,6 +22,6 @@
 
 @media (min-width: 60rem) {
   .reel > * {
-    flex: 0 0 calc(33.333% - var(--s1));
+    flex: 0 0 calc(33.333% - var(--space-s));
   }
 }

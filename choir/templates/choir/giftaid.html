@@ -6,7 +6,7 @@
 {% block content %}
 <div
   class="wrapper flow flow--large form-page-wrapper"
-  style="padding-top: var(--s3); padding-bottom: var(--s4)"
+  style="padding-top: var(--space-l); padding-bottom: var(--space-xl)"
 >
   <header class="u-text-center flow flow--small">
     <h1>Member Registration</h1>
@@ -116,7 +116,7 @@
           section blank.
         </p>
 
-        <div style="display: flex; gap: var(--s0); align-items: flex-start">
+        <div style="display: flex; gap: var(--space-xs); align-items: flex-start">
           <div style="margin-top: 0.3rem">{{ form.consent_given }}</div>
 
           <label
@@ -137,14 +137,14 @@
         </div>
       </div>
 
-      <button type="submit" class="button" data-variant="primary" style="margin-top: var(--s1)">
+      <button type="submit" class="button" data-variant="primary" style="margin-top: var(--space-s)">
         Submit Registration
       </button>
     </form>
   </div>
   {% endif %}
 
-  <div class="u-text-center" style="margin-top: var(--s2)">
+  <div class="u-text-center" style="margin-top: var(--space-m)">
     <a
       href="{% url 'members' %}"
       style="color: #c9a45e; text-decoration: none"

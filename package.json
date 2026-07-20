@@ -1,0 +1,8 @@
+{
+  "name": "clent-consort-site",
+  "private": true,
+  "description": "Design token compiler for the Clent Consort site's CSS (Django app itself has no Node build step - this only regenerates choir/static/css/site/global/variables.css from design-tokens.json).",
+  "scripts": {
+    "build:tokens": "node build-tokens.js"
+  }
+}

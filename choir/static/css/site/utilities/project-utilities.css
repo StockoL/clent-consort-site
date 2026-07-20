@@ -40,7 +40,7 @@
    One-off margin utilities (mt-s2, mb-s-min, etc.) used to live here.
    Removed in favour of the mechanism .flow itself already provides:
    --flow-space is read per-child, so a single element can override
-   just its own gap inline (style="--flow-space: var(--s2)") without
+   just its own gap inline (style="--flow-space: var(--space-m)") without
    a dedicated utility class or affecting its siblings. Elements
    outside any .flow, or that are themselves a flow/flow-modifier
    (so already consume --flow-space for their own children), use a
@@ -48,8 +48,8 @@
    the same --s-* scale, just expressed inline at the one place that
    needs a non-default value instead of a class meant to be reused. */
 .section-padding {
-  padding-top: var(--s3);
-  padding-bottom: var(--s4);
+  padding-top: var(--space-l);
+  padding-bottom: var(--space-xl);
 }
 
 /* --- Layout & sizing --- */

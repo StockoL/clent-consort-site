@@ -4,8 +4,15 @@
    Mirrors ../looseleaf-ui/src/index.css, with looseleaf-ui's individual
    source files copied in verbatim (vendored - re-synced by re-copying
    when looseleaf-ui changes, never hand-edited) alongside this project's
-   own additions in the same tier folders. Native @import + @layer, no
-   build step. The single stylesheet linked from base.html.
+   own additions in the same tier folders. Native @import + @layer at
+   runtime, no build step for the site itself.
+
+   The one exception is global/variables.css, which is generated (not
+   vendored) - see ../design-tokens.json and ../build-tokens.js at the
+   project root. This project forked its own token source rather than
+   staying synced to looseleaf-ui's brand-neutral one, so run
+   `node build-tokens.js` after editing design-tokens.json and re-run
+   collectstatic; that one file is the sole build step in this project.
    ========================================================================== */
 
 @layer reset, global, compositions, blocks, utilities;
@@ -15,7 +22,6 @@
    -------------------------------------------------------------------------- */
 @import "global/reset.css" layer(reset);
 @import "global/variables.css" layer(global);
-@import "global/tokens.css" layer(global);
 @import "global/global-styles.css" layer(global);
 @import "global/base-overrides.css" layer(global);
 

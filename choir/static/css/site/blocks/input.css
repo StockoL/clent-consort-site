@@ -5,19 +5,19 @@
 .label {
   display: block;
   font-weight: 600;
-  font-size: var(--typography-step-0);
+  font-size: var(--step-0);
   color: var(--colors-text-base);
 }
 
 .input {
   width: 100%; /* Allows layout compositions to dictate actual width */
   font-family: inherit;
-  font-size: var(--typography-step-0);
+  font-size: var(--step-0);
   color: var(--colors-text-base);
   background-color: var(--colors-surface-base);
   border: 1px solid var(--colors-border-subtle);
   border-radius: 4px;
-  padding: var(--spacing-xs) var(--spacing-sm);
+  padding: var(--space-2xs) var(--space-xs);
   transition:
     border-color var(--transitions-dur-fast) ease,
     box-shadow var(--transitions-dur-fast) ease;

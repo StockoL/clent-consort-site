@@ -30,17 +30,17 @@
         <input type="hidden" name="next" value="{{ request.GET.next }}" />
       {% endif %}
 
-      <button type="submit" class="button btn-block" data-variant="primary" style="--flow-space: var(--s-1)">Sign In</button>
+      <button type="submit" class="button btn-block" data-variant="primary" style="--flow-space: var(--space-2xs)">Sign In</button>
     </form>
 
-    <div class="text-center" style="--flow-space: var(--s-min)">
+    <div class="text-center" style="--flow-space: var(--space-3xs)">
       <a href="{% url 'account_reset_password' %}" style="color: #c9a45e; text-decoration: none; font-size: 0.9rem;">
         Forgot your password?
       </a>
     </div>
 
     {% if form.errors %}
-    <div class="text-error text-center" style="--flow-space: var(--s-1)">
+    <div class="text-error text-center" style="--flow-space: var(--space-2xs)">
       <p class="text-error">Your email and password didn't match. Please try again.</p>
     </div>
     {% endif %}

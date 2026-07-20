@@ -21,5 +21,5 @@
 .wrapper {
   max-inline-size: var(--wrapper-max-width, var(--layout-wrapper-max-width, 80rem));
   margin-inline: auto;
-  padding-inline: var(--wrapper-gutters, var(--spacing-md, 1.5rem));
+  padding-inline: var(--wrapper-gutters, var(--space-s, 1.5rem));
 }

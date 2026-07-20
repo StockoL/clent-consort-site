@@ -9,7 +9,7 @@
 
 .dropdown {
   --dropdown-width: 12rem;
-  --dropdown-offset: var(--spacing-xs);
+  --dropdown-offset: var(--space-2xs);
 
   position: absolute;
   top: calc(100% + var(--dropdown-offset));
@@ -19,13 +19,13 @@
   background-color: var(--colors-surface-base);
   border: 1px solid var(--colors-border-subtle);
   border-radius: 8px;
-  padding: var(--spacing-xs);
+  padding: var(--space-2xs);
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
 
   /* Hidden State Physics */
   opacity: 0;
   visibility: hidden;
-  transform: translateY(calc(var(--spacing-xs) * -1));
+  transform: translateY(calc(var(--space-2xs) * -1));
   transition:
     opacity var(--transitions-dur-base) var(--transitions-spring-smooth),
     transform var(--transitions-dur-base) var(--transitions-spring-snappy),
@@ -42,11 +42,11 @@
 
 .dropdown__item {
   display: block;
-  padding: var(--spacing-xs) var(--spacing-sm);
+  padding: var(--space-2xs) var(--space-xs);
   color: var(--colors-text-base);
   text-decoration: none;
   border-radius: 4px;
-  font-size: var(--typography-step-0);
+  font-size: var(--step-0);
   font-weight: 500;
   transition:
     background-color 0.15s ease,
@@ -63,5 +63,5 @@
 .dropdown__divider {
   border: none;
   border-top: 1px solid var(--colors-border-subtle);
-  margin-block: var(--spacing-xs);
+  margin-block: var(--space-2xs);
 }

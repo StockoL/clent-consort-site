@@ -20,12 +20,14 @@
   --colors-neutral-800: #27272a;
   --colors-neutral-900: #18181b;
   --colors-neutral-950: #09090b;
-  --colors-action-primary: #0070f3;
+  --colors-brand-gold: #c9a45e;
+  --colors-brand-ink: #1a1a1a;
+  --colors-action-primary: var(--colors-brand-gold);
+  --colors-text-on-action: var(--colors-brand-ink);
   --colors-surface-base: var(--colors-neutral-0);
   --colors-surface-sunken: var(--colors-neutral-100);
   --colors-text-base: var(--colors-neutral-900);
-  --colors-text-muted: var(--colors-neutral-500);
-  --colors-text-on-action: var(--colors-neutral-0);
+  --colors-text-muted: var(--colors-neutral-600);
   --colors-border-subtle: var(--colors-neutral-200);
   --colors-border-strong: var(--colors-neutral-300);
   --colors-success: #16a34a;
@@ -45,19 +47,36 @@
   --colors-info-border: #bfdbfe;
   --colors-info-text: #1e3a8a;
 
-  /* --- SPACING --- */
-  --spacing-xs: clamp(0.50rem, 0.45rem + 0.25vw, 0.63rem);
-  --spacing-sm: clamp(0.75rem, 0.65rem + 0.50vw, 1.00rem);
-  --spacing-md: clamp(1.13rem, 0.98rem + 0.75vw, 1.50rem);
-  --spacing-lg: clamp(1.50rem, 1.30rem + 1.00vw, 2.00rem);
-  --spacing-xl: clamp(2.00rem, 1.75rem + 1.25vw, 2.75rem);
+  /* --- SPACE --- */
+  --space-3xs: clamp(0.3125rem, 0.3125rem + 0vw, 0.3125rem);
+  --space-2xs: clamp(0.5625rem, 0.5369rem + 0.1136vw, 0.625rem);
+  --space-xs: clamp(0.875rem, 0.8494rem + 0.1136vw, 0.9375rem);
+  --space-s: clamp(1.125rem, 1.0739rem + 0.2273vw, 1.25rem);
+  --space-m: clamp(1.6875rem, 1.6108rem + 0.3409vw, 1.875rem);
+  --space-l: clamp(2.25rem, 2.1477rem + 0.4545vw, 2.5rem);
+  --space-xl: clamp(3.375rem, 3.2216rem + 0.6818vw, 3.75rem);
+  --space-2xl: clamp(4.5rem, 4.2955rem + 0.9091vw, 5rem);
+  --space-3xl: clamp(6.75rem, 6.4432rem + 1.3636vw, 7.5rem);
+  --space-3xs-2xs: clamp(0.3125rem, 0.1847rem + 0.5682vw, 0.625rem);
+  --space-2xs-xs: clamp(0.5625rem, 0.4091rem + 0.6818vw, 0.9375rem);
+  --space-xs-s: clamp(0.875rem, 0.7216rem + 0.6818vw, 1.25rem);
+  --space-s-m: clamp(1.125rem, 0.8182rem + 1.3636vw, 1.875rem);
+  --space-m-l: clamp(1.6875rem, 1.3551rem + 1.4773vw, 2.5rem);
+  --space-l-xl: clamp(2.25rem, 1.6364rem + 2.7273vw, 3.75rem);
+  --space-xl-2xl: clamp(3.375rem, 2.7102rem + 2.9545vw, 5rem);
+  --space-2xl-3xl: clamp(4.5rem, 3.2727rem + 5.4545vw, 7.5rem);
+  --space-s-l: clamp(1.125rem, 0.5625rem + 2.5vw, 2.5rem);
 
-  /* --- TYPOGRAPHY --- */
-  --typography-step-0: clamp(1.00rem, 0.93rem + 0.36vw, 1.20rem);
-  --typography-step-1: clamp(1.20rem, 1.07rem + 0.63vw, 1.55rem);
-  --typography-step-2: clamp(1.44rem, 1.24rem + 1.02vw, 2.01rem);
-  --typography-step-3: clamp(1.73rem, 1.42rem + 1.53vw, 2.59rem);
-  --typography-step-4: clamp(2.07rem, 1.63rem + 2.21vw, 3.33rem);
+  /* --- STEP --- */
+  --step--2: clamp(0.7813rem, 0.7736rem + 0.0341vw, 0.8rem);
+  --step--1: clamp(0.9375rem, 0.9119rem + 0.1136vw, 1rem);
+  --step-0: clamp(1.125rem, 1.0739rem + 0.2273vw, 1.25rem);
+  --step-1: clamp(1.35rem, 1.2631rem + 0.3864vw, 1.5625rem);
+  --step-2: clamp(1.62rem, 1.4837rem + 0.6057vw, 1.9531rem);
+  --step-3: clamp(1.944rem, 1.7405rem + 0.9044vw, 2.4414rem);
+  --step-4: clamp(2.3328rem, 2.0387rem + 1.3072vw, 3.0518rem);
+  --step-5: clamp(2.7994rem, 2.384rem + 1.8461vw, 3.8147rem);
+  --step-6: clamp(3.3592rem, 2.7828rem + 2.5621vw, 4.7684rem);
 
   /* --- TRANSITIONS --- */
   --transitions-spring-snappy: cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -70,6 +89,35 @@
   --layout-wrapper-max-width: 80rem;
 
   /* --- FONTS --- */
-  --fonts-heading: system-ui, sans-serif;
-  --fonts-body: system-ui, sans-serif;
+  --fonts-heading: "Cinzel", serif;
+  --fonts-body: "Inter", sans-serif;
+}
+
+/* --------------------------------------------------------------------------
+   DARK SCOPE - opt-in via .invert or [data-variant="invert"]
+   -------------------------------------------------------------------------- */
+.invert,
+[data-variant="invert"] {
+
+  /* --- COLORS-INVERT --- */
+  --colors-surface-base: var(--colors-brand-ink);
+  --colors-surface-sunken: #141414;
+  --colors-text-base: var(--colors-neutral-0);
+  --colors-text-muted: var(--colors-neutral-400);
+  --colors-border-subtle: rgba(255, 255, 255, 0.1);
+  --colors-border-strong: rgba(255, 255, 255, 0.2);
+  --colors-info-text: #38bdf8;
+  --colors-info-bg: rgba(2, 132, 199, 0.15);
+  --colors-info-border: rgba(2, 132, 199, 0.3);
+  --colors-success-text: #4ade80;
+  --colors-success-bg: rgba(22, 163, 74, 0.15);
+  --colors-success-border: rgba(22, 163, 74, 0.3);
+  --colors-warning-text: #fbbf24;
+  --colors-warning-bg: rgba(217, 119, 6, 0.15);
+  --colors-warning-border: rgba(217, 119, 6, 0.3);
+  --colors-danger-text: #f87171;
+  --colors-danger-bg: rgba(220, 38, 38, 0.15);
+  --colors-danger-border: rgba(220, 38, 38, 0.3);
+
+  color: var(--colors-text-base);
 }

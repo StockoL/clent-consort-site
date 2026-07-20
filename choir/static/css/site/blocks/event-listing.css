@@ -30,7 +30,7 @@
 }
 
 .featured-event .event-details {
-  padding: var(--s2);
+  padding: var(--space-m);
 }
 
 .featured-event h1 {
@@ -46,22 +46,22 @@
   font-size: 0.85rem;
   letter-spacing: 0.2ch;
   display: block;
-  margin-bottom: var(--s-1);
+  margin-bottom: var(--space-2xs);
 }
 
 .featured-event ul {
   list-style: none;
   padding: 0;
-  margin: var(--s1) 0;
+  margin: var(--space-s) 0;
 }
 
 .featured-event ul li {
   color: #e0e0e0;
   display: flex;
   flex-wrap: nowrap;
-  gap: var(--s0);
+  gap: var(--space-xs);
   align-items: flex-start;
-  margin-bottom: var(--s-1);
+  margin-bottom: var(--space-2xs);
   width: 100%;
 }
 
@@ -77,7 +77,7 @@
 
 .event-card {
   background: white;
-  padding: var(--s2);
+  padding: var(--space-m);
   border: 1px solid #eee;
   border-top: 4px solid #c9a45e;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
@@ -98,15 +98,15 @@
 
 .event-archive h2 {
   border-bottom: 2px solid #eee;
-  padding-bottom: var(--s0);
-  margin-bottom: var(--s1);
+  padding-bottom: var(--space-xs);
+  margin-bottom: var(--space-s);
 }
 
 .archive-item {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--s0) var(--s2);
-  padding: var(--s1) 0;
+  gap: var(--space-xs) var(--space-m);
+  padding: var(--space-s) 0;
   border-bottom: 1px solid #eee;
   align-items: baseline;
 }

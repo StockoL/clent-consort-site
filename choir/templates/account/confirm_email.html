@@ -9,7 +9,7 @@
             <h1>{% trans "Confirm Email" %}</h1>
         </div>
 
-        <div class="flow text-center" style="margin-block-start: var(--s2)">
+        <div class="flow text-center" style="margin-block-start: var(--space-m)">
             {% if confirmation %}
                 <p class="u-muted">
                     {% blocktrans with confirmation.email_address.email as email %}
@@ -22,7 +22,7 @@
                     <button class="button" data-variant="primary" type="submit">{% trans "Confirm Address" %}</button>
                 </form>
             {% else %}
-                <div class="alert" data-status="danger" style="margin-block-start: var(--s-1)">
+                <div class="alert" data-status="danger" style="margin-block-start: var(--space-2xs)">
                     <p>{% trans "This confirmation link has expired or is invalid. Please log in to request a new one." %}</p>
                 </div>
             {% endif %}

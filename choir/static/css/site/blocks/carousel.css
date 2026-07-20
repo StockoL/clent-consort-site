@@ -57,7 +57,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--s2, 2rem);
+  padding: var(--space-m, 2rem);
   z-index: 2;
   pointer-events: none; /* Allows swipe drag gestures to register through to container */
 }
@@ -69,7 +69,7 @@
   pointer-events: auto; /* Re-enables standard mouse interactions for content */
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(8px);
-  padding: var(--s2, 2rem);
+  padding: var(--space-m, 2rem);
   border-radius: 6px;
 }
 

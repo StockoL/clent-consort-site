@@ -3,7 +3,7 @@
    ========================================================================== */
 
 .modal {
-  padding: var(--spacing-lg);
+  padding: var(--space-m);
   border: none;
   border-radius: 8px;
   background-color: var(--colors-surface-base);

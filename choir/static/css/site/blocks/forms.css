@@ -19,7 +19,7 @@
   --switcher-threshold: 60rem;
   max-width: 75rem;
   margin-inline: auto;
-  gap: var(--s2);
+  gap: var(--space-m);
   align-items: flex-start;
 }
 
@@ -32,7 +32,7 @@
   color: #c9a45e;
   margin-top: 0;
   border-bottom: 1px solid rgba(201, 164, 94, 0.2);
-  padding-bottom: var(--s-1);
+  padding-bottom: var(--space-2xs);
 }
 
 .contact-form-container .form-group label {
@@ -49,7 +49,7 @@
 .contact-form-container select,
 .contact-form-container textarea {
   width: 100%;
-  padding: var(--s0);
+  padding: var(--space-xs);
   background-color: #ffffff;
   border: 1px solid #ccc;
   color: #1a1a1a;
@@ -102,7 +102,7 @@
 .divider {
   border: 0;
   border-top: 1px solid #333;
-  margin: var(--s2) 0;
+  margin: var(--space-m) 0;
 }
 
 .align-start {
@@ -129,13 +129,13 @@
 }
 
 .login-wrapper {
-  margin-top: var(--s2);
-  --box-padding: var(--s1);
+  margin-top: var(--space-m);
+  --box-padding: var(--space-s);
 }
 
 @media (min-width: 45rem) {
   .login-wrapper {
-    --box-padding: var(--s2); /* Desktop breathing room */
+    --box-padding: var(--space-m); /* Desktop breathing room */
   }
 }
 
@@ -154,7 +154,7 @@
 [data-variant="invert"] select {
   min-height: 3.5rem; /* Large enough for thumbs */
   font-size: 1.1rem; /* Prevents iOS zoom-on-focus */
-  padding: var(--s0);
+  padding: var(--space-xs);
   background-color: #ffffff;
   border: 1px solid #ccc;
   border-radius: 8px;
@@ -170,7 +170,7 @@
   justify-content: center;
   width: 100%;
   border-radius: 8px;
-  margin-top: var(--s1);
+  margin-top: var(--space-s);
   background-color: #ffffff;
   color: #1a1a1a;
   border: none;

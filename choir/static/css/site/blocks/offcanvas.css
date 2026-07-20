@@ -11,7 +11,7 @@
   max-inline-size: 24rem;
   border: none;
   background-color: var(--colors-surface-base);
-  padding: var(--spacing-lg);
+  padding: var(--space-m);
   box-shadow: -10px 0 25px rgba(0, 0, 0, 0.1);
   color: var(--colors-text-base);
 

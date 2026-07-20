@@ -1,0 +1,126 @@
+{
+  "_comment_colors": "PROCESS: neutral-* is the raw grayscale ramp and brand-* are Clent Consort's own brand primitives - both are static scales, never used directly in templates. Semantic tokens (surface-*, text-*, border-*, action-primary, text-on-action) alias into them via var(...) so the ramp/primitives stay the single source of truth. Status tokens (success/warning/danger/info) each ship a base + -bg/-border/-text trio for blocks like alert and badge. 'colors-invert' below carries the dark-scope overrides for the same semantic names - see that category's comment.",
+  "colors": {
+    "neutral-0": "#ffffff",
+    "neutral-50": "#fafafa",
+    "neutral-100": "#f4f4f5",
+    "neutral-200": "#e4e4e7",
+    "neutral-300": "#d4d4d8",
+    "neutral-400": "#a1a1aa",
+    "neutral-500": "#71717a",
+    "neutral-600": "#52525b",
+    "neutral-700": "#3f3f46",
+    "neutral-800": "#27272a",
+    "neutral-900": "#18181b",
+    "neutral-950": "#09090b",
+
+    "brand-gold": "#c9a45e",
+    "brand-ink": "#1a1a1a",
+
+    "action-primary": "var(--colors-brand-gold)",
+    "text-on-action": "var(--colors-brand-ink)",
+
+    "surface-base": "var(--colors-neutral-0)",
+    "surface-sunken": "var(--colors-neutral-100)",
+    "text-base": "var(--colors-neutral-900)",
+    "text-muted": "var(--colors-neutral-600)",
+    "border-subtle": "var(--colors-neutral-200)",
+    "border-strong": "var(--colors-neutral-300)",
+
+    "success": "#16a34a",
+    "success-bg": "#f0fdf4",
+    "success-border": "#bbf7d0",
+    "success-text": "#166534",
+
+    "warning": "#d97706",
+    "warning-bg": "#fffbeb",
+    "warning-border": "#fde68a",
+    "warning-text": "#92400e",
+
+    "danger": "#dc2626",
+    "danger-bg": "#fef2f2",
+    "danger-border": "#fecaca",
+    "danger-text": "#991b1b",
+
+    "info": "#0284c7",
+    "info-bg": "#eff6ff",
+    "info-border": "#bfdbfe",
+    "info-text": "#1e3a8a"
+  },
+  "_comment_colors-invert": "PROCESS: a category ending in '-invert' is handled specially by build-tokens.js - instead of landing in the main :root block, its keys are wrapped in '.invert, [data-variant=\"invert\"] { ... }' (the same scoping every dark card on this site already opts into). Keys still compile to the same custom property names as their 'colors' counterparts (e.g. this category's 'surface-base' becomes --colors-surface-base, not --colors-invert-surface-base), so anything reading --colors-surface-base automatically re-themes inside an inverted container. Only the tokens that actually need to flip for legibility on a dark surface are listed - brand/action colors stay constant in both themes. State base colors (success/warning/danger/info, no suffix) also stay constant; only -text/-bg/-border shift, to lighter/more-transparent variants suited to a dark background instead of the light-background defaults above.",
+  "colors-invert": {
+    "surface-base": "var(--colors-brand-ink)",
+    "surface-sunken": "#141414",
+    "text-base": "var(--colors-neutral-0)",
+    "text-muted": "var(--colors-neutral-400)",
+    "border-subtle": "rgba(255, 255, 255, 0.1)",
+    "border-strong": "rgba(255, 255, 255, 0.2)",
+
+    "info-text": "#38bdf8",
+    "info-bg": "rgba(2, 132, 199, 0.15)",
+    "info-border": "rgba(2, 132, 199, 0.3)",
+
+    "success-text": "#4ade80",
+    "success-bg": "rgba(22, 163, 74, 0.15)",
+    "success-border": "rgba(22, 163, 74, 0.3)",
+
+    "warning-text": "#fbbf24",
+    "warning-bg": "rgba(217, 119, 6, 0.15)",
+    "warning-border": "rgba(217, 119, 6, 0.3)",
+
+    "danger-text": "#f87171",
+    "danger-bg": "rgba(220, 38, 38, 0.15)",
+    "danger-border": "rgba(220, 38, 38, 0.3)"
+  },
+  "_comment_space": "PROCESS: fluid spacing scale generated at https://utopia.fyi/space/calculator/ - base steps (3xs..3xl) plus 'one-up' pairs (adjacent-step transitional sizes, e.g. 3xs-2xs) plus one custom pair (s-l) for gaps that need to grow faster than the standard curve across viewport width. Replaces both the old project-only --s-1..--s5 scale (base-overrides.css) and looseleaf-ui's own generic 5-rung --spacing-xs..xl scale (previously used internally by several vendored blocks/compositions) - this is the one spacing scale for the whole project now.",
+  "space": {
+    "3xs": "clamp(0.3125rem, 0.3125rem + 0vw, 0.3125rem)",
+    "2xs": "clamp(0.5625rem, 0.5369rem + 0.1136vw, 0.625rem)",
+    "xs": "clamp(0.875rem, 0.8494rem + 0.1136vw, 0.9375rem)",
+    "s": "clamp(1.125rem, 1.0739rem + 0.2273vw, 1.25rem)",
+    "m": "clamp(1.6875rem, 1.6108rem + 0.3409vw, 1.875rem)",
+    "l": "clamp(2.25rem, 2.1477rem + 0.4545vw, 2.5rem)",
+    "xl": "clamp(3.375rem, 3.2216rem + 0.6818vw, 3.75rem)",
+    "2xl": "clamp(4.5rem, 4.2955rem + 0.9091vw, 5rem)",
+    "3xl": "clamp(6.75rem, 6.4432rem + 1.3636vw, 7.5rem)",
+
+    "3xs-2xs": "clamp(0.3125rem, 0.1847rem + 0.5682vw, 0.625rem)",
+    "2xs-xs": "clamp(0.5625rem, 0.4091rem + 0.6818vw, 0.9375rem)",
+    "xs-s": "clamp(0.875rem, 0.7216rem + 0.6818vw, 1.25rem)",
+    "s-m": "clamp(1.125rem, 0.8182rem + 1.3636vw, 1.875rem)",
+    "m-l": "clamp(1.6875rem, 1.3551rem + 1.4773vw, 2.5rem)",
+    "l-xl": "clamp(2.25rem, 1.6364rem + 2.7273vw, 3.75rem)",
+    "xl-2xl": "clamp(3.375rem, 2.7102rem + 2.9545vw, 5rem)",
+    "2xl-3xl": "clamp(4.5rem, 3.2727rem + 5.4545vw, 7.5rem)",
+
+    "s-l": "clamp(1.125rem, 0.5625rem + 2.5vw, 2.5rem)"
+  },
+  "_comment_step": "PROCESS: fluid type scale generated at https://utopia.fyi/type/calculator/ - replaces looseleaf-ui's generic 5-step --typography-step-0..4 scale with a wider 9-step range (including two steps below the body-text baseline) so every heading level and fine-print size has a dedicated rung instead of reusing/hardcoding.",
+  "step": {
+    "-2": "clamp(0.7813rem, 0.7736rem + 0.0341vw, 0.8rem)",
+    "-1": "clamp(0.9375rem, 0.9119rem + 0.1136vw, 1rem)",
+    "0": "clamp(1.125rem, 1.0739rem + 0.2273vw, 1.25rem)",
+    "1": "clamp(1.35rem, 1.2631rem + 0.3864vw, 1.5625rem)",
+    "2": "clamp(1.62rem, 1.4837rem + 0.6057vw, 1.9531rem)",
+    "3": "clamp(1.944rem, 1.7405rem + 0.9044vw, 2.4414rem)",
+    "4": "clamp(2.3328rem, 2.0387rem + 1.3072vw, 3.0518rem)",
+    "5": "clamp(2.7994rem, 2.384rem + 1.8461vw, 3.8147rem)",
+    "6": "clamp(3.3592rem, 2.7828rem + 2.5621vw, 4.7684rem)"
+  },
+  "transitions": {
+    "spring-snappy": "cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+    "spring-smooth": "cubic-bezier(0.4, 0, 0.2, 1)",
+    "dur-fast": "150ms",
+    "dur-base": "250ms"
+  },
+  "_comment_layout": "PROCESS: 'measure' caps prose/content width (used by .center and typographic elements). 'wrapper-max-width' caps macro page-section width (used by .wrapper) and is deliberately a separate, wider value - the two primitives solve different problems and should not share a default.",
+  "layout": {
+    "measure": "60ch",
+    "wrapper-max-width": "80rem"
+  },
+  "_comment_fonts": "Clent Consort's actual brand typefaces - forked from looseleaf-ui's brand-neutral system-ui placeholders now that this project owns its own token source rather than vendoring looseleaf-ui's generic one.",
+  "fonts": {
+    "heading": "\"Cinzel\", serif",
+    "body": "\"Inter\", sans-serif"
+  }
+}

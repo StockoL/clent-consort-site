@@ -8,7 +8,7 @@
   --alert-border: var(--colors-border-subtle);
   --alert-text: var(--colors-text-base);
 
-  padding: var(--spacing-sm);
+  padding: var(--space-xs);
   border-radius: 8px;
   border: 1px solid var(--alert-border);
   background-color: var(--alert-bg);
@@ -52,7 +52,7 @@
   color: inherit;
   opacity: 0.7;
   cursor: pointer;
-  padding: var(--spacing-xs);
+  padding: var(--space-2xs);
   border-radius: 4px;
   transition:
     opacity var(--transitions-dur-fast),

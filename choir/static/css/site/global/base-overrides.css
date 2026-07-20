@@ -2,34 +2,20 @@
    GLOBAL: PROJECT BASE OVERRIDES (decanted from style.css "v1")
    ==========================================================================
    Ported verbatim from style.css's old section 1 (base) and section 10
-   (scrollbar) - same selectors, same behavior, just relocated. The
-   spacing scale (--s-1..--s5) stays here rather than being remapped onto
-   looseleaf's fluid spacing.* tokens - that's a value-changing decision
-   (looseleaf's scale is a different fluid curve), not a relocation, so
-   it's deliberately left alone for a later, dedicated pass.
+   (scrollbar) - same selectors, same behavior, just relocated. The old
+   project-only spacing scale (--space-2xs..--space-2xl) that used to live here has
+   been fully replaced by the fluid --space-* scale in global/variables.css
+   (generated from design-tokens.json) - every var(--s*) reference across
+   the project has been migrated, so this file no longer defines its own
+   spacing scale at all.
    ========================================================================== */
 
 :root {
-  /* Spacing Scale */
-  --s-1: 0.8rem;
-  --s0: 1rem;
-  --s1: 1.5rem;
-  --s2: 2.25rem;
-  --s3: 3.375rem;
-  --s4: 5.063rem;
-  --s5: 7.594rem;
-
-  --s-min: 0.5rem; /* A smaller spacing unit for tight layouts */
-
-  --primary: #c9a45e; /* A warm gold for accents and highlights */
-
-  /* TEMPORARY aliases so style.css's remaining, not-yet-decanted rules
-     (which still reference var(--font-heading)/var(--font-body)) keep
-     working during the migration - drop these once style.css is fully
-     drained and every reference points at --fonts-heading/--fonts-body
-     directly. */
-  --font-heading: var(--fonts-heading);
-  --font-body: var(--fonts-body);
+  /* Kept as a short, memorable alias for the brand color - some earlier
+     inline styles still reference var(--primary) directly. Points at the
+     generated token rather than its own hardcoded hex, so there's still
+     only one place the actual gold value is defined. */
+  --primary: var(--colors-brand-gold);
 }
 
 body {

@@ -17,8 +17,8 @@
 .conductor-sidebar.sidebar {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--s1);
-  padding: var(--s2) var(--s1);
+  gap: var(--space-s);
+  padding: var(--space-m) var(--space-s);
   max-width: 80rem;
   margin-inline: auto;
 }

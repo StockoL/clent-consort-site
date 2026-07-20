@@ -11,8 +11,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--spacing-xs); /* For icons */
-  padding: var(--spacing-xs) var(--spacing-md);
+  gap: var(--space-2xs); /* For icons */
+  padding: var(--space-2xs) var(--space-s);
 
   background-color: var(--button-bg);
   color: var(--button-text);
@@ -20,7 +20,7 @@
   border-radius: 4px;
 
   font-family: inherit;
-  font-size: var(--typography-step-0);
+  font-size: var(--step-0);
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;

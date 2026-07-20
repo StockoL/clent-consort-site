@@ -3,15 +3,15 @@
    ==========================================================================
    looseleaf-ui's .flow ships no size-modifier classes (--flow-space is
    set per-instance) - these two match the old .l-stack--small/--large
-   exactly (--s-1 = 0.8rem, --s4 = 5.063rem) so every conversion from
+   exactly (--space-2xs = 0.8rem, --space-xl = 5.063rem) so every conversion from
    l-stack to flow across templates is a pure class rename, not a
    value change.
    ========================================================================== */
 
 .flow--small {
-  --flow-space: var(--s-1);
+  --flow-space: var(--space-2xs);
 }
 
 .flow--large {
-  --flow-space: var(--s4);
+  --flow-space: var(--space-xl);
 }

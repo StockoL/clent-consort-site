@@ -22,12 +22,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--space-xs) var(--space-s);
   background: transparent;
   border: none;
   color: var(--colors-text-base);
   font-weight: 600;
-  font-size: var(--typography-step-0);
+  font-size: var(--step-0);
   cursor: pointer;
   transition: background-color var(--transitions-dur-fast) ease;
 }
@@ -51,11 +51,11 @@
 
 .accordion__content {
   overflow: hidden;
-  padding-inline: var(--spacing-md);
+  padding-inline: var(--space-s);
 }
 
 .accordion__panel[data-state="open"] .accordion__content {
-  padding-bottom: var(--spacing-md);
+  padding-bottom: var(--space-s);
 }
 
 .accordion__icon {

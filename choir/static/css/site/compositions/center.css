@@ -19,7 +19,7 @@
   display: block;
   max-inline-size: var(--center-max-width, var(--layout-measure, 60ch));
   margin-inline: auto;
-  padding-inline: var(--center-gutters, var(--spacing-md, 1.5rem));
+  padding-inline: var(--center-gutters, var(--space-s, 1.5rem));
 }
 
 /* Optional utility exception: centers the text alignment inside the center box too */
