@@ -7,7 +7,7 @@
   flex-direction: column;
   /* Fill <main> exactly, so the hero always touches the footer
      regardless of viewport height. main is now itself a flex column
-     (see 01-global/base-overrides.css) specifically so flex: 1 works
+     (see global/base-overrides.css) specifically so flex: 1 works
      here reliably - the earlier min-height: 100% attempt didn't
      actually resolve, since body only has min-height: 100vh (not a
      definite height), which keeps flex-grown descendants further down

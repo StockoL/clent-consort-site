@@ -2,7 +2,7 @@
    BLOCK: CARD (project exception, extends the vendored card.css)
    ==========================================================================
    The dark background/text/border-subtle job is now handled automatically
-   by the dark-scope token override in 01-global/tokens.css ([data-variant
+   by the dark-scope token override in global/tokens.css ([data-variant
    ="invert"] overrides --colors-surface-base/--colors-text-base/etc, and
    .card already reads those tokens). This file only adds the cosmetic
    flourishes that are genuinely specific to this site's card, not just

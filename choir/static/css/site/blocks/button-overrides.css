@@ -46,3 +46,18 @@
   --button-bg: var(--colors-action-primary);
   --button-text: var(--colors-text-on-action);
 }
+
+/* Size exceptions - these only ever apply to .button, so belong here as
+   block exceptions rather than in utilities (moved from
+   project-utilities.css, same class names, no template changes). */
+.button.btn-small {
+  padding: 5px 15px;
+  font-size: 0.85em;
+}
+
+.button.btn-block {
+  display: block;
+  width: 100%;
+  text-align: center;
+  text-decoration: none;
+}

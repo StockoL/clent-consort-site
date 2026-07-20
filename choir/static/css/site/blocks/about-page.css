@@ -9,7 +9,7 @@
    padding/max-width). Scoped to .conductor-sidebar.sidebar specifically
    (rather than bare .sidebar, which style.css originally used) so it
    can't leak onto the composition's other use sites - .sidebar alone is
-   now also vendored (02-compositions/sidebar.css) and used unqualified
+   now also vendored (compositions/sidebar.css) and used unqualified
    elsewhere (about.html's own repertoire card, events.html's featured-
    event card).
    ========================================================================== */
