@@ -1,7 +1,7 @@
 {% extends 'choir/base.html' %}
 
 {% block content %}
-<div class="l-center section-padding">
+<div class="wrapper section-padding">
   <div class="box invert">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
       <div>
@@ -14,7 +14,7 @@
     <div style="overflow-x: auto; margin-top: 2rem;">
       <table class="data-table" style="width: 100%; text-align: left; border-collapse: collapse;">
         <thead>
-          <tr style="border-bottom: 2px solid var(--color-primary);">
+          <tr style="border-bottom: 2px solid var(--primary);">
             <th style="padding: 1rem;">Singer</th>
             <th style="padding: 1rem;">Voice</th>
             <th style="padding: 1rem;">Emergency Contact</th>
@@ -42,7 +42,7 @@
                   <span style="color: #aaa; font-size: 0.9em;">({{ member.profile.emergency_contact_relation }})</span>
                 {% endif %}
                 <br>
-                <a href="tel:{{ member.profile.emergency_contact_phone }}" style="color: var(--color-accent); text-decoration: none;">
+                <a href="tel:{{ member.profile.emergency_contact_phone }}" style="color: var(--primary); text-decoration: none;">
                   {{ member.profile.emergency_contact_phone }}
                 </a>
               </td>
