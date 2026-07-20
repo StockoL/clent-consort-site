@@ -330,8 +330,17 @@ END:VCALENDAR"""
 
 
 def is_committee(user):
-    """Helper gatekeeper: Checks for administrative privileges."""
-    return user.is_staff or user.is_superuser
+    """
+    Helper gatekeeper: checks for committee/administrative privileges.
+
+    Single source of truth for "is this user committee staff" - this used
+    to also exist as a second, inconsistent predicate (is_committee_staff)
+    that a couple of views used instead. Gates the genuinely sensitive
+    committee views (financials, emergency roster, broadcast, scheduling,
+    RSVP overrides). committee_hub and committee_documents_view are
+    deliberately NOT gated by this - see the comment on those views.
+    """
+    return user.is_active and (user.is_staff or user.is_superuser)
 
 
 @login_required
@@ -446,14 +455,19 @@ def committee_update_rsvp_override(request, attendance_id):
 # 4.2 COMMITTEE DOCUMENTS
 # =============================================================================
 @login_required
-# DELETED the @user_passes_test decorator here
+# Intentionally open to any active member, not just committee/staff: the
+# committee asked for the hub and the document vault (read access) to be
+# available to all choir members, not staff-only. Do not add
+# @user_passes_test(is_committee) back here - that was tried and reverted.
 def committee_hub(request):
     """The central command center dashboard, now acting as a shared workspace."""
     return render(request, "choir/committee_hub.html")
 
 
 @login_required
-# DELETED the @user_passes_test decorator here
+# Intentionally open to any active member for read access - see the comment
+# on committee_hub above. Uploading (POST) is still staff-only, enforced
+# in-body below.
 def committee_documents_view(request):
     """Unified vault to view secure documents. Uploading restricted to staff."""
     if request.method == "POST":
@@ -584,13 +598,8 @@ def committee_financials_view(request):
 # =============================================================================
 
 
-def is_committee_staff(user):
-    """Gatekeeper: Verifies the user is an active member of the committee staff."""
-    return user.is_active and user.is_staff
-
-
 @login_required
-@user_passes_test(is_committee_staff)
+@user_passes_test(is_committee)
 def committee_schedule_event(request):
     """Processes frontend form submissions to schedule new rehearsals or residencies."""
     from .forms import QuickEventScheduleForm  # Local import to prevent circular traps
@@ -628,7 +637,7 @@ def login_redirect_router(request):
 
 
 @login_required
-@user_passes_test(is_committee_staff)
+@user_passes_test(is_committee)
 def committee_broadcast(request):
     """Processes frontend mass-email dispatch."""
     from .forms import BroadcastForm
