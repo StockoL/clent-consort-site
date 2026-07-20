@@ -53,6 +53,8 @@
     {% block extra_head %}{% endblock extra_head %}
 
     <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/looseleaf.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/local-cube.css' %}" />
   </head>
 
   <body id="top" class="{% block body_class %}{% endblock body_class %}">
@@ -177,5 +179,6 @@
     </button>
 
     <script src="{% static 'clentConsort.js' %}"></script>
+    <script src="{% static 'js/looseleaf-behaviors.js' %}" defer></script>
   </body>
 </html>

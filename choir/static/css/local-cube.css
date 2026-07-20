@@ -1,0 +1,23 @@
+/* ==========================================================================
+   PROJECT-LOCAL CUBE ADDITIONS
+   ==========================================================================
+   Small additions to looseleaf-ui's CUBE layers that are specific to this
+   site and don't belong upstream in ../looseleaf-ui itself. Kept in its own
+   file (unlike css/looseleaf.css, which is a vendored, regenerated build
+   artifact - do not hand-edit that one) so it survives re-vendoring.
+   ========================================================================== */
+
+@layer blocks {
+  /* The site's dark/gold "invert" card treatment, previously .box.invert
+     in css/style.css. Exception-layer pattern: same .card block, state via
+     [data-variant] attribute rather than a second class. */
+  .card[data-variant="invert"] {
+    background-color: #1a1a1a;
+    color: #ffffff;
+    border-radius: 20px;
+    border: 1px solid rgba(201, 164, 94, 0.3);
+    box-shadow:
+      0 10px 15px -3px rgba(0, 0, 0, 0.3),
+      0 40px 60px -15px rgba(0, 0, 0, 0.4);
+  }
+}
