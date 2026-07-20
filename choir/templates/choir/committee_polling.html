@@ -1,0 +1,91 @@
+{% extends 'choir/base.html' %}
+
+{% block title %}Availability Polling - Clent Consort{% endblock title %}
+
+{% block content %}
+<div class="wrapper flow section-padding">
+  <div class="text-center">
+    <h1 class="text-primary">Availability Polling</h1>
+    <p>Gauge member availability for a planning-phase project before committing to a date or venue.</p>
+
+    <a href="{% url 'committee_hub' %}" class="button btn-small" data-variant="outline" style="text-decoration: none; display: inline-block; margin-block-start: var(--space-2xs);">
+      ← Back to Hub
+    </a>
+  </div>
+
+  <div class="switcher" style="--flow-space: var(--space-m)">
+    <section class="card flow" data-variant="invert">
+      <h2 class="text-primary text-step-1" style="padding-bottom: var(--space-3xs); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">Create Poll</h2>
+
+      {% if form.project.field.queryset|length == 0 %}
+      <p class="text-small text-muted" style="margin-block-start: var(--space-s)">
+        No projects are currently in the Planning stage. Create one from the
+        <a href="{% url 'committee_projects' %}" style="color: #c9a45e;">Projects</a> page first.
+      </p>
+      {% else %}
+      <form method="POST" class="flow flow--small" style="margin-block-start: var(--space-s)">
+        {% csrf_token %}
+
+        <div>
+          <label class="form-label text-small">{{ form.project.label }}</label>
+          {{ form.project }}
+          <div class="form-error">{{ form.project.errors }}</div>
+        </div>
+
+        <div>
+          <label class="form-label text-small">{{ form.question.label }}</label>
+          {{ form.question }}
+          <div class="form-error">{{ form.question.errors }}</div>
+        </div>
+
+        <div style="display: flex; gap: 1rem;">
+          <div style="flex: 1;">
+            <label class="form-label text-small">{{ form.proposed_date.label }}</label>
+            {{ form.proposed_date }}
+          </div>
+        </div>
+
+        <div>
+          <label class="form-label text-small">{{ form.notes.label }}</label>
+          {{ form.notes }}
+        </div>
+
+        <button type="submit" class="button w-100" data-variant="primary" style="--flow-space: var(--space-s)">Create Poll</button>
+      </form>
+      {% endif %}
+    </section>
+
+    <section class="card flow" data-variant="invert">
+      <h2 class="text-primary text-step-1" style="padding-bottom: var(--space-3xs); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">Results</h2>
+
+      {% if poll_data %}
+      <ul class="list-unstyled flow flow--small" style="margin-block-start: var(--space-s)">
+        {% for row in poll_data %}
+        <li style="padding-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+          <strong>{{ row.poll.question }}</strong>
+          <span class="badge" data-status="{% if row.poll.is_open %}success{% else %}info{% endif %}">
+            {% if row.poll.is_open %}Open{% else %}Closed{% endif %}
+          </span>
+          <br>
+          <span class="text-small text-muted">{{ row.poll.project.name }}{% if row.poll.proposed_date %} · {{ row.poll.proposed_date|date:"j M Y" }}{% endif %}</span>
+          <p class="text-small" style="margin-top: 0.5rem;">
+            ✅ {{ row.yes_count }} available &nbsp; ❌ {{ row.no_count }} not available &nbsp; ❔ {{ row.maybe_count }} maybe
+          </p>
+          {% if row.non_responders %}
+          <p class="text-small text-muted">
+            {{ row.non_responders|length }} member{{ row.non_responders|length|pluralize }} yet to respond
+            {% if row.non_responder_emails %}
+            - <a href="mailto:?bcc={{ row.non_responder_emails }}&subject=Availability Poll Reminder&body=Hi everyone,%0A%0APlease could you log into the Clent Consort portal and let us know your availability for: {{ row.poll.question }}.%0A%0AThank you!" style="color: #c9a45e;">✉️ Send reminder</a>
+            {% endif %}
+          </p>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="text-muted text-small" style="margin-block-start: var(--space-s)">No polls created yet.</p>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock content %}

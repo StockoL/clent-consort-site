@@ -3,6 +3,8 @@ from django.contrib import admin
 from .models import (
     Attendance,
     AuditionApplication,
+    AvailabilityPoll,
+    AvailabilityResponse,
     ChoirCommunication,
     Enquiry,
     Event,
@@ -129,6 +131,21 @@ class EventAdmin(admin.ModelAdmin):
 
     # Injects the RSVP list at the bottom of the event page
     inlines = [AttendanceInline]
+
+
+class AvailabilityResponseInline(admin.TabularInline):
+    model = AvailabilityResponse
+    extra = 0
+    readonly_fields = ("updated_at",)
+
+
+@admin.register(AvailabilityPoll)
+class AvailabilityPollAdmin(admin.ModelAdmin):
+    # Day-to-day management happens on the committee's own frontend page
+    # (committee_polling) - see the note on ProjectAdmin.
+    list_display = ("question", "project", "proposed_date", "is_open")
+    list_filter = ("is_open", "project")
+    inlines = [AvailabilityResponseInline]
 
 
 # ==============================================================================

@@ -332,6 +332,69 @@ class CommitteeDocument(models.Model):
         return f"{self.title} ({self.get_doc_type_display()})"
 
 
+class AvailabilityPoll(models.Model):
+    """
+    A committee-created question tied to a PLANNING-phase Project, used to
+    gauge ensemble availability before committing to a venue or date.
+    Member-facing surface is deliberately narrow: question/proposed_date/
+    notes only, never the parent Project's repertoire or description.
+    """
+
+    project = models.ForeignKey(Project, on_delete=models.PROTECT, related_name="polls")
+    question = models.CharField(
+        max_length=200,
+        help_text="e.g., Are you available the weekend of 14-15 March 2027?",
+    )
+    proposed_date = models.DateField(
+        blank=True, null=True, help_text="Optional - the specific date being tested."
+    )
+    notes = models.TextField(
+        blank=True, help_text="Extra context for members, e.g. venue under consideration."
+    )
+    is_open = models.BooleanField(
+        default=True,
+        help_text="Closes the poll to new or changed responses once the committee has decided.",
+    )
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["proposed_date", "created_at"]
+
+    def __str__(self):
+        return f"{self.project.name}: {self.question}"
+
+
+class AvailabilityResponse(models.Model):
+    """A member's answer to a single AvailabilityPoll."""
+
+    RESPONSE_CHOICES = [
+        ("YES", "Available"),
+        ("NO", "Not Available"),
+        ("MAYBE", "Maybe"),
+    ]
+
+    poll = models.ForeignKey(
+        AvailabilityPoll, on_delete=models.CASCADE, related_name="responses"
+    )
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="availability_responses"
+    )
+    response = models.CharField(max_length=5, choices=RESPONSE_CHOICES)
+    notes = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Optional - e.g. 'Away until the 10th, fine after that.'",
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("poll", "user")
+
+    def __str__(self):
+        return f"{self.user.get_full_name() or self.user.username} - {self.poll.question}: {self.get_response_display()}"
+
+
 # ==============================================================================
 # 4. CONTACT
 # ==============================================================================

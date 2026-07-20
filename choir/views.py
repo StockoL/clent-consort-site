@@ -24,6 +24,8 @@ from .forms import (
 )
 from .models import (
     Attendance,
+    AvailabilityPoll,
+    AvailabilityResponse,
     CommitteeDocument,
     Event,
     GiftAidDeclaration,
@@ -201,6 +203,62 @@ def member_repertoire_view(request):
         "current_repertoire": repertoire,
     }
     return render(request, "choir/member_repertoire.html", context)
+
+
+@login_required
+def member_polling_view(request):
+    """"Looking Ahead" on the subnav. PLANNING projects are otherwise
+    committee-only (see the Project docstring), but their open polls are
+    the one deliberate exception - members answer question/proposed_date/
+    notes here, never that project's repertoire or description, which
+    this view's context never includes."""
+    open_polls = list(
+        AvailabilityPoll.objects.filter(
+            project__status="PLANNING", is_open=True
+        ).select_related("project")
+    )
+
+    existing_responses = {
+        response.poll_id: response.response
+        for response in AvailabilityResponse.objects.filter(
+            user=request.user, poll__in=open_polls
+        )
+    }
+    # Django templates can't do a dict lookup with a variable key
+    # ({{ dict.some_var }} only works for literal keys) - attach each
+    # poll's response directly as an attribute instead, so the template
+    # can just read {{ poll.user_response }}.
+    for poll in open_polls:
+        poll.user_response = existing_responses.get(poll.id)
+
+    context = {"open_polls": open_polls}
+    return render(request, "choir/member_polling.html", context)
+
+
+@login_required
+@require_POST
+def member_poll_respond_view(request, poll_id):
+    """API endpoint updating a member's response to one poll, mirroring
+    update_rsvp_view's fetch+CSRF-header AJAX pattern rather than a full
+    page reload."""
+    poll = get_object_or_404(AvailabilityPoll, id=poll_id, is_open=True)
+
+    try:
+        data = json.loads(request.body)
+        response_value = data.get("response")
+    except json.JSONDecodeError:
+        return JsonResponse({"success": False, "error": "Invalid payload"}, status=400)
+
+    valid_choices = [choice[0] for choice in AvailabilityResponse.RESPONSE_CHOICES]
+    if response_value not in valid_choices:
+        return JsonResponse({"success": False, "error": "Invalid response"}, status=400)
+
+    AvailabilityResponse.objects.update_or_create(
+        poll=poll,
+        user=request.user,
+        defaults={"response": response_value},
+    )
+    return JsonResponse({"success": True, "response": response_value})
 
 
 @login_required
@@ -437,6 +495,53 @@ def committee_project_edit_view(request, project_id):
         "project": project,
     }
     return render(request, "choir/committee_project_edit.html", context)
+
+
+@login_required
+@user_passes_test(is_committee)
+def committee_poll_manage_view(request):
+    """Create availability polls (tied to a PLANNING project) and view
+    aggregate YES/NO/MAYBE results + a non-responder list per poll -
+    mirrors committee_rsvp_report's pending-list-with-mailto pattern."""
+    from .forms import AvailabilityPollForm
+
+    if request.method == "POST":
+        form = AvailabilityPollForm(request.POST)
+        if form.is_valid():
+            poll = form.save(commit=False)
+            poll.created_by = request.user
+            poll.save()
+            messages.success(request, "Poll created.")
+            return redirect("committee_polling")
+    else:
+        form = AvailabilityPollForm()
+
+    active_users = User.objects.filter(is_active=True)
+    poll_data = []
+    for poll in AvailabilityPoll.objects.select_related("project"):
+        responses = poll.responses.select_related("user")
+        responded_user_ids = responses.values_list("user_id", flat=True)
+        non_responders = active_users.exclude(id__in=responded_user_ids)
+        non_responder_emails = ",".join(
+            [user.email for user in non_responders if user.email]
+        )
+
+        poll_data.append(
+            {
+                "poll": poll,
+                "yes_count": responses.filter(response="YES").count(),
+                "no_count": responses.filter(response="NO").count(),
+                "maybe_count": responses.filter(response="MAYBE").count(),
+                "non_responders": non_responders,
+                "non_responder_emails": non_responder_emails,
+            }
+        )
+
+    context = {
+        "form": form,
+        "poll_data": poll_data,
+    }
+    return render(request, "choir/committee_polling.html", context)
 
 
 @login_required

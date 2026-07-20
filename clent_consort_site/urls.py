@@ -14,6 +14,7 @@ from choir.views import (
     committee_emergency_roster,
     committee_financials_view,
     committee_hub,
+    committee_poll_manage_view,
     committee_project_edit_view,
     committee_projects_view,
     committee_rsvp_report,
@@ -27,6 +28,8 @@ from choir.views import (
     home_view,
     hub_view,
     login_redirect_router,
+    member_poll_respond_view,
+    member_polling_view,
     member_repertoire_view,
     settings_view,
     update_rsvp_view,
@@ -48,6 +51,12 @@ urlpatterns = [
     # --- Secure Member Area ---
     path("members/", dashboard_view, name="members"),
     path("members/repertoire/", member_repertoire_view, name="member_repertoire"),
+    path("members/polling/", member_polling_view, name="member_polling"),
+    path(
+        "members/polling/<int:poll_id>/respond/",
+        member_poll_respond_view,
+        name="member_poll_respond",
+    ),
     path("members/giftaid/", giftaid_view, name="giftaid"),
     path("members/hub/<str:voice_part>/", hub_view, name="hub"),
     path("members/settings/", settings_view, name="settings"),
@@ -59,6 +68,7 @@ urlpatterns = [
         committee_project_edit_view,
         name="committee_project_edit",
     ),
+    path("members/committee/polling/", committee_poll_manage_view, name="committee_polling"),
     path("members/committee/rsvps/", committee_rsvp_report, name="committee_rsvps"),
     path(
         "members/committee/broadcast/", committee_broadcast, name="committee_broadcast"

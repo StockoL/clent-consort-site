@@ -2,10 +2,6 @@
 First reusable nav include in this codebase - base.html's main nav is
 hand-inlined per-link with this same aria-current + resolver_match.url_name
 idiom, factored out here since three dashboard pages all need it.
-
-"Looking Ahead" (polling) is added once member_polling exists - keeping
-each phase of the Project-centric rewrite independently deployable
-without a dangling {% url %} reference to a view that doesn't exist yet.
 {% endcomment %}
 <nav class="subnav" aria-label="Dashboard sections">
   <ul class="subnav-list">
@@ -22,6 +18,13 @@ without a dangling {% url %} reference to a view that doesn't exist yet.
         class="subnav-link"
         {% if request.resolver_match.url_name == 'member_repertoire' %}aria-current="page"{% endif %}
       >Repertoire &amp; Learning</a>
+    </li>
+    <li>
+      <a
+        href="{% url 'member_polling' %}"
+        class="subnav-link"
+        {% if request.resolver_match.url_name == 'member_polling' %}aria-current="page"{% endif %}
+      >Looking Ahead</a>
     </li>
   </ul>
 </nav>

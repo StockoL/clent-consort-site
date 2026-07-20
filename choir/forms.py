@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 
 from .models import (
     AuditionApplication,
+    AvailabilityPoll,
     ChoirCommunication,
     CommitteeDocument,
     Enquiry,
@@ -181,6 +182,33 @@ class ProjectForm(forms.ModelForm):
             "description": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
             "start_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
             "end_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+        }
+
+
+class AvailabilityPollForm(forms.ModelForm):
+    """Frontend form for the committee to create an availability poll -
+    always tied to a PLANNING-phase project, since a poll's whole purpose
+    is gauging availability before a project is confirmed as ACTIVE."""
+
+    project = forms.ModelChoiceField(
+        queryset=Project.objects.filter(status="PLANNING"),
+        widget=forms.Select(attrs={"class": "form-control"}),
+    )
+
+    class Meta:
+        model = AvailabilityPoll
+        fields = ["project", "question", "proposed_date", "notes"]
+        widgets = {
+            "question": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "e.g., Are you available the weekend of 14-15 March 2027?",
+                }
+            ),
+            "proposed_date": forms.DateInput(
+                attrs={"type": "date", "class": "form-control"}
+            ),
+            "notes": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
         }
 
 

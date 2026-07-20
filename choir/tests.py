@@ -7,7 +7,16 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Attendance, ChoirCommunication, Enquiry, Event, Project, Repertoire
+from .models import (
+    Attendance,
+    AvailabilityPoll,
+    AvailabilityResponse,
+    ChoirCommunication,
+    Enquiry,
+    Event,
+    Project,
+    Repertoire,
+)
 
 
 class AttendanceAutoCreationTests(TestCase):
@@ -252,6 +261,7 @@ class CommitteePermissionModelTests(TestCase):
             "committee_broadcast",
             "committee_schedule",
             "committee_projects",
+            "committee_polling",
         ):
             response = self.client.get(reverse(name))
             self.assertEqual(
@@ -418,3 +428,96 @@ class EmailManagementTests(TestCase):
         # and explicitly made primary - that's the whole point of the fix.
         self.user.refresh_from_db()
         self.assertEqual(self.user.email, "original@example.com")
+
+
+class AvailabilityPollingTests(TestCase):
+    """Guards the availability polling feature: response uniqueness,
+    committee poll creation, and the confirmed scoping decision that
+    members answering a poll never see that PLANNING project's
+    repertoire or description (only committee-facing pages do)."""
+
+    def setUp(self):
+        self.planning = Project.objects.create(name="Easter 2027", status="PLANNING")
+        self.poll = AvailabilityPoll.objects.create(
+            project=self.planning,
+            question="Are you available the weekend of 14-15 March 2027?",
+        )
+        self.member = User.objects.create_user(username="member", password="pw")
+        self.client.login(username="member", password="pw")
+
+    def test_response_unique_together_enforced(self):
+        AvailabilityResponse.objects.create(
+            poll=self.poll, user=self.member, response="YES"
+        )
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                AvailabilityResponse.objects.create(
+                    poll=self.poll, user=self.member, response="NO"
+                )
+
+    def test_respond_endpoint_updates_existing_response(self):
+        self.client.post(
+            reverse("member_poll_respond", args=[self.poll.id]),
+            data='{"response": "YES"}',
+            content_type="application/json",
+        )
+        self.client.post(
+            reverse("member_poll_respond", args=[self.poll.id]),
+            data='{"response": "MAYBE"}',
+            content_type="application/json",
+        )
+        self.assertEqual(AvailabilityResponse.objects.filter(poll=self.poll).count(), 1)
+        response = AvailabilityResponse.objects.get(poll=self.poll, user=self.member)
+        self.assertEqual(response.response, "MAYBE")
+
+    def test_member_polling_page_never_exposes_project_details(self):
+        self.planning.description = "Secret repertoire planning notes"
+        self.planning.save()
+        piece = Repertoire.objects.create(composer="Byrd", title="Ave Verum Corpus")
+        self.planning.repertoire.add(piece)
+
+        response = self.client.get(reverse("member_polling"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.poll.question)
+        self.assertNotContains(response, "Secret repertoire planning notes")
+        self.assertNotContains(response, "Ave Verum Corpus")
+
+
+class CommitteePollManagementTests(TestCase):
+    """Guards the committee-facing poll creation/results page."""
+
+    def setUp(self):
+        self.staff = User.objects.create_user(
+            username="committee", password="pw", is_staff=True
+        )
+        self.client.login(username="committee", password="pw")
+        self.planning = Project.objects.create(name="Easter 2027", status="PLANNING")
+
+    def test_create_poll(self):
+        response = self.client.post(
+            reverse("committee_polling"),
+            {
+                "project": self.planning.id,
+                "question": "Available for a March residency?",
+            },
+        )
+        self.assertRedirects(response, reverse("committee_polling"))
+        self.assertTrue(
+            AvailabilityPoll.objects.filter(
+                question="Available for a March residency?"
+            ).exists()
+        )
+
+    def test_results_show_response_counts_and_non_responders(self):
+        poll = AvailabilityPoll.objects.create(
+            project=self.planning, question="Available in March?"
+        )
+        member = User.objects.create_user(username="singer", password="pw")
+        AvailabilityResponse.objects.create(poll=poll, user=member, response="YES")
+
+        response = self.client.get(reverse("committee_polling"))
+        self.assertEqual(response.status_code, 200)
+        row = next(r for r in response.context["poll_data"] if r["poll"] == poll)
+        self.assertEqual(row["yes_count"], 1)
+        # self.staff never responded, so should appear as a non-responder
+        self.assertIn(self.staff, row["non_responders"])
