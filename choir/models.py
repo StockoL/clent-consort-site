@@ -39,6 +39,15 @@ class Project(models.Model):
     start_date = models.DateField(blank=True, null=True)
     end_date = models.DateField(blank=True, null=True)
 
+    # Many-to-Many: a piece is a permanent organisational asset, reusable
+    # across projects without duplicating Repertoire rows. "Repertoire" is
+    # a forward string reference since that class is defined later in this
+    # file (section 2. MUSIC & ASSETS) - Django resolves it at app-loading
+    # time, not at this class's definition time, so the ordering is fine.
+    repertoire = models.ManyToManyField(
+        "Repertoire", blank=True, related_name="projects"
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -283,9 +292,6 @@ class Event(models.Model):
     date_time = models.DateTimeField()
     location = models.CharField(max_length=200, default="St Laurence's Church")
     additional_notes = HTMLField(blank=True)
-
-    # Many-to-Many: An event features multiple pieces, a piece is sung at multiple events.
-    pieces = models.ManyToManyField(Repertoire, blank=True, related_name="events")
 
     # The clean link to your members via the intermediate model
     attendees = models.ManyToManyField(

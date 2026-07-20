@@ -28,6 +28,7 @@ from .models import (
     Event,
     GiftAidDeclaration,
     LearningAsset,
+    Project,
     SubscriptionPayment,  # <-- Added for the new financial logic
 )
 
@@ -150,17 +151,19 @@ def dashboard_view(request):
     user_attendances = (
         Attendance.objects.filter(user=request.user)
         .select_related("event")
-        .prefetch_related("event__pieces")
         .order_by("event__date_time")
     )
 
-    # Extract unique repertoire across all upcoming events
-    repertoire_set = set()
-    for attendance in user_attendances:
-        for piece in attendance.event.pieces.all():
-            repertoire_set.add(piece)
-
-    current_repertoire = sorted(list(repertoire_set), key=lambda x: x.title)
+    # Repertoire is attached at the Project level now, not per-event - see
+    # Project.repertoire. Full active-project scoping of this view (auto-
+    # heal, empty state, subnav) lands in a later phase; this is the
+    # minimal fix so the view doesn't break now that Event.pieces is gone.
+    active_project = Project.get_active()
+    current_repertoire = (
+        active_project.repertoire.all().order_by("title")
+        if active_project
+        else []
+    )
 
     # --- C. FINANCIAL TRACKING (Progressive Disclosure) ---
     current_term = settings.CURRENT_TERM

@@ -7,7 +7,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Attendance, ChoirCommunication, Enquiry, Event, Project
+from .models import Attendance, ChoirCommunication, Enquiry, Event, Project, Repertoire
 
 
 class AttendanceAutoCreationTests(TestCase):
@@ -64,6 +64,32 @@ class ProjectModelTests(TestCase):
     def test_get_active_returns_none_when_no_project_is_active(self):
         Project.objects.create(name="Planning Project", status="PLANNING")
         self.assertIsNone(Project.get_active())
+
+
+class DashboardRepertoireTests(TestCase):
+    """Guards dashboard_view's repertoire logic after its move from
+    Event.pieces (removed) to Project.repertoire - the dashboard should
+    show the active project's repertoire, and not crash when there isn't
+    one."""
+
+    def setUp(self):
+        User.objects.create_user(username="member", password="pw")
+        self.client.login(username="member", password="pw")
+
+    def test_dashboard_shows_active_projects_repertoire(self):
+        active = Project.objects.create(name="Christmas 2026", status="ACTIVE")
+        piece = Repertoire.objects.create(composer="Elgar", title="Ave Verum")
+        active.repertoire.add(piece)
+        Project.objects.create(name="Old Project", status="ARCHIVED")
+
+        response = self.client.get(reverse("members"))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(piece, response.context["current_repertoire"])
+
+    def test_dashboard_does_not_crash_with_no_active_project(self):
+        response = self.client.get(reverse("members"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(list(response.context["current_repertoire"]), [])
 
 
 class CommitteeScheduleEventTests(TestCase):

@@ -28,6 +28,11 @@ class ProjectAdmin(admin.ModelAdmin):
     list_display = ("name", "status", "start_date")
     list_filter = ("status",)
 
+    # This single line replaces the clunky Ctrl-Click box with a beautiful
+    # dual-panel UI - moved here from EventAdmin now that repertoire is
+    # attached at the project level, not per-event.
+    filter_horizontal = ("repertoire",)
+
 
 # ==============================================================================
 # 1. PEOPLE & FINANCE
@@ -121,9 +126,6 @@ class AttendanceInline(admin.TabularInline):
 class EventAdmin(admin.ModelAdmin):
     list_display = ("event_type", "date_time", "location", "project")
     list_filter = ("event_type", "date_time", "project")
-
-    # This single line replaces the clunky Ctrl-Click box with a beautiful dual-panel UI
-    filter_horizontal = ("pieces",)
 
     # Injects the RSVP list at the bottom of the event page
     inlines = [AttendanceInline]
