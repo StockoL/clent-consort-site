@@ -17,6 +17,7 @@ from .models import (
     CommitteeDocument,
     Enquiry,
     Event,
+    LearningAsset,
     Project,
     Repertoire,
     SubscriptionPayment,
@@ -104,6 +105,27 @@ class MemberRepertoireViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(list(response.context["current_repertoire"]), [])
 
+    def test_shows_a_tab_per_simultaneous_active_project_without_leakage(self):
+        project_a = Project.objects.create(name="Clent 2026", status="ACTIVE")
+        project_b = Project.objects.create(name="Ewelme 2027", status="ACTIVE")
+        piece_a = Repertoire.objects.create(composer="Elgar", title="Ave Verum")
+        piece_b = Repertoire.objects.create(composer="Byrd", title="Ave Verum Corpus")
+        project_a.repertoire.add(piece_a)
+        project_b.repertoire.add(piece_b)
+
+        response = self.client.get(reverse("member_repertoire"))
+        self.assertEqual(response.status_code, 200)
+
+        active_projects = list(response.context["active_projects"])
+        self.assertEqual(set(active_projects), {project_a, project_b})
+
+        projects_data = {
+            entry["project"].id: list(entry["repertoire"])
+            for entry in response.context["projects_data"]
+        }
+        self.assertEqual(projects_data[project_a.id], [piece_a])
+        self.assertEqual(projects_data[project_b.id], [piece_b])
+
 
 class DashboardSubnavTests(TestCase):
     """Guards dashboard_view's Phase 5 project-scoping: the "Schedule &
@@ -157,6 +179,77 @@ class DashboardSubnavTests(TestCase):
         self.assertFalse(
             Attendance.objects.filter(user=member, event=archived_event).exists()
         )
+
+    def test_shows_a_tab_per_simultaneous_active_project_without_leakage(self):
+        project_a = Project.objects.create(name="Clent 2026", status="ACTIVE")
+        project_b = Project.objects.create(name="Ewelme 2027", status="ACTIVE")
+
+        event_a = Event.objects.create(
+            project=project_a,
+            date_time=timezone.now() + timedelta(days=7),
+            location="St Leonard's Church",
+        )
+        event_b = Event.objects.create(
+            project=project_b,
+            date_time=timezone.now() + timedelta(days=30),
+            location="Ewelme Village Hall",
+        )
+
+        response = self.client.get(reverse("members"))
+        self.assertEqual(response.status_code, 200)
+
+        active_projects = list(response.context["active_projects"])
+        self.assertEqual(set(active_projects), {project_a, project_b})
+
+        projects_data = {
+            entry["project"].id: [a.event_id for a in entry["user_attendances"]]
+            for entry in response.context["projects_data"]
+        }
+        self.assertEqual(projects_data[project_a.id], [event_a.id])
+        self.assertEqual(projects_data[project_b.id], [event_b.id])
+
+
+class HubViewTests(TestCase):
+    """Guards hub_view's project scoping - a LearningAsset attached to one
+    project's repertoire shouldn't appear under another project's hub, even
+    for the same voice part."""
+
+    def setUp(self):
+        User.objects.create_user(username="member", password="pw")
+        self.client.login(username="member", password="pw")
+
+        self.project_a = Project.objects.create(name="Clent 2026", status="ACTIVE")
+        self.project_b = Project.objects.create(name="Ewelme 2027", status="ACTIVE")
+
+        self.piece_a = Repertoire.objects.create(composer="Elgar", title="Ave Verum")
+        self.piece_b = Repertoire.objects.create(composer="Byrd", title="Mass")
+        self.project_a.repertoire.add(self.piece_a)
+        self.project_b.repertoire.add(self.piece_b)
+
+        self.asset_a = LearningAsset.objects.create(
+            repertoire=self.piece_a, voice_part="SOP", asset_name="Sop Track A"
+        )
+        self.asset_b = LearningAsset.objects.create(
+            repertoire=self.piece_b, voice_part="SOP", asset_name="Sop Track B"
+        )
+
+    def test_hub_only_shows_the_requested_projects_assets(self):
+        response = self.client.get(reverse("hub", args=["soprano", self.project_a.id]))
+        self.assertEqual(response.status_code, 200)
+
+        assets = list(response.context["assets"])
+        self.assertIn(self.asset_a, assets)
+        self.assertNotIn(self.asset_b, assets)
+
+    def test_hub_requires_login(self):
+        self.client.logout()
+        response = self.client.get(reverse("hub", args=["soprano", self.project_a.id]))
+        self.assertEqual(response.status_code, 302)
+
+    def test_hub_404s_for_a_non_active_project(self):
+        archived = Project.objects.create(name="Old Project", status="ARCHIVED")
+        response = self.client.get(reverse("hub", args=["soprano", archived.id]))
+        self.assertEqual(response.status_code, 404)
 
 
 class CommitteeProjectManagementTests(TestCase):

@@ -62,7 +62,7 @@ urlpatterns = [
         name="member_poll_respond",
     ),
     path("members/giftaid/", giftaid_view, name="giftaid"),
-    path("members/hub/<str:voice_part>/", hub_view, name="hub"),
+    path("members/hub/<str:voice_part>/<int:project_id>/", hub_view, name="hub"),
     path("members/settings/", settings_view, name="settings"),
     # --- Committee Area ---
     path("members/committee/", committee_hub, name="committee_hub"),

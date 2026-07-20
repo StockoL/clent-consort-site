@@ -21,43 +21,62 @@
 
   <div class="wrapper wrapper--narrow section-padding">
     <section class="card flow" data-variant="invert">
-      {% if active_project is None %}
+      {% if not active_projects %}
       <p>
         There's no active project right now - check back once the
         committee has confirmed the next one.
       </p>
       {% else %}
-      <h2 class="text-primary text-step-1">Current Repertoire</h2>
-      <p class="text-small text-muted">Pieces scheduled for {{ active_project.name }}.</p>
 
-      {% if current_repertoire %}
-      <ul class="flow flow--small list-unstyled">
-        {% for piece in current_repertoire %}
-        <li class="repertoire-item" style="display: flex; justify-content: space-between; align-items: center;">
-
-          <div>
-            <strong>{{ piece.title }}</strong><br />
-            <span class="text-muted text-small">{{ piece.composer }}</span>
-          </div>
-
-        </li>
+      {% if active_projects|length > 1 %}
+      <div class="rsvp-tab-container">
+        {% for item in projects_data %}
+        <button
+          type="button"
+          id="project-tab-{{ item.project.id }}"
+          class="rsvp-tab project-tab{% if forloop.first %} active{% endif %}"
+          onclick="switchProjectTab('{{ item.project.id }}')"
+        >{{ item.project.name }}</button>
         {% endfor %}
-      </ul>
-      {% else %}
-      <p>No music currently assigned.</p>
+      </div>
       {% endif %}
 
-      <hr class="divider" />
+      {% for item in projects_data %}
+      <div id="project-panel-{{ item.project.id }}" class="project-panel" {% if not forloop.first %}style="display: none;"{% endif %}>
+        <h2 class="text-primary text-step-1">Current Repertoire</h2>
+        <p class="text-small text-muted">Pieces scheduled for {{ item.project.name }}.</p>
 
-      <div class="text-center">
-        <h2 class="text-primary text-step-1">Access Scores &amp; Learning Tracks</h2>
-        <div class="flex-center-wrap" style="margin-top: 0.75rem;">
-          <a href="{% url 'hub' 'soprano' %}" class="button btn-small" data-variant="primary">Sop</a>
-          <a href="{% url 'hub' 'alto' %}" class="button btn-small" data-variant="primary">Alto</a>
-          <a href="{% url 'hub' 'tenor' %}" class="button btn-small" data-variant="primary">Ten</a>
-          <a href="{% url 'hub' 'bass' %}" class="button btn-small" data-variant="primary">Bass</a>
+        {% if item.repertoire %}
+        <ul class="flow flow--small list-unstyled">
+          {% for piece in item.repertoire %}
+          <li class="repertoire-item" style="display: flex; justify-content: space-between; align-items: center;">
+
+            <div>
+              <strong>{{ piece.title }}</strong><br />
+              <span class="text-muted text-small">{{ piece.composer }}</span>
+            </div>
+
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p>No music currently assigned.</p>
+        {% endif %}
+
+        <hr class="divider" />
+
+        <div class="text-center">
+          <h2 class="text-primary text-step-1">Access Scores &amp; Learning Tracks</h2>
+          <div class="flex-center-wrap" style="margin-top: 0.75rem;">
+            <a href="{% url 'hub' 'soprano' item.project.id %}" class="button btn-small" data-variant="primary">Sop</a>
+            <a href="{% url 'hub' 'alto' item.project.id %}" class="button btn-small" data-variant="primary">Alto</a>
+            <a href="{% url 'hub' 'tenor' item.project.id %}" class="button btn-small" data-variant="primary">Ten</a>
+            <a href="{% url 'hub' 'bass' item.project.id %}" class="button btn-small" data-variant="primary">Bass</a>
+          </div>
         </div>
       </div>
+      {% endfor %}
+
       {% endif %}
     </section>
   </div>

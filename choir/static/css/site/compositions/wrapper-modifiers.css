@@ -14,3 +14,7 @@
 .wrapper--narrow {
   --wrapper-max-width: 500px;
 }
+
+.wrapper--medium {
+  --wrapper-max-width: 700px;
+}

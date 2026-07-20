@@ -66,6 +66,18 @@ class Project(models.Model):
         """
         return cls.objects.filter(status="ACTIVE").first()
 
+    @classmethod
+    def get_active_projects(cls):
+        """
+        All ACTIVE projects, soonest start_date first (nulls last) - for
+        contexts that support the deliberate overlap get_active() only
+        picks one winner from (the member dashboard's project tabs),
+        rather than a single "primary" project.
+        """
+        return cls.objects.filter(status="ACTIVE").order_by(
+            models.F("start_date").asc(nulls_last=True), "created_at"
+        )
+
 
 # ==============================================================================
 # 1. PEOPLE & FINANCE

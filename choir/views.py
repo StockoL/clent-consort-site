@@ -130,24 +130,38 @@ def contact_view(request):
 def dashboard_view(request):
     """
     The primary member command center - "Schedule & Logistics" on the
-    subnav. Scoped to the current ACTIVE project only; Repertoire &
-    Learning lives on its own page now (member_repertoire_view).
+    subnav. Scoped to every currently-ACTIVE project (shown as tabs when
+    there's more than one - a deliberate handoff overlap between projects
+    is a real, supported state, not an edge case); Repertoire & Learning
+    lives on its own page now (member_repertoire_view).
     """
-    active_project = Project.get_active()
+    active_projects = list(Project.get_active_projects())
 
-    if active_project is None:
+    current_term = settings.CURRENT_TERM
+    has_paid_current_term = SubscriptionPayment.objects.filter(
+        member=request.user.profile, term_reference=current_term
+    ).exists()
+
+    if not active_projects:
         # No project is currently ACTIVE - a real, reachable state (right
         # after a fresh deploy, or any handoff gap between archiving one
         # project and activating the next), not an edge case to hand-wave.
-        context = {"active_project": None, "user_attendances": []}
+        context = {
+            "active_project": None,
+            "active_projects": [],
+            "projects_data": [],
+            "user_attendances": [],
+            "current_term": current_term,
+            "has_paid_current_term": has_paid_current_term,
+        }
         return render(request, "choir/members.html", context)
 
     # --- A. THE AUTO-HEALING MATRIX ---
-    # Backfill missing Attendance rows for the active project's events
+    # Backfill missing Attendance rows for the active projects' events
     # only - not every Event ever, which used to mean a member visiting
     # the dashboard silently created RSVP rows for events belonging to
     # long-archived projects too.
-    project_events = Event.objects.filter(project=active_project)
+    project_events = Event.objects.filter(project__in=active_projects)
 
     existing_rsvp_event_ids = Attendance.objects.filter(
         user=request.user, event__in=project_events
@@ -163,23 +177,33 @@ def dashboard_view(request):
         Attendance.objects.bulk_create(new_attendances)
 
     # --- B. FETCH DASHBOARD DATA ---
-    user_attendances = (
-        Attendance.objects.filter(user=request.user, event__project=active_project)
-        .select_related("event")
+    # One bulk query across every active project, then grouped in Python
+    # per-project below - cheaper than a separate query per tab.
+    all_attendances = (
+        Attendance.objects.filter(user=request.user, event__project__in=active_projects)
+        .select_related("event", "event__project")
         .order_by("event__date_time")
     )
 
-    # --- C. FINANCIAL TRACKING (Progressive Disclosure) ---
-    current_term = settings.CURRENT_TERM
-
-    # Check if a payment record exists for this user for this specific term
-    has_paid_current_term = SubscriptionPayment.objects.filter(
-        member=request.user.profile, term_reference=current_term
-    ).exists()
+    projects_data = [
+        {
+            "project": project,
+            "user_attendances": [
+                attendance
+                for attendance in all_attendances
+                if attendance.event.project_id == project.id
+            ],
+        }
+        for project in active_projects
+    ]
 
     context = {
-        "active_project": active_project,
-        "user_attendances": user_attendances,
+        # Backward-compat aliases: the first (soonest) active project's data,
+        # for anything still reading the old single-project context shape.
+        "active_project": active_projects[0],
+        "user_attendances": projects_data[0]["user_attendances"],
+        "active_projects": active_projects,
+        "projects_data": projects_data,
         "current_term": current_term,
         "has_paid_current_term": has_paid_current_term,
     }
@@ -189,18 +213,21 @@ def dashboard_view(request):
 
 @login_required
 def member_repertoire_view(request):
-    """"Repertoire & Learning" on the subnav - the active project's music
-    library. Voice-part hub links stay unscoped (see hub_view) - a member
-    may legitimately want an older term's audio track, and that's a
-    separate, deliberately deferred enhancement, not part of this page."""
-    active_project = Project.get_active()
-    repertoire = (
-        active_project.repertoire.all().order_by("title") if active_project else []
-    )
+    """"Repertoire & Learning" on the subnav - shown as one tab per
+    currently-ACTIVE project. Each project's voice-part hub links (see
+    hub_view) are scoped to that project's own repertoire."""
+    active_projects = list(Project.get_active_projects())
+    projects_data = [
+        {"project": project, "repertoire": project.repertoire.all().order_by("title")}
+        for project in active_projects
+    ]
 
     context = {
-        "active_project": active_project,
-        "current_repertoire": repertoire,
+        # Backward-compat aliases: the first (soonest) active project's data.
+        "active_project": active_projects[0] if active_projects else None,
+        "current_repertoire": projects_data[0]["repertoire"] if projects_data else [],
+        "active_projects": active_projects,
+        "projects_data": projects_data,
     }
     return render(request, "choir/member_repertoire.html", context)
 
@@ -302,8 +329,12 @@ def giftaid_view(request):
 
 
 @login_required
-def hub_view(request, voice_part):
-    """Renders the learning hub dynamically based on the requested voice part."""
+def hub_view(request, voice_part, project_id):
+    """Renders the learning hub dynamically based on the requested voice
+    part, scoped to one project's repertoire - a member picking a voice
+    part from Project A's tab shouldn't see Project B's assets mixed in."""
+    project = get_object_or_404(Project, id=project_id, status="ACTIVE")
+
     part_map = {
         "soprano": "SOP",
         "alto": "ALT",
@@ -317,7 +348,7 @@ def hub_view(request, voice_part):
     if db_part:
         # select_related optimizes the database hit when fetching foreign keys
         assets = LearningAsset.objects.filter(
-            voice_part__in=[db_part, "ALL"]
+            voice_part__in=[db_part, "ALL"], repertoire__in=project.repertoire.all()
         ).select_related("repertoire")
     else:
         assets = []
@@ -325,6 +356,7 @@ def hub_view(request, voice_part):
     context = {
         "voice_part_name": voice_part.title(),
         "assets": assets,
+        "project": project,
     }
     return render(request, "choir/hub.html", context)
 
