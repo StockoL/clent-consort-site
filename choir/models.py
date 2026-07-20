@@ -414,18 +414,8 @@ def save_user_profile(sender, instance, **kwargs):
     instance.profile.save()
 
 
-@receiver(post_save, sender=Event)
-def create_attendance_records_for_new_event(sender, instance, created, **kwargs):
-    """
-    Automator: The absolute millisecond an admin saves a new Event,
-    this loop generates a 'PENDING' RSVP placeholder for every active choir member.
-    """
-    if created:
-        active_users = User.objects.filter(is_active=True)
-
-        # Performance trick: bulk_create hits the database once instead of performing dozens of separate writes
-        attendance_placeholders = [
-            Attendance(user=user, event=instance, status="PENDING")
-            for user in active_users
-        ]
-        Attendance.objects.bulk_create(attendance_placeholders)
+# NOTE: the "new Event -> backfill Attendance for every active user" receiver
+# lives in choir/signals.py (auto_add_existing_users_to_new_event), not here.
+# It used to be defined in both places, which raced against the same
+# Attendance.unique_together=("user", "event") constraint and raised
+# IntegrityError on every new Event. Keep it in exactly one place.
