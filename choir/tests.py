@@ -66,30 +66,84 @@ class ProjectModelTests(TestCase):
         self.assertIsNone(Project.get_active())
 
 
-class DashboardRepertoireTests(TestCase):
-    """Guards dashboard_view's repertoire logic after its move from
-    Event.pieces (removed) to Project.repertoire - the dashboard should
-    show the active project's repertoire, and not crash when there isn't
+class MemberRepertoireViewTests(TestCase):
+    """Guards member_repertoire_view - Repertoire & Learning on the
+    subnav, split out of dashboard_view in the Phase 5 restructure. Shows
+    the active project's repertoire, and doesn't crash when there isn't
     one."""
 
     def setUp(self):
         User.objects.create_user(username="member", password="pw")
         self.client.login(username="member", password="pw")
 
-    def test_dashboard_shows_active_projects_repertoire(self):
+    def test_shows_active_projects_repertoire(self):
         active = Project.objects.create(name="Christmas 2026", status="ACTIVE")
         piece = Repertoire.objects.create(composer="Elgar", title="Ave Verum")
         active.repertoire.add(piece)
         Project.objects.create(name="Old Project", status="ARCHIVED")
 
-        response = self.client.get(reverse("members"))
+        response = self.client.get(reverse("member_repertoire"))
         self.assertEqual(response.status_code, 200)
         self.assertIn(piece, response.context["current_repertoire"])
+
+    def test_does_not_crash_with_no_active_project(self):
+        response = self.client.get(reverse("member_repertoire"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(list(response.context["current_repertoire"]), [])
+
+
+class DashboardSubnavTests(TestCase):
+    """Guards dashboard_view's Phase 5 project-scoping: the "Schedule &
+    Logistics" subnav tab should only auto-heal/show Attendance for the
+    ACTIVE project's events, not every Event ever (the pre-Phase-5
+    behavior), and must not crash with no active project."""
+
+    def setUp(self):
+        User.objects.create_user(username="member", password="pw")
+        self.client.login(username="member", password="pw")
 
     def test_dashboard_does_not_crash_with_no_active_project(self):
         response = self.client.get(reverse("members"))
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(list(response.context["current_repertoire"]), [])
+        self.assertIsNone(response.context["active_project"])
+
+    def test_dashboard_only_autoheals_active_projects_events(self):
+        # Event creation's own post_save signal (signals.py) already backs
+        # every active user with a PENDING Attendance row regardless of
+        # project - that's unrelated to this phase's change. What Phase 5
+        # actually changed is dashboard_view's own catch-up pass, which
+        # used to sweep every Event ever; simulate the gap that pass is
+        # meant to catch (a missing Attendance row) on both an active- and
+        # an archived-project event, and confirm the view only heals the
+        # active one.
+        active = Project.objects.create(name="Christmas 2026", status="ACTIVE")
+        archived = Project.objects.create(name="Old Project", status="ARCHIVED")
+
+        active_event = Event.objects.create(
+            project=active,
+            date_time=timezone.now() + timedelta(days=7),
+            location="St Leonard's Church",
+        )
+        archived_event = Event.objects.create(
+            project=archived,
+            date_time=timezone.now() - timedelta(days=100),
+            location="St Leonard's Church",
+        )
+
+        member = User.objects.get(username="member")
+        Attendance.objects.filter(
+            user=member, event__in=[active_event, archived_event]
+        ).delete()
+
+        response = self.client.get(reverse("members"))
+        self.assertEqual(response.status_code, 200)
+
+        self.assertTrue(
+            Attendance.objects.filter(user=member, event=active_event).exists()
+        )
+        self.assertFalse(
+            Attendance.objects.filter(user=member, event=archived_event).exists()
+        )
 
 
 class CommitteeProjectManagementTests(TestCase):

@@ -1,0 +1,65 @@
+{% extends 'choir/base.html' %}
+
+{% block title %}Repertoire & Learning - Clent Consort{% endblock title %}
+
+{% block content %}
+<div class="wrapper flow section-padding">
+  <div class="text-center">
+    <h1>Repertoire &amp; Learning</h1>
+    <p>
+      {% if active_project %}
+        The digital library for {{ active_project.name }}.
+      {% else %}
+        Sheet music and audio tracks for the current project.
+      {% endif %}
+    </p>
+
+    <div style="margin-top: 1.5rem;">
+      {% include 'choir/_member_subnav.html' %}
+    </div>
+  </div>
+
+  <div class="wrapper wrapper--narrow section-padding">
+    <section class="card flow" data-variant="invert">
+      {% if active_project is None %}
+      <p>
+        There's no active project right now - check back once the
+        committee has confirmed the next one.
+      </p>
+      {% else %}
+      <h2 class="text-primary text-step-1">Current Repertoire</h2>
+      <p class="text-small text-muted">Pieces scheduled for {{ active_project.name }}.</p>
+
+      {% if current_repertoire %}
+      <ul class="flow flow--small list-unstyled">
+        {% for piece in current_repertoire %}
+        <li class="repertoire-item" style="display: flex; justify-content: space-between; align-items: center;">
+
+          <div>
+            <strong>{{ piece.title }}</strong><br />
+            <span class="text-muted text-small">{{ piece.composer }}</span>
+          </div>
+
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p>No music currently assigned.</p>
+      {% endif %}
+
+      <hr class="divider" />
+
+      <div class="text-center">
+        <h2 class="text-primary text-step-1">Access Scores &amp; Learning Tracks</h2>
+        <div class="flex-center-wrap" style="margin-top: 0.75rem;">
+          <a href="{% url 'hub' 'soprano' %}" class="button btn-small" data-variant="primary">Sop</a>
+          <a href="{% url 'hub' 'alto' %}" class="button btn-small" data-variant="primary">Alto</a>
+          <a href="{% url 'hub' 'tenor' %}" class="button btn-small" data-variant="primary">Ten</a>
+          <a href="{% url 'hub' 'bass' %}" class="button btn-small" data-variant="primary">Bass</a>
+        </div>
+      </div>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock content %}

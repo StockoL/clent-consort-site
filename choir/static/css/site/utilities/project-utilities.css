@@ -146,12 +146,6 @@
   font-size: 0.9rem;
 }
 
-.subtitle-faded {
-  font-size: 0.9em;
-  margin-top: -1rem;
-  color: #ccc;
-}
-
 /* Templates pair this with the vendored .text-muted (colors.css) at
    nearly every use site, expecting it to be a generic "smaller text"
    utility - .text-small already existed under that exact name, but

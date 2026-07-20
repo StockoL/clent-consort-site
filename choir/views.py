@@ -127,17 +127,31 @@ def contact_view(request):
 @login_required
 def dashboard_view(request):
     """
-    The primary member command center.
+    The primary member command center - "Schedule & Logistics" on the
+    subnav. Scoped to the current ACTIVE project only; Repertoire &
+    Learning lives on its own page now (member_repertoire_view).
     """
+    active_project = Project.get_active()
+
+    if active_project is None:
+        # No project is currently ACTIVE - a real, reachable state (right
+        # after a fresh deploy, or any handoff gap between archiving one
+        # project and activating the next), not an edge case to hand-wave.
+        context = {"active_project": None, "user_attendances": []}
+        return render(request, "choir/members.html", context)
+
     # --- A. THE AUTO-HEALING MATRIX ---
-    # Fetch ALL events, past and future, to ensure late-joiners get complete records
-    all_events = Event.objects.all()
+    # Backfill missing Attendance rows for the active project's events
+    # only - not every Event ever, which used to mean a member visiting
+    # the dashboard silently created RSVP rows for events belonging to
+    # long-archived projects too.
+    project_events = Event.objects.filter(project=active_project)
 
     existing_rsvp_event_ids = Attendance.objects.filter(
-        user=request.user, event__in=all_events
+        user=request.user, event__in=project_events
     ).values_list("event_id", flat=True)
 
-    missing_events = all_events.exclude(id__in=existing_rsvp_event_ids)
+    missing_events = project_events.exclude(id__in=existing_rsvp_event_ids)
 
     if missing_events.exists():
         new_attendances = [
@@ -147,22 +161,10 @@ def dashboard_view(request):
         Attendance.objects.bulk_create(new_attendances)
 
     # --- B. FETCH DASHBOARD DATA ---
-    # Remove the time filter and fetch everything chronologically
     user_attendances = (
-        Attendance.objects.filter(user=request.user)
+        Attendance.objects.filter(user=request.user, event__project=active_project)
         .select_related("event")
         .order_by("event__date_time")
-    )
-
-    # Repertoire is attached at the Project level now, not per-event - see
-    # Project.repertoire. Full active-project scoping of this view (auto-
-    # heal, empty state, subnav) lands in a later phase; this is the
-    # minimal fix so the view doesn't break now that Event.pieces is gone.
-    active_project = Project.get_active()
-    current_repertoire = (
-        active_project.repertoire.all().order_by("title")
-        if active_project
-        else []
     )
 
     # --- C. FINANCIAL TRACKING (Progressive Disclosure) ---
@@ -174,13 +176,31 @@ def dashboard_view(request):
     ).exists()
 
     context = {
+        "active_project": active_project,
         "user_attendances": user_attendances,
-        "current_repertoire": current_repertoire,
         "current_term": current_term,
         "has_paid_current_term": has_paid_current_term,
     }
 
     return render(request, "choir/members.html", context)
+
+
+@login_required
+def member_repertoire_view(request):
+    """"Repertoire & Learning" on the subnav - the active project's music
+    library. Voice-part hub links stay unscoped (see hub_view) - a member
+    may legitimately want an older term's audio track, and that's a
+    separate, deliberately deferred enhancement, not part of this page."""
+    active_project = Project.get_active()
+    repertoire = (
+        active_project.repertoire.all().order_by("title") if active_project else []
+    )
+
+    context = {
+        "active_project": active_project,
+        "current_repertoire": repertoire,
+    }
+    return render(request, "choir/member_repertoire.html", context)
 
 
 @login_required

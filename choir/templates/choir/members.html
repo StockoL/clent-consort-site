@@ -16,12 +16,12 @@
       {% endif %}
     </h1>
     <p>Welcome back, {{ user.first_name|default:user.username }}.</p>
-    
+
     <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 1rem; margin-top: 1rem;">
       <a href="{% url 'settings' %}" class="button btn-small" data-variant="primary">
         Update Profile
       </a>
-      
+
       <a href="{% url 'committee_hub' %}" class="button btn-small" data-variant="primary">
         {% if user.is_staff %}
           Committee Hub
@@ -33,12 +33,13 @@
       <a href="{% url 'giftaid' %}" class="button btn-small" data-variant="primary">
         Gift Aid
       </a>
+    </div>
 
-      <a href="#repertoire-section" class="button hide-on-desktop" data-variant="outline">
-        ↓ Jump to Music
-      </a>
+    <div style="margin-top: 1.5rem;">
+      {% include 'choir/_member_subnav.html' %}
     </div>
   </div>
+
 {% if not has_paid_current_term %}
   <div class="card flow text-center" data-variant="invert" style="border: 2px solid #c9a45e; max-width: 40rem; margin-inline: auto; margin-block-start: var(--space-m)">
     <h3 class="text-primary">{{ current_term }} Subscriptions Due</h3>
@@ -53,97 +54,61 @@
       <p class="text-small text-muted" style="margin-block-start: var(--space-3xs)"><em>Reference: {{ user.last_name|upper }} SUBS</em></p>
     </div>
   </div>
-  {% endif %}
-  <div class="switcher" style="--flow-space: var(--space-m)">
+{% endif %}
+
+  <div class="wrapper wrapper--narrow section-padding">
     <section class="card flow" data-variant="invert">
-  <h2 class="text-primary text-step-1">Upcoming Schedule</h2>
+      <h2 class="text-primary text-step-1">Upcoming Schedule</h2>
 
-  {% if user_attendances %}
-  <div class="flow flow--small">
-    {% for attendance in user_attendances %}
-    
-    <article class="event-card-highlight">
-  
-  <div class="event-card-header">
-    <h3 class="event-date">
-      {{ attendance.event.date_time|date:"l, j M Y" }}
-    </h3>
-    
-    <select class="rsvp-toggle rsvp-{{ attendance.status|lower }}" data-attendance-id="{{ attendance.id }}">
-        <option value="PENDING" {% if attendance.status == 'PENDING' %}selected{% endif %}>No Response</option>
-        <option value="ATTENDING" {% if attendance.status == 'ATTENDING' %}selected{% endif %}>Attending</option>
-        <option value="ABSENT" {% if attendance.status == 'ABSENT' %}selected{% endif %}>Absent</option>
-    </select>
-  </div>
+      {% if active_project is None %}
+      <p>
+        There's no active project right now - check back once the
+        committee has confirmed the next one.
+      </p>
+      {% elif user_attendances %}
+      <div class="flow flow--small">
+        {% for attendance in user_attendances %}
 
-  <div class="event-card-body">
-    <p class="event-meta">
-      <strong>{{ attendance.event.get_event_type_display }}</strong> |
-      {{ attendance.event.date_time|time:"g:i A" }} <br />📍 {{ attendance.event.location }}
-    </p>
-    
-    <a href="{% url 'download_ics' attendance.event.id %}" class="button" data-variant="outline" style="padding: 0.5rem 1rem; font-size: 0.75rem; align-self: flex-start; margin-top: 0.5rem;">
-      📅 Add to Calendar
-    </a>
-  </div>
-  
-  {% if attendance.event.additional_notes %}
-  <div class="event-card-notes">
-    <p class="text-small">
-      <strong>Rehearsal Plan:</strong><br/>
-      {{ attendance.event.additional_notes|safe }}
-    </p>
-  </div>
-  {% endif %}
+        <article class="event-card-highlight">
 
-</article>
-    {% endfor %}
-  </div>
-  {% else %}
-  <p>No upcoming events in the calendar.</p>
-  {% endif %}
-</section>
+          <div class="event-card-header">
+            <h3 class="event-date">
+              {{ attendance.event.date_time|date:"l, j M Y" }}
+            </h3>
 
-    <section id="repertoire-section" class="card flow" data-variant="invert">
-  <h2 class="text-primary text-step-1">Current Repertoire</h2>
-  <p class="subtitle-faded">Pieces scheduled for upcoming dates.</p>
+            <select class="rsvp-toggle rsvp-{{ attendance.status|lower }}" data-attendance-id="{{ attendance.id }}">
+                <option value="PENDING" {% if attendance.status == 'PENDING' %}selected{% endif %}>No Response</option>
+                <option value="ATTENDING" {% if attendance.status == 'ATTENDING' %}selected{% endif %}>Attending</option>
+                <option value="ABSENT" {% if attendance.status == 'ABSENT' %}selected{% endif %}>Absent</option>
+            </select>
+          </div>
 
-  {% if current_repertoire %}
-  <ul class="flow flow--small list-unstyled">
-    {% for piece in current_repertoire %}
-    <li class="repertoire-item" style="display: flex; justify-content: space-between; align-items: center;">
-      
-      <div>
-        <strong>{{ piece.title }}</strong><br />
-        <span class="text-muted text-small">{{ piece.composer }}</span>
+          <div class="event-card-body">
+            <p class="event-meta">
+              <strong>{{ attendance.event.get_event_type_display }}</strong> |
+              {{ attendance.event.date_time|time:"g:i A" }} <br />📍 {{ attendance.event.location }}
+            </p>
+
+            <a href="{% url 'download_ics' attendance.event.id %}" class="button" data-variant="outline" style="padding: 0.5rem 1rem; font-size: 0.75rem; align-self: flex-start; margin-top: 0.5rem;">
+              📅 Add to Calendar
+            </a>
+          </div>
+
+          {% if attendance.event.additional_notes %}
+          <div class="event-card-notes">
+            <p class="text-small">
+              <strong>Rehearsal Plan:</strong><br/>
+              {{ attendance.event.additional_notes|safe }}
+            </p>
+          </div>
+          {% endif %}
+
+        </article>
+        {% endfor %}
       </div>
-      
-      {% if piece.file_upload %} 
-      <div>
-        <a href="{{ piece.file_upload.url }}" target="_blank" rel="noopener noreferrer" class="text-primary" title="Open Master Score" style="font-size: 1.5rem; text-decoration: none;">
-          📄
-        </a>
-      </div>
+      {% else %}
+      <p>No upcoming events in the calendar.</p>
       {% endif %}
-
-    </li>
-    {% endfor %}
-  </ul>
-  {% else %}
-  <p>No music currently assigned.</p>
-  {% endif %}
-
-      <hr class="divider" />
-      
-      <div class="text-center">
-        <p class="text-primary"><h2>Access Scores & Learning Tracks:</h2>
-        <div class="flex-center-wrap">
-          <a href="{% url 'hub' 'soprano' %}" class="button btn-small" data-variant="primary">Sop</a>
-          <a href="{% url 'hub' 'alto' %}" class="button btn-small" data-variant="primary">Alto</a>
-          <a href="{% url 'hub' 'tenor' %}" class="button btn-small" data-variant="primary">Ten</a>
-          <a href="{% url 'hub' 'bass' %}" class="button btn-small" data-variant="primary">Bass</a>
-        </div>
-      </div>
     </section>
   </div>
 </div>

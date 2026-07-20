@@ -27,6 +27,7 @@ from choir.views import (
     home_view,
     hub_view,
     login_redirect_router,
+    member_repertoire_view,
     settings_view,
     update_rsvp_view,
 )
@@ -46,6 +47,7 @@ urlpatterns = [
     path("contact/", contact_view, name="contact"),
     # --- Secure Member Area ---
     path("members/", dashboard_view, name="members"),
+    path("members/repertoire/", member_repertoire_view, name="member_repertoire"),
     path("members/giftaid/", giftaid_view, name="giftaid"),
     path("members/hub/<str:voice_part>/", hub_view, name="hub"),
     path("members/settings/", settings_view, name="settings"),
