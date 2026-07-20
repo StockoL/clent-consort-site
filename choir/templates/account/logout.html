@@ -3,7 +3,7 @@
 {% block title %}Sign Out - Clent Consort{% endblock title %}
 
 {% block content %}
-<div class="wrapper flow section-padding container-narrow mx-auto">
+<div class="wrapper wrapper--narrow flow section-padding">
   <section class="card flow text-center" data-variant="invert">
     <h1>Sign Out</h1>
     <p>Are you sure you want to sign out of the member dashboard?</p>
@@ -15,7 +15,7 @@
         <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
       {% endif %}
       
-      <button type="submit" class="button btn-block mt-s-1" data-variant="primary">Confirm Sign Out</button>
+      <button type="submit" class="button btn-block" data-variant="primary" style="margin-block-start: var(--s-1)">Confirm Sign Out</button>
     </form>
   </section>
 </div>

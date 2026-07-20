@@ -13,7 +13,7 @@
 
    .text-center and .text-primary used to be defined here too,
    identically (in behavior, if not always token name) to looseleaf-ui's
-   own 04-utilities/text.css and colors.css - dropped in favor of the
+   own utilities/text.css and colors.css - dropped in favor of the
    vendored ones rather than kept as duplicates. Vendored colors.css/
    text.css themselves are never touched here - this file only holds
    what they don't already cover.
@@ -36,30 +36,20 @@
 
 /* --- Spacing (keyed to this project's own --s-* scale in
    01-global/base-overrides.css - looseleaf-ui has no equivalent set,
-   it expects compositions like .flow to own spacing instead) --- */
+   it expects compositions like .flow to own spacing instead) ---
+   One-off margin utilities (mt-s2, mb-s-min, etc.) used to live here.
+   Removed in favour of the mechanism .flow itself already provides:
+   --flow-space is read per-child, so a single element can override
+   just its own gap inline (style="--flow-space: var(--s2)") without
+   a dedicated utility class or affecting its siblings. Elements
+   outside any .flow, or that are themselves a flow/flow-modifier
+   (so already consume --flow-space for their own children), use a
+   direct margin-block-start/-end override instead - both keyed to
+   the same --s-* scale, just expressed inline at the one place that
+   needs a non-default value instead of a class meant to be reused. */
 .section-padding {
   padding-top: var(--s3);
   padding-bottom: var(--s4);
-}
-
-.mt-s2 {
-  margin-top: var(--s2);
-}
-
-.mt-s-1 {
-  margin-top: var(--s-1);
-}
-
-.mt-s-min {
-  margin-top: var(--s-min);
-}
-
-.mb-s-min {
-  margin-bottom: var(--s-min);
-}
-
-.mb-0 {
-  margin-bottom: 0;
 }
 
 /* --- Layout & sizing --- */
@@ -75,10 +65,6 @@
 
 .u-measure {
   max-width: 65ch;
-}
-
-.container-narrow {
-  max-width: 500px;
 }
 
 .mx-auto {
@@ -123,23 +109,18 @@
   color: #ccc;
 }
 
-.text-muted {
+/* Templates pair this with the vendored .text-muted (colors.css) at
+   nearly every use site, expecting it to be a generic "smaller text"
+   utility - .text-small already existed under that exact name, but
+   only as a component-scoped exception (event-card-dashboard.css's
+   .event-card-notes .text-small), which never actually matched
+   anywhere these templates use it bare. That gap is why .text-muted
+   used to carry its own font-size: 0.85em directly, duplicating (and,
+   worse, fighting - same class name, same utilities layer, decided
+   only by import order) colors.css's token-based .text-muted. Giving
+   .text-small a real, working definition lets that duplicate go. */
+.text-small {
   font-size: 0.85em;
-  color: #aaa;
-}
-
-/* --- Buttons (size modifiers, not variants - those live in
-   03-blocks/button-overrides.css) --- */
-.btn-small {
-  padding: 5px 15px;
-  font-size: 0.85em;
-}
-
-.btn-block {
-  display: block;
-  width: 100%;
-  text-align: center;
-  text-decoration: none;
 }
 
 .icon-action-btn {
@@ -158,19 +139,4 @@
 .icon-action-btn:hover {
   opacity: 0.7;
   transform: translateY(-2px);
-}
-
-/* --- Accessibility: screen-reader-only helper. looseleaf-ui ships the
-   same technique under a different name (.visually-hidden) - kept as
-   its own class since templates already use .sr-only. --- */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
 }

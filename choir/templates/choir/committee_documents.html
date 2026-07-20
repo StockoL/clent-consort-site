@@ -8,16 +8,16 @@
     <h1 class="text-primary">Committee Document Vault</h1>
     <p>Secure storage for minutes, policies, and reports.</p>
     
-    <a href="{% url 'committee_hub' %}" class="button btn-small mt-s-1" data-variant="outline" style="text-decoration: none; display: inline-block;">
+    <a href="{% url 'committee_hub' %}" class="button btn-small" data-variant="outline" style="text-decoration: none; display: inline-block; margin-block-start: var(--s-1);">
       ← Back to Hub
     </a>
   </div>
 
-  <div class="switcher mt-s2">
+  <div class="switcher" style="--flow-space: var(--s2)">
     <section class="card flow" data-variant="invert">
-      <h2 class="text-primary border-bottom pb-s-min">Upload Document</h2>
-      
-      <form method="POST" enctype="multipart/form-data" class="flow flow--small mt-s1">
+      <h2 class="text-primary" style="padding-bottom: var(--s-min); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">Upload Document</h2>
+
+      <form method="POST" enctype="multipart/form-data" class="flow flow--small" style="margin-block-start: var(--s1)">
         {% csrf_token %}
         
         <div>
@@ -36,15 +36,15 @@
           </div>
         </div>
 
-        <button type="submit" class="button mt-s1 w-100" data-variant="primary">📤 Upload to Vault</button>
+        <button type="submit" class="button w-100" data-variant="primary" style="--flow-space: var(--s1)">📤 Upload to Vault</button>
       </form>
     </section>
 
     <section class="card flow" data-variant="invert">
-      <h2 class="text-primary border-bottom pb-s-min">Archive</h2>
-      
+      <h2 class="text-primary" style="padding-bottom: var(--s-min); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">Archive</h2>
+
       {% if documents %}
-        <ul class="list-unstyled flow flow--small mt-s1">
+        <ul class="list-unstyled flow flow--small" style="margin-block-start: var(--s1)">
           {% for doc in documents %}
           <li style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
             <div>
@@ -59,7 +59,7 @@
           {% endfor %}
         </ul>
       {% else %}
-        <p class="text-muted mt-s1">The vault is currently empty.</p>
+        <p class="text-muted text-small" style="margin-block-start: var(--s1)">The vault is currently empty.</p>
       {% endif %}
     </section>
   </div>

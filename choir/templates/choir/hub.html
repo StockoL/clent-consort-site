@@ -11,16 +11,16 @@
     <p>Access your rehearsal tracks and sheet music below.</p>
   </div>
 
-  <div class="flow flow--large mt-s2">
+  <div class="flow flow--large" style="margin-block-start: var(--s2)">
     {% regroup assets by repertoire as grouped_assets %}
 
     {% for group in grouped_assets %}
     <article class="card flow card-flex" data-variant="invert">
       
       <div class="repertoire-header">
-        <h3 class="text-primary mb-0">{{ group.grouper.title }}</h3>
+        <h3 class="text-primary">{{ group.grouper.title }}</h3>
         {% if group.grouper.composer %}
-          <p class="mt-s-min text-muted"><em>{{ group.grouper.composer }}</em></p>
+          <p class="text-muted text-small" style="margin-block-start: var(--s-min)"><em>{{ group.grouper.composer }}</em></p>
         {% endif %}
       </div>
 
@@ -29,14 +29,14 @@
       <div class="flow flow--small">
         {% for asset in group.list %}
           <div class="asset-item">
-            <p class="mb-s-min"><strong>{{ asset.asset_name }}</strong></p>
+            <p style="margin-block-end: var(--s-min)"><strong>{{ asset.asset_name }}</strong></p>
 
             {% if asset.file_upload %}
               
               {# Audio Track Integration #}
               {% if ".mp3" in asset.file_upload.name|lower or ".wav" in asset.file_upload.name|lower or ".m4a" in asset.file_upload.name|lower %}
-                <div class="media-flex-row mt-s-min">
-                  <label class="sr-only" for="audio-{{ asset.id }}">Listen to {{ asset.asset_name }}</label>
+                <div class="media-flex-row" style="margin-block-start: var(--s-min)">
+                  <label class="visually-hidden" for="audio-{{ asset.id }}">Listen to {{ asset.asset_name }}</label>
                   <audio id="audio-{{ asset.id }}" controls preload="none" class="w-100">
                     <source src="{{ asset.file_upload.url }}" type="audio/mpeg">
                     Your browser does not support the audio element.
@@ -48,7 +48,7 @@
 
               {# Document / Sheet Music Integration #}
               {% elif ".pdf" in asset.file_upload.name|lower %}
-                <div class="media-flex-row mt-s-min">
+                <div class="media-flex-row" style="margin-block-start: var(--s-min)">
                   <a href="{{ asset.file_upload.url }}" target="_blank" rel="noopener noreferrer" class="button btn-small w-100 text-center" data-variant="primary">
                     📄 Open Score
                   </a>
@@ -56,7 +56,7 @@
 
               {# Generic File Backup #}
               {% else %}
-                <div class="media-flex-row mt-s-min">
+                <div class="media-flex-row" style="margin-block-start: var(--s-min)">
                   <a href="{{ asset.file_upload.url }}" target="_blank" class="button btn-small w-100 text-center" data-variant="primary">
                     Open Resource
                   </a>
@@ -64,13 +64,13 @@
               {% endif %}
 
             {% elif asset.external_url %}
-              <div class="media-flex-row mt-s-min">
+              <div class="media-flex-row" style="margin-block-start: var(--s-min)">
                 <a href="{{ asset.external_url }}" target="_blank" rel="noopener noreferrer" class="button btn-small w-100 text-center" data-variant="primary">
                   🌐 External Link
                 </a>
               </div>
             {% else %}
-              <p class="text-error mt-s-min"><em>Resource currently unavailable</em></p>
+              <p class="text-error" style="margin-block-start: var(--s-min)"><em>Resource currently unavailable</em></p>
             {% endif %}
           </div>
         {% endfor %}

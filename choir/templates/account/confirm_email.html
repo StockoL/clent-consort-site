@@ -3,27 +3,27 @@
 
 {% block content %}
 <div class="wrapper login-wrapper section-padding">
-    <div class="card mx-auto container-narrow" data-variant="invert">
-        
+    <div class="card wrapper wrapper--narrow flow" data-variant="invert">
+
         <div class="login-header">
             <h1>{% trans "Confirm Email" %}</h1>
         </div>
 
-        <div class="flow text-center mt-s2">
+        <div class="flow text-center" style="margin-block-start: var(--s2)">
             {% if confirmation %}
-                <p class="u-muted mb-0">
+                <p class="u-muted">
                     {% blocktrans with confirmation.email_address.email as email %}
                     Please confirm that <strong class="text-primary">{{ email }}</strong> is the correct address for {{ user_display }}.
                     {% endblocktrans %}
                 </p>
-                
+
                 <form method="post" action="{% url 'account_confirm_email' confirmation.key %}">
                     {% csrf_token %}
                     <button class="button" data-variant="primary" type="submit">{% trans "Confirm Address" %}</button>
                 </form>
             {% else %}
-                <div class="alert mt-s-1" data-status="danger">
-                    <p class="mb-0">{% trans "This confirmation link has expired or is invalid. Please log in to request a new one." %}</p>
+                <div class="alert" data-status="danger" style="margin-block-start: var(--s-1)">
+                    <p>{% trans "This confirmation link has expired or is invalid. Please log in to request a new one." %}</p>
                 </div>
             {% endif %}
         </div>

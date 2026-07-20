@@ -1,0 +1,16 @@
+/* ==========================================================================
+   COMPOSITION: WRAPPER MODIFIERS (project extension of wrapper.css)
+   ==========================================================================
+   Login/signup/password-reset pages and committee_schedule's form need a
+   narrower cap (500px) than .wrapper's site-wide default - previously done
+   by stacking two separate utility classes (.container-narrow for the
+   max-width, .mx-auto for centering) on top of .wrapper, which duplicated
+   what .wrapper already provides via its own --wrapper-max-width override
+   and its built-in margin-inline: auto. A modifier class, matching the
+   .flow--small/.flow--large pattern already used elsewhere, does the same
+   job through the composition itself instead of bolting utilities onto it.
+   ========================================================================== */
+
+.wrapper--narrow {
+  --wrapper-max-width: 500px;
+}

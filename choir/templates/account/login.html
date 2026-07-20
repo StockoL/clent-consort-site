@@ -6,7 +6,7 @@
 {% block extra_head %}{% endblock extra_head %}
 
 {% block content %}
-<div class="wrapper flow section-padding container-narrow mx-auto">
+<div class="wrapper wrapper--narrow flow section-padding">
   <section class="card flow" data-variant="invert">
     <div class="text-center">
       <h1>Member Login</h1>
@@ -30,17 +30,17 @@
         <input type="hidden" name="next" value="{{ request.GET.next }}" />
       {% endif %}
 
-      <button type="submit" class="button btn-block mt-s-1" data-variant="primary">Sign In</button>
+      <button type="submit" class="button btn-block" data-variant="primary" style="--flow-space: var(--s-1)">Sign In</button>
     </form>
 
-    <div class="text-center mt-s-min">
+    <div class="text-center" style="--flow-space: var(--s-min)">
       <a href="{% url 'account_reset_password' %}" style="color: #c9a45e; text-decoration: none; font-size: 0.9rem;">
         Forgot your password?
       </a>
     </div>
 
     {% if form.errors %}
-    <div class="text-error text-center mt-s-1">
+    <div class="text-error text-center" style="--flow-space: var(--s-1)">
       <p class="text-error">Your email and password didn't match. Please try again.</p>
     </div>
     {% endif %}
