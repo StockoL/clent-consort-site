@@ -1,0 +1,70 @@
+{% extends 'choir/base.html' %}
+{% load static %}
+
+{% block title %}Manage Email - Clent Consort{% endblock title %}
+
+{% block content %}
+<div class="wrapper wrapper--narrow flow section-padding">
+  <section class="card flow" data-variant="invert">
+    <div class="text-center">
+      <h1>Email Addresses</h1>
+      <p>Manage the email addresses linked to your account. Your verified primary address is what you sign in with.</p>
+    </div>
+
+    {% if emailaddresses %}
+    <form method="POST" action="{% url 'account_email' %}" class="flow">
+      {% csrf_token %}
+
+      <div class="flow flow--small">
+        {% for radio in emailaddress_radios %}
+        <label class="cluster" for="{{ radio.id }}">
+          <input type="radio" name="email" value="{{ radio.emailaddress.email }}" id="{{ radio.id }}" {% if radio.checked %}checked{% endif %} />
+          <span>{{ radio.emailaddress.email }}</span>
+          {% if radio.emailaddress.verified %}
+            <span class="badge" data-status="success">Verified</span>
+          {% else %}
+            <span class="badge" data-status="warning">Unverified</span>
+          {% endif %}
+          {% if radio.emailaddress.primary %}
+            <span class="badge" data-status="info">Primary</span>
+          {% endif %}
+        </label>
+        {% endfor %}
+      </div>
+
+      <div class="cluster" style="--flow-space: var(--space-s)">
+        <button type="submit" name="action_primary" class="button btn-small" data-variant="outline">Make Primary</button>
+        <button type="submit" name="action_send" class="button btn-small" data-variant="outline">Re-send Verification</button>
+        <button type="submit" name="action_remove" class="button btn-small" data-variant="outline">Remove</button>
+      </div>
+    </form>
+    {% endif %}
+
+    {% if can_add_email %}
+    <hr class="divider" />
+
+    <form method="POST" action="{% url 'account_email' %}" class="flow">
+      {% csrf_token %}
+      <h2 class="text-step-1">Add Email Address</h2>
+
+      <div class="form-group flow flow--small">
+        <label for="{{ add_email_form.email.id_for_label }}">New Email Address</label>
+        {{ add_email_form.email }}
+        <div class="form-error">{{ add_email_form.email.errors }}</div>
+      </div>
+
+      <p class="text-small" style="color: #aaa;">
+        We'll send a confirmation link to the new address. It won't become
+        your sign-in address until you've verified it and made it primary.
+      </p>
+
+      <button type="submit" name="action_add" class="button btn-block" data-variant="primary">Add Email</button>
+    </form>
+    {% endif %}
+  </section>
+
+  <div class="text-center" style="--flow-space: var(--space-m)">
+    <a href="{% url 'settings' %}" style="color: #c9a45e; text-decoration: none">&larr; Back to Settings</a>
+  </div>
+</div>
+{% endblock content %}

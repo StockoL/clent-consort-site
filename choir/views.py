@@ -10,7 +10,6 @@ from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import strip_tags
 from django.views.decorators.http import require_POST
@@ -92,11 +91,20 @@ def contact_view(request):
             return redirect("contact")
 
         else:
-            print("🛑 FORM FAILED VALIDATION! Errors:", form.errors)
+            # Re-render with the bound (invalid) form instead of redirecting -
+            # a redirect starts a fresh GET, which meant the user lost every
+            # field they'd typed and never saw *which* field was wrong, only
+            # a generic banner. The other form on the page still gets a
+            # clean, empty instance since it wasn't the one submitted.
             messages.error(
-                request, "There was an error with your submission. Please try again."
+                request, "There was an error with your submission. Please check the highlighted fields."
             )
-            return redirect(reverse("contact") + "#form-section")
+            if is_audition:
+                enquiry_form = EnquiryForm()
+                audition_form = form
+            else:
+                enquiry_form = form
+                audition_form = AuditionForm()
 
     else:
         # GET Request: Initialize fresh, empty forms to send to the template
@@ -182,6 +190,19 @@ def giftaid_view(request):
     ).first()
 
     if request.method == "POST":
+        # GiftAidDeclaration.member is a OneToOneField - the template only
+        # ever shows this form when no declaration exists yet, but a stale
+        # tab, double-click, or replayed request could still POST here with
+        # one already on file. Without this guard, form.save() below builds
+        # a brand-new GiftAidDeclaration and hits that uniqueness
+        # constraint directly - an uncaught IntegrityError (500 page)
+        # instead of a graceful message.
+        if existing_declaration:
+            messages.info(
+                request, "You already have a Gift Aid declaration on file."
+            )
+            return redirect("giftaid")
+
         form = GiftAidForm(request.POST)
         if form.is_valid():
             # commit=False builds the object in memory to allow appending the user profile
@@ -646,7 +667,7 @@ def committee_broadcast(request):
         form = BroadcastForm(request.POST)
         if form.is_valid():
             broadcast = form.save(commit=False)
-            broadcast.sent_by = request.user  # Ensure your model tracks the sender
+            broadcast.author = request.user
             broadcast.save()
             messages.success(request, "Communication broadcasted to the ensemble.")
             return redirect("committee_hub")

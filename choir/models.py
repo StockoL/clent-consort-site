@@ -238,7 +238,7 @@ class Event(models.Model):
 
     date_time = models.DateTimeField()
     location = models.CharField(max_length=200, default="St Laurence's Church")
-    additional_notes = additional_notes = HTMLField(blank=True)
+    additional_notes = HTMLField(blank=True)
 
     # Many-to-Many: An event features multiple pieces, a piece is sung at multiple events.
     pieces = models.ManyToManyField(Repertoire, blank=True, related_name="events")

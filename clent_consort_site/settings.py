@@ -247,12 +247,6 @@ AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
 AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME")
 
-# Temporary print to prove the .env is connected
-print("=== CLOUD CHECK ===")
-print("Bucket:", AWS_STORAGE_BUCKET_NAME)
-print("Key Found:", bool(AWS_ACCESS_KEY_ID))
-print("===================")
-
 # Only activate AWS storage if we have supplied real keys
 if AWS_ACCESS_KEY_ID and AWS_ACCESS_KEY_ID != "pending_verification_id":
     # Modern Django 5.0+ Cloud Storage Configuration

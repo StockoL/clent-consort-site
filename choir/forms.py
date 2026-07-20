@@ -110,13 +110,22 @@ class GiftAidForm(forms.ModelForm):
 
 
 class UserUpdateForm(forms.ModelForm):
-    """Allows members to update their core account details."""
+    """
+    Allows members to update their core account details.
 
-    email = forms.EmailField(required=True)  # Forces email to be required
+    Deliberately excludes email: since ACCOUNT_LOGIN_METHODS = {"email"},
+    allauth logs members in against its own EmailAddress records (with
+    verification status), not User.email directly. Saving a plain
+    ModelForm's email field here updated User.email without ever
+    touching EmailAddress, which could leave a member unable to log in
+    with the "new" address they'd just set. Email changes now go
+    through allauth's own account_email view (see account/email.html),
+    which handles verification and keeps User.email in sync correctly.
+    """
 
     class Meta:
         model = User
-        fields = ["first_name", "last_name", "email"]
+        fields = ["first_name", "last_name"]
 
 
 class ProfileUpdateForm(forms.ModelForm):

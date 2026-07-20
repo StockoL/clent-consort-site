@@ -59,9 +59,9 @@
             </div>
             
             <div class="form-group flow flow--small">
-                <label for="{{ user_form.email.id_for_label }}">Email Address</label>
-                {{ user_form.email }}
-                <div class="form-error">{{ user_form.email.errors }}</div>
+                <label>Email Address</label>
+                <p style="margin: 0;">{{ user.email }}</p>
+                <a href="{% url 'account_email' %}" class="text-small" style="color: #c9a45e;">Manage email addresses &rarr;</a>
             </div>
         </div>
 
