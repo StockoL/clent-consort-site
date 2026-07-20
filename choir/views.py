@@ -367,6 +367,58 @@ def is_committee(user):
     return user.is_active and (user.is_staff or user.is_superuser)
 
 
+# =============================================================================
+# 4.0 COMMITTEE PROJECT MANAGEMENT
+# =============================================================================
+@login_required
+@user_passes_test(is_committee)
+def committee_projects_view(request):
+    """List existing Projects (most recent first, per Project.Meta.ordering)
+    and handle creating a new one. Editing an existing Project - including
+    the PLANNING -> ACTIVE -> ARCHIVED status transition - happens on
+    committee_project_edit_view, not here."""
+    from .forms import ProjectForm
+
+    if request.method == "POST":
+        form = ProjectForm(request.POST)
+        if form.is_valid():
+            new_project = form.save()
+            messages.success(request, f"'{new_project.name}' created.")
+            return redirect("committee_projects")
+    else:
+        form = ProjectForm()
+
+    context = {
+        "form": form,
+        "projects": Project.objects.all(),
+    }
+    return render(request, "choir/committee_projects.html", context)
+
+
+@login_required
+@user_passes_test(is_committee)
+def committee_project_edit_view(request, project_id):
+    """Edit an existing Project's details, status, and repertoire list."""
+    from .forms import ProjectForm
+
+    project = get_object_or_404(Project, id=project_id)
+
+    if request.method == "POST":
+        form = ProjectForm(request.POST, instance=project)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"'{project.name}' updated.")
+            return redirect("committee_projects")
+    else:
+        form = ProjectForm(instance=project)
+
+    context = {
+        "form": form,
+        "project": project,
+    }
+    return render(request, "choir/committee_project_edit.html", context)
+
+
 @login_required
 @user_passes_test(is_committee)
 def committee_rsvp_report(request):

@@ -1,0 +1,86 @@
+{% extends 'choir/base.html' %}
+
+{% block title %}Projects - Clent Consort{% endblock title %}
+
+{% block content %}
+<div class="wrapper flow section-padding">
+  <div class="text-center">
+    <h1 class="text-primary">Committee Projects</h1>
+    <p>Manage seasons and concert cycles - status, dates, and repertoire.</p>
+
+    <a href="{% url 'committee_hub' %}" class="button btn-small" data-variant="outline" style="text-decoration: none; display: inline-block; margin-block-start: var(--space-2xs);">
+      ← Back to Hub
+    </a>
+  </div>
+
+  <div class="switcher" style="--flow-space: var(--space-m)">
+    <section class="card flow" data-variant="invert">
+      <h2 class="text-primary text-step-1" style="padding-bottom: var(--space-3xs); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">Create Project</h2>
+
+      <form method="POST" class="flow flow--small" style="margin-block-start: var(--space-s)">
+        {% csrf_token %}
+
+        <div>
+          <label class="form-label text-small">{{ form.name.label }}</label>
+          {{ form.name }}
+          <div class="form-error">{{ form.name.errors }}</div>
+        </div>
+
+        <div style="display: flex; gap: 1rem;">
+          <div style="flex: 1;">
+            <label class="form-label text-small">{{ form.status.label }}</label>
+            {{ form.status }}
+          </div>
+          <div style="flex: 1;">
+            <label class="form-label text-small">{{ form.start_date.label }}</label>
+            {{ form.start_date }}
+          </div>
+          <div style="flex: 1;">
+            <label class="form-label text-small">{{ form.end_date.label }}</label>
+            {{ form.end_date }}
+          </div>
+        </div>
+
+        <div>
+          <label class="form-label text-small">{{ form.description.label }}</label>
+          {{ form.description }}
+        </div>
+
+        <div>
+          <label class="form-label text-small">{{ form.repertoire.label }}</label>
+          {{ form.repertoire }}
+        </div>
+
+        <button type="submit" class="button w-100" data-variant="primary" style="--flow-space: var(--space-s)">Create Project</button>
+      </form>
+    </section>
+
+    <section class="card flow" data-variant="invert">
+      <h2 class="text-primary text-step-1" style="padding-bottom: var(--space-3xs); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">All Projects</h2>
+
+      {% if projects %}
+        <ul class="list-unstyled flow flow--small" style="margin-block-start: var(--space-s)">
+          {% for project in projects %}
+          <li style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <div>
+              <strong>{{ project.name }}</strong>
+              <span class="badge" data-status="{% if project.status == 'ACTIVE' %}success{% elif project.status == 'PLANNING' %}warning{% else %}info{% endif %}">
+                {{ project.get_status_display }}
+              </span>
+              <br>
+              <span class="text-small text-muted">{{ project.repertoire.count }} piece{{ project.repertoire.count|pluralize }}</span>
+            </div>
+
+            <a href="{% url 'committee_project_edit' project.id %}" class="button btn-small" data-variant="outline" style="padding: 0.25rem 0.75rem;">
+              Edit
+            </a>
+          </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted text-small" style="margin-block-start: var(--space-s)">No projects yet.</p>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock content %}

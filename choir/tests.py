@@ -92,6 +92,49 @@ class DashboardRepertoireTests(TestCase):
         self.assertEqual(list(response.context["current_repertoire"]), [])
 
 
+class CommitteeProjectManagementTests(TestCase):
+    """Guards the frontend Project CRUD pages - creation, editing, and the
+    PLANNING -> ACTIVE status transition that happens there."""
+
+    def setUp(self):
+        self.staff = User.objects.create_user(
+            username="committee", password="pw", is_staff=True
+        )
+        self.client.login(username="committee", password="pw")
+
+    def test_create_project(self):
+        response = self.client.post(
+            reverse("committee_projects"),
+            {"name": "Christmas 2026", "status": "PLANNING"},
+        )
+        self.assertRedirects(response, reverse("committee_projects"))
+        self.assertTrue(Project.objects.filter(name="Christmas 2026").exists())
+
+    def test_edit_project_changes_status_and_repertoire(self):
+        project = Project.objects.create(name="Christmas 2026", status="PLANNING")
+        piece = Repertoire.objects.create(composer="Elgar", title="Ave Verum")
+
+        response = self.client.post(
+            reverse("committee_project_edit", args=[project.id]),
+            {"name": "Christmas 2026", "status": "ACTIVE", "repertoire": [piece.id]},
+        )
+        self.assertRedirects(response, reverse("committee_projects"))
+
+        project.refresh_from_db()
+        self.assertEqual(project.status, "ACTIVE")
+        self.assertIn(piece, project.repertoire.all())
+        self.assertEqual(Project.get_active(), project)
+
+    def test_project_edit_blocked_for_non_staff(self):
+        project = Project.objects.create(name="Christmas 2026", status="PLANNING")
+        self.client.logout()
+        User.objects.create_user(username="member", password="pw")
+        self.client.login(username="member", password="pw")
+
+        response = self.client.get(reverse("committee_project_edit", args=[project.id]))
+        self.assertEqual(response.status_code, 302)
+
+
 class CommitteeScheduleEventTests(TestCase):
     """Guards QuickEventScheduleForm's project field - added as a hard
     blocker alongside Event.project becoming required, since this form is
@@ -154,6 +197,7 @@ class CommitteePermissionModelTests(TestCase):
             "committee_emergency",
             "committee_broadcast",
             "committee_schedule",
+            "committee_projects",
         ):
             response = self.client.get(reverse(name))
             self.assertEqual(

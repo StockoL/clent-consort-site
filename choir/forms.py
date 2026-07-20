@@ -10,6 +10,7 @@ from .models import (
     GiftAidDeclaration,
     MemberProfile,
     Project,
+    Repertoire,
 )
 
 
@@ -153,6 +154,33 @@ class ProfileUpdateForm(forms.ModelForm):
                     "placeholder": "Optional: Let us know how we can best support you during rehearsals...",
                 }
             ),
+        }
+
+
+class ProjectForm(forms.ModelForm):
+    """
+    Frontend form for the committee to create/edit a Project - name,
+    status (this is where PLANNING -> ACTIVE -> ARCHIVED transitions
+    actually happen), dates, and its repertoire list.
+    """
+
+    repertoire = forms.ModelMultipleChoiceField(
+        queryset=Repertoire.objects.all(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+    )
+
+    class Meta:
+        model = Project
+        fields = ["name", "status", "description", "start_date", "end_date", "repertoire"]
+        widgets = {
+            "name": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "e.g., Christmas 2026"}
+            ),
+            "status": forms.Select(attrs={"class": "form-control"}),
+            "description": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "start_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+            "end_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
         }
 
 

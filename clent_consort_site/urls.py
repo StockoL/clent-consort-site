@@ -14,6 +14,8 @@ from choir.views import (
     committee_emergency_roster,
     committee_financials_view,
     committee_hub,
+    committee_project_edit_view,
+    committee_projects_view,
     committee_rsvp_report,
     committee_schedule_event,  # <-- ADD THIS IMPORT LINE HERE
     committee_update_rsvp_override,
@@ -49,6 +51,12 @@ urlpatterns = [
     path("members/settings/", settings_view, name="settings"),
     # --- Committee Area ---
     path("members/committee/", committee_hub, name="committee_hub"),
+    path("members/committee/projects/", committee_projects_view, name="committee_projects"),
+    path(
+        "members/committee/projects/<int:project_id>/edit/",
+        committee_project_edit_view,
+        name="committee_project_edit",
+    ),
     path("members/committee/rsvps/", committee_rsvp_report, name="committee_rsvps"),
     path(
         "members/committee/broadcast/", committee_broadcast, name="committee_broadcast"

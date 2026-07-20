@@ -1,0 +1,63 @@
+{% extends 'choir/base.html' %}
+
+{% block title %}Edit {{ project.name }} - Clent Consort{% endblock title %}
+
+{% block content %}
+<div class="wrapper flow section-padding">
+  <div class="text-center">
+    <h1 class="text-primary">Edit Project</h1>
+    <p>Update {{ project.name }}'s details, status, and repertoire.</p>
+
+    <a href="{% url 'committee_projects' %}" class="button btn-small" data-variant="outline" style="text-decoration: none; display: inline-block; margin-block-start: var(--space-2xs);">
+      ← Back to Projects
+    </a>
+  </div>
+
+  <div class="wrapper wrapper--narrow section-padding">
+    <section class="card flow" data-variant="invert" style="padding: 2rem;">
+      <form method="POST" class="flow flow--small">
+        {% csrf_token %}
+
+        <div class="form-group flow flow--small">
+          <label class="form-label text-small">{{ form.name.label }}</label>
+          {{ form.name }}
+          <div class="form-error">{{ form.name.errors }}</div>
+        </div>
+
+        <div class="form-group flow flow--small">
+          <label class="form-label text-small">{{ form.status.label }}</label>
+          {{ form.status }}
+          <p class="text-small text-muted">
+            Moving this to Active makes it the one front-and-centre on the
+            member dashboard. Archiving hides it from members but keeps
+            every record for committee querying.
+          </p>
+        </div>
+
+        <div style="display: flex; gap: 1rem;">
+          <div class="form-group flow flow--small" style="flex: 1;">
+            <label class="form-label text-small">{{ form.start_date.label }}</label>
+            {{ form.start_date }}
+          </div>
+          <div class="form-group flow flow--small" style="flex: 1;">
+            <label class="form-label text-small">{{ form.end_date.label }}</label>
+            {{ form.end_date }}
+          </div>
+        </div>
+
+        <div class="form-group flow flow--small">
+          <label class="form-label text-small">{{ form.description.label }}</label>
+          {{ form.description }}
+        </div>
+
+        <div class="form-group flow flow--small">
+          <label class="form-label text-small">{{ form.repertoire.label }}</label>
+          {{ form.repertoire }}
+        </div>
+
+        <button type="submit" class="button" data-variant="primary">Save Changes</button>
+      </form>
+    </section>
+  </div>
+</div>
+{% endblock content %}
