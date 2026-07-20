@@ -29,7 +29,7 @@
     <div class="switcher contact-forms-layout">
       
       <section class="card contact-form-container flow" data-variant="invert">
-        <h2>General Enquiry</h2>
+        <h2 class="text-step-1">General Enquiry</h2>
         <form action="{% url 'contact' %}" method="POST" class="flow">
           {% csrf_token %}
 
@@ -62,7 +62,7 @@
       </section>
 
       <section class="card contact-form-container flow" data-variant="invert">
-        <h2>Join the Consort</h2>
+        <h2 class="text-step-1">Join the Consort</h2>
         <form action="{% url 'contact' %}" method="POST" class="flow">
           {% csrf_token %}
 

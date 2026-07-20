@@ -15,7 +15,7 @@
 
   <div class="switcher" style="--flow-space: var(--space-m)">
     <section class="card flow" data-variant="invert">
-      <h2 class="text-primary" style="padding-bottom: var(--space-3xs); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">Upload Document</h2>
+      <h2 class="text-primary text-step-1" style="padding-bottom: var(--space-3xs); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">Upload Document</h2>
 
       <form method="POST" enctype="multipart/form-data" class="flow flow--small" style="margin-block-start: var(--space-s)">
         {% csrf_token %}
@@ -41,7 +41,7 @@
     </section>
 
     <section class="card flow" data-variant="invert">
-      <h2 class="text-primary" style="padding-bottom: var(--space-3xs); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">Archive</h2>
+      <h2 class="text-primary text-step-1" style="padding-bottom: var(--space-3xs); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">Archive</h2>
 
       {% if documents %}
         <ul class="list-unstyled flow flow--small" style="margin-block-start: var(--space-s)">

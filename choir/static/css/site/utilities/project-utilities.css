@@ -34,9 +34,52 @@
   color: var(--colors-warning-text);
 }
 
-/* --- Spacing (keyed to this project's own --s-* scale in
-   01-global/base-overrides.css - looseleaf-ui has no equivalent set,
-   it expects compositions like .flow to own spacing instead) ---
+/* --- Text size (keyed to global/variables.css's --step-* scale) ---
+   Headings map to a sensible default size by tag in global-styles.css
+   (h1 biggest .. h6 smallest), which is right for the common case -
+   most h2s on this site are page-section headings (events.html's
+   "Recent Performances", about.html's section titles) that should
+   read at that size. But h1-h6 is a semantic hierarchy, not a size
+   guarantee: several h2/h3s are card titles (contact.html's form
+   cards, committee_documents.html's upload/archive cards, members.
+   html's dashboard cards) that are correctly marked up at that heading
+   level for document structure, yet need to visually read smaller
+   than a page section title - changing the tag would be wrong (it'd
+   misrepresent the document outline just to get a smaller font), and
+   changing the global h2/h3 default would wrongly shrink the page-
+   section headings instead. A size utility is exactly the tool for
+   "keep the semantic tag, override the visual size" - apply the one
+   step down (or more) that reads right for the specific card. */
+.text-step--2 {
+  font-size: var(--step--2);
+}
+.text-step--1 {
+  font-size: var(--step--1);
+}
+.text-step-0 {
+  font-size: var(--step-0);
+}
+.text-step-1 {
+  font-size: var(--step-1);
+}
+.text-step-2 {
+  font-size: var(--step-2);
+}
+.text-step-3 {
+  font-size: var(--step-3);
+}
+.text-step-4 {
+  font-size: var(--step-4);
+}
+.text-step-5 {
+  font-size: var(--step-5);
+}
+.text-step-6 {
+  font-size: var(--step-6);
+}
+
+/* --- Spacing (keyed to this project's own fluid --space-* scale in
+   global/variables.css) ---
    One-off margin utilities (mt-s2, mb-s-min, etc.) used to live here.
    Removed in favour of the mechanism .flow itself already provides:
    --flow-space is read per-child, so a single element can override
