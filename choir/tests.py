@@ -658,3 +658,77 @@ class CommitteeDocumentDeleteTests(TestCase):
         self.assertTrue(
             CommitteeDocument.objects.filter(id=self.document.id).exists()
         )
+
+
+class CommitteeRsvpProjectScopingTests(TestCase):
+    """Guards the concrete dual-axis attendance implementation: the Event
+    Logistics panel defaults to the ACTIVE project and is switchable via
+    ?project=<id>, while Member Overview stays all-time/unfiltered
+    regardless of which project is selected."""
+
+    def setUp(self):
+        self.staff = User.objects.create_user(
+            username="committee", password="pw", is_staff=True
+        )
+        self.client.login(username="committee", password="pw")
+
+        self.active_project = Project.objects.create(
+            name="Christmas 2026", status="ACTIVE"
+        )
+        self.archived_project = Project.objects.create(
+            name="Summer 2025", status="ARCHIVED"
+        )
+        self.active_event = Event.objects.create(
+            project=self.active_project,
+            date_time=timezone.now() + timedelta(days=7),
+            location="Active Venue",
+        )
+        self.archived_event = Event.objects.create(
+            project=self.archived_project,
+            date_time=timezone.now() - timedelta(days=200),
+            location="Archived Venue",
+        )
+
+    def test_defaults_to_active_project_events_only(self):
+        response = self.client.get(reverse("committee_rsvps"))
+        self.assertEqual(response.status_code, 200)
+        events_shown = [row["event"] for row in response.context["report_data"]]
+        self.assertIn(self.active_event, events_shown)
+        self.assertNotIn(self.archived_event, events_shown)
+        self.assertEqual(response.context["selected_project_id"], str(self.active_project.id))
+
+    def test_can_switch_to_a_different_project(self):
+        response = self.client.get(
+            reverse("committee_rsvps"), {"project": self.archived_project.id}
+        )
+        events_shown = [row["event"] for row in response.context["report_data"]]
+        self.assertIn(self.archived_event, events_shown)
+        self.assertNotIn(self.active_event, events_shown)
+
+    def test_all_projects_option_shows_every_event(self):
+        response = self.client.get(reverse("committee_rsvps"), {"project": ""})
+        events_shown = [row["event"] for row in response.context["report_data"]]
+        self.assertIn(self.active_event, events_shown)
+        self.assertIn(self.archived_event, events_shown)
+
+    def test_member_overview_is_unaffected_by_project_selection(self):
+        singer = User.objects.create_user(username="singer", password="pw")
+        Attendance.objects.filter(event=self.active_event, user=singer).update(
+            status="ATTENDING"
+        )
+        Attendance.objects.filter(event=self.archived_event, user=singer).update(
+            status="ATTENDING"
+        )
+
+        default_response = self.client.get(reverse("committee_rsvps"))
+        scoped_response = self.client.get(
+            reverse("committee_rsvps"), {"project": self.archived_project.id}
+        )
+
+        def rate_for(response):
+            row = next(
+                r for r in response.context["member_stats"] if r["user"] == singer
+            )
+            return row["attending"]
+
+        self.assertEqual(rate_for(default_response), rate_for(scoped_response))

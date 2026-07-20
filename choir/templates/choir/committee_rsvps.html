@@ -23,6 +23,16 @@
       {% csrf_token %}
 
       <div style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1.5rem; margin-bottom: 1rem;">
+        <label for="project-selector" class="text-small text-muted" style="display: block; margin-bottom: 0.5rem;">Select Project:</label>
+        <select id="project-selector" onchange="window.location.href = '?project=' + this.value" style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.3); border: 1px solid #c9a45e; color: white; border-radius: 4px; font-size: 1rem; cursor: pointer;">
+          <option value="" {% if not selected_project_id %}selected{% endif %}>All Projects</option>
+          {% for project in projects %}
+            <option value="{{ project.id }}" {% if selected_project_id == project.id|stringformat:"s" %}selected{% endif %}>{{ project.name }} ({{ project.get_status_display }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1.5rem; margin-bottom: 1rem;">
         <label for="event-selector" class="text-small text-muted" style="display: block; margin-bottom: 0.5rem;">Select Event:</label>
         <select id="event-selector" onchange="switchEvent(this.value)" style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.3); border: 1px solid #c9a45e; color: white; border-radius: 4px; font-size: 1rem; cursor: pointer;">
           {% for data in report_data %}

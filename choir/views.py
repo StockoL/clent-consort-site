@@ -547,11 +547,35 @@ def committee_poll_manage_view(request):
 @login_required
 @user_passes_test(is_committee)
 def committee_rsvp_report(request):
-    """A dual-panel dashboard showing Event RSVPs and Member Attendance Stats."""
+    """
+    A dual-panel dashboard showing Event RSVPs and Member Attendance Stats.
+
+    This is the concrete dual-axis attendance implementation: the "Event
+    Logistics" panel is project-scoped (Axis 1 - defaults to whichever
+    Project is currently ACTIVE, switchable via ?project=<id>), while
+    "Member Overview" stays deliberately all-time/unfiltered (Axis 2) -
+    a member's overall standing shouldn't reset every time a project
+    wraps up.
+    """
+    # --- PROJECT SCOPING (Event Logistics panel only) ---
+    # Distinguish "no ?project= at all" (default to the active project) from
+    # "?project= explicitly empty" (the committee chose "All Projects").
+    if "project" in request.GET:
+        selected_project_id = request.GET.get("project", "")
+    else:
+        selected_project_id = ""
+        active_project = Project.get_active()
+        if active_project:
+            selected_project_id = str(active_project.id)
 
     # --- DATASET 1: EVENT-BY-EVENT DATA ---
-    # Fetch ALL events, ordered backwards so the latest are at the top
+    # Fetch events, ordered backwards so the latest are at the top. An empty
+    # selection (no active project, or "All Projects" explicitly chosen)
+    # falls back to every event, preserving the dashboard's original
+    # behaviour rather than showing nothing.
     all_events = Event.objects.all().order_by("-date_time")
+    if selected_project_id.isdigit():
+        all_events = all_events.filter(project_id=selected_project_id)
 
     all_attendances = (
         Attendance.objects.filter(event__in=all_events, user__is_active=True)
@@ -621,6 +645,8 @@ def committee_rsvp_report(request):
     context = {
         "report_data": report_data,
         "member_stats": member_stats,
+        "projects": Project.objects.all(),
+        "selected_project_id": selected_project_id,
     }
 
     return render(request, "choir/committee_rsvps.html", context)
