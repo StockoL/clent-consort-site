@@ -50,16 +50,29 @@ footer a:hover {
   margin: 0;
 }
 
+.footer-nav {
+  /* The switcher's default flex-grow: 1/flex-basis: 0-ish split gives
+     brand/nav/connect roughly equal thirds - not quite enough room for
+     five links plus generous letter-spacing, which pushed the last one
+     ("Member Login") onto its own line. flex-shrink: 0 lets this column
+     claim the width its content actually needs instead of being
+     squeezed to an equal third; the other two columns' own flex-grow
+     still absorbs whatever space is left. */
+  flex-shrink: 0;
+}
+
 .footer-nav ul {
   list-style: none;
   padding: 0;
   margin: 0;
+  flex-wrap: nowrap; /* Keep the whole nav on one line - see .footer-nav above */
 }
 
 .footer-nav a {
   font-size: 0.9rem;
   text-transform: uppercase;
   letter-spacing: 0.05ch;
+  white-space: nowrap;
 }
 
 .footer-connect-label {
