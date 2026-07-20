@@ -64,6 +64,18 @@ main {
   flex: 1 0 auto; /* Forces the main content to stretch, pushing the footer down */
 }
 
+main > * {
+  /* Flex items default to min-width: auto, i.e. never shrink narrower
+     than their own content's intrinsic width - normally invisible,
+     but any page whose top-level section contains a horizontally-
+     scrolling element (events.html's .reel, overflow-x: auto) has
+     content that's intentionally wider than the viewport. Without
+     this, the section itself refuses to shrink to the column's width,
+     blowing the whole page out sideways instead of letting the reel's
+     own overflow handle it internally. */
+  min-width: 0;
+}
+
 /* looseleaf-ui's global-styles.css already maps h1-h6 to
    var(--fonts-heading) - only the uppercase/letter-spacing treatment
    below is specific to this site and not covered there. */
