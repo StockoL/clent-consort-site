@@ -12,10 +12,23 @@
      actually resolve, since body only has min-height: 100vh (not a
      definite height), which keeps flex-grown descendants further down
      the chain from counting as a definite percentage-resolution base.
-     flex-grow chaining doesn't have that requirement. min-height stays
-     as a floor so the hero never gets shorter than this regardless. */
+     flex-grow chaining doesn't have that requirement.
+
+     min-height is a safety floor only (overflow: hidden below makes
+     the flex-item auto-minimum resolve to 0, so without this the hero
+     could shrink arbitrarily small on a cramped viewport) - it must
+     stay well under any realistic header+footer height, or it fights
+     flex: 1's fill-exactly-to-the-footer behavior instead of just
+     backstopping it. 80vh briefly did that: on narrow/short mobile
+     viewports, once the redesigned footer got taller, header + 80vh
+     + footer regularly added up to more than 100vh, so main (flex-
+     shrink: 0) refused to shrink and body grew past the viewport -
+     scrollable, but with a gap after the footer since the hero was
+     forced taller than "available space" actually was. A small
+     absolute floor avoids ever competing with the viewport-based fill
+     calculation. */
   flex: 1;
-  min-height: 80vh;
+  min-height: 20rem;
   padding: var(--s1);
   background:
     linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
