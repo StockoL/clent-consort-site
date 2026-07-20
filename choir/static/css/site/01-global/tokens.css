@@ -1,0 +1,12 @@
+/* ==========================================================================
+   GLOBAL: PROJECT TOKEN OVERRIDES
+   ==========================================================================
+   Clent Consort's overrides for looseleaf-ui's brand-neutral placeholder
+   tokens. looseleaf-ui's own design-tokens.json stays generic/reusable
+   across projects - this is where this specific site's values live.
+   ========================================================================== */
+
+:root {
+  --fonts-heading: "Cinzel", serif;
+  --fonts-body: "Inter", sans-serif;
+}

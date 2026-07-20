@@ -1,0 +1,18 @@
+/* ==========================================================================
+   BLOCK: CARD (project exception)
+   ==========================================================================
+   The site's dark/gold "invert" card treatment, previously .box.invert in
+   css/style.css. Exception-layer pattern: same .card block from
+   looseleaf-ui, state via [data-variant] attribute rather than a second
+   class.
+   ========================================================================== */
+
+.card[data-variant="invert"] {
+  background-color: #1a1a1a;
+  color: #ffffff;
+  border-radius: 20px;
+  border: 1px solid rgba(201, 164, 94, 0.3);
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.3),
+    0 40px 60px -15px rgba(0, 0, 0, 0.4);
+}

@@ -1,0 +1,16 @@
+/* ==========================================================================
+   CLENT CONSORT - SITE-SPECIFIC CUBE LAYERS ("v2")
+   ==========================================================================
+   Mirrors ../looseleaf-ui's own tier structure (01-global, 02-compositions,
+   03-blocks, 04-utilities) so this project's own additions live in the same
+   shape as the design system they extend. Native @import + @layer, no
+   build step - loaded after css/looseleaf.css so these rules win
+   source-order ties within the same shared layer names.
+
+   02-compositions/ and 04-utilities/ are currently empty - nothing has
+   been migrated into them yet. css/style.css ("v1") remains the source of
+   truth for everything not yet reassessed into this structure.
+   ========================================================================== */
+
+@import "01-global/tokens.css" layer(global);
+@import "03-blocks/card.css" layer(blocks);
