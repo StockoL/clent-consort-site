@@ -16,6 +16,9 @@
      button's own --button-* props on :hover/:focus-visible rather than
      duplicating the block's rules (same CUBE exception pattern the
      vendored block already uses for [data-variant="primary"]).
+   - The small hover lift (translateY(-2px)) both old CTA variants had,
+     which the vendored block's own :hover (filter: brightness(0.9)
+     only) doesn't include.
    ========================================================================== */
 
 .button {
@@ -25,6 +28,11 @@
   letter-spacing: 0.1em;
   padding: 1rem 2rem;
   border-radius: 2px;
+}
+
+.button:hover,
+.button:focus-visible {
+  transform: translateY(-2px);
 }
 
 .button[data-variant="outline"] {

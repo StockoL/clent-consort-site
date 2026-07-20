@@ -15,69 +15,69 @@
 
   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
     
-    <a href="{% url 'committee_documents' %}" class="box invert l-stack text-center" style="text-decoration: none; transition: transform 0.2s ease;">
+    <a href="{% url 'committee_documents' %}" class="card l-stack text-center" data-variant="invert" style="text-decoration: none; transition: transform 0.2s ease;">
       <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📝</div>
       <h3 class="text-primary">Document Vault</h3>
       <p class="text-small text-muted" style="margin-top: 0.5rem;">Secure storage for meeting minutes and committee policies.</p>
     </a>
 
     {% if user.is_staff %}
-      <a href="{% url 'committee_schedule' %}" class="box invert l-stack text-center" style="text-decoration: none; transition: transform 0.2s ease;">
+      <a href="{% url 'committee_schedule' %}" class="card l-stack text-center" data-variant="invert" style="text-decoration: none; transition: transform 0.2s ease;">
         <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📅</div>
         <h3 class="text-primary">Schedule</h3>
         <p class="text-small text-muted" style="margin-top: 0.5rem;">Manage and view events.</p>
       </a>
 
-      <a href="{% url 'committee_broadcast' %}" class="box invert l-stack text-center" style="text-decoration: none; transition: transform 0.2s ease;">
+      <a href="{% url 'committee_broadcast' %}" class="card l-stack text-center" data-variant="invert" style="text-decoration: none; transition: transform 0.2s ease;">
         <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📢</div>
         <h3 class="text-primary">Broadcast</h3>
         <p class="text-small text-muted" style="margin-top: 0.5rem;">Send announcements to all members.</p>
       </a>
 
-      <a href="{% url 'committee_rsvps' %}" class="box invert l-stack text-center" style="text-decoration: none; transition: transform 0.2s ease;">
+      <a href="{% url 'committee_rsvps' %}" class="card l-stack text-center" data-variant="invert" style="text-decoration: none; transition: transform 0.2s ease;">
         <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">👥</div>
         <h3 class="text-primary">Missing RSVPs</h3>
         <p class="text-small text-muted" style="margin-top: 0.5rem;">View singers who have not responded to upcoming events.</p>
       </a>
 
-      <a href="{% url 'committee_financials' %}" class="box invert l-stack text-center" style="text-decoration: none; transition: transform 0.2s ease;">
+      <a href="{% url 'committee_financials' %}" class="card l-stack text-center" data-variant="invert" style="text-decoration: none; transition: transform 0.2s ease;">
         <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">💷</div>
         <h3 class="text-primary">Financials</h3>
         <p class="text-small text-muted" style="margin-top: 0.5rem;">Track term subscriptions and manual BACS payments.</p>
       </a>
 
-      <a href="{% url 'committee_emergency' %}" class="box invert l-stack text-center" style="text-decoration: none; transition: transform 0.2s ease;">
+      <a href="{% url 'committee_emergency' %}" class="card l-stack text-center" data-variant="invert" style="text-decoration: none; transition: transform 0.2s ease;">
         <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🏥</div>
         <h3 class="text-primary">Duty of Care</h3>
         <p class="text-small text-muted" style="margin-top: 0.5rem;">Confidential medical and emergency contact roster.</p>
       </a>
 
     {% else %}
-      <div class="box invert l-stack text-center" style="opacity: 0.4; cursor: not-allowed; text-decoration: none;" title="Committee access required">
+      <div class="card l-stack text-center" data-variant="invert" style="opacity: 0.4; cursor: not-allowed; text-decoration: none;" title="Committee access required">
         <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📅</div>
         <h3 class="text-primary">Schedule 🔒</h3>
         <p class="text-small text-muted" style="margin-top: 0.5rem;">Manage and view events.</p>
       </div>
 
-      <div class="box invert l-stack text-center" style="opacity: 0.4; cursor: not-allowed; text-decoration: none;" title="Committee access required">
+      <div class="card l-stack text-center" data-variant="invert" style="opacity: 0.4; cursor: not-allowed; text-decoration: none;" title="Committee access required">
         <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📢</div>
         <h3 class="text-primary">Broadcast 🔒</h3>
         <p class="text-small text-muted" style="margin-top: 0.5rem;">Send announcements to all members.</p>
       </div>
 
-      <div class="box invert l-stack text-center" style="opacity: 0.4; cursor: not-allowed; text-decoration: none;" title="Committee access required">
+      <div class="card l-stack text-center" data-variant="invert" style="opacity: 0.4; cursor: not-allowed; text-decoration: none;" title="Committee access required">
         <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">👥</div>
         <h3 class="text-primary">Missing RSVPs 🔒</h3>
         <p class="text-small text-muted" style="margin-top: 0.5rem;">View singers who have not responded to upcoming events.</p>
       </div>
 
-      <div class="box invert l-stack text-center" style="opacity: 0.4; cursor: not-allowed; text-decoration: none;" title="Committee access required">
+      <div class="card l-stack text-center" data-variant="invert" style="opacity: 0.4; cursor: not-allowed; text-decoration: none;" title="Committee access required">
         <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">💷</div>
         <h3 class="text-primary">Financials 🔒</h3>
         <p class="text-small text-muted" style="margin-top: 0.5rem;">Track term subscriptions and manual BACS payments.</p>
       </div>
 
-      <div class="box invert l-stack text-center" style="opacity: 0.4; cursor: not-allowed; text-decoration: none;" title="Committee access required">
+      <div class="card l-stack text-center" data-variant="invert" style="opacity: 0.4; cursor: not-allowed; text-decoration: none;" title="Committee access required">
         <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🏥</div>
         <h3 class="text-primary">Duty of Care 🔒</h3>
         <p class="text-small text-muted" style="margin-top: 0.5rem;">Confidential medical and emergency contact roster.</p>

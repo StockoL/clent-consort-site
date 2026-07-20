@@ -118,23 +118,6 @@ html {
   --space: var(--s4);
 }
 
-/* --- THE BOX --- */
-.box {
-  padding: var(--s1);
-  border: 1px solid transparent;
-}
-
-/* Unified Invert: The "Card" standard for the whole site */
-.box.invert {
-  background-color: #1a1a1a;
-  color: #ffffff;
-  border-radius: 20px;
-  border: 1px solid rgba(201, 164, 94, 0.3);
-  overflow: hidden;
-  box-shadow:
-    0 10px 15px -3px rgba(0, 0, 0, 0.3),
-    0 40px 60px -15px rgba(0, 0, 0, 0.4);
-}
 /* ==========================================================================
    3. GLOBAL COMPONENTS (Header, Footer, Buttons)
    ========================================================================== */
@@ -299,50 +282,6 @@ html {
   }
 }
 
-/* CTA Button */
-.cta-button,
-.cta-button-outline {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem 2rem;
-  font-family: var(--font-heading);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  text-align: center;
-  text-decoration: none;
-  border-radius: 2px;
-  cursor: pointer;
-  transition:
-    transform 0.2s ease,
-    background-color 0.3s,
-    color 0.3s,
-    box-shadow 0.2s ease;
-}
-
-.cta-button {
-  background-color: var(--primary);
-  color: #1a1a1a;
-  border: 2px solid transparent;
-}
-
-.cta-button:hover {
-  background-color: #dcb97a;
-  transform: translateY(-2px);
-}
-
-.cta-button-outline {
-  background-color: transparent;
-  color: var(--primary);
-  border: 2px solid var(--primary);
-}
-
-.cta-button-outline:hover {
-  background-color: var(--primary);
-  color: #1a1a1a;
-  transform: translateY(-2px);
-}
 
 /* --- MOBILE ONLY UTILITY CLASS --- */
 /* Using your existing 45rem (720px) breakpoint from your global styles */
@@ -856,7 +795,7 @@ footer a:hover,
   box-shadow: 0 0 0 3px rgba(201, 164, 94, 0.2);
 }
 
-.contact-form-container .cta-button {
+.contact-form-container .button {
   width: 100%;
   border: 1px solid #ccc; /* Adds definition to the white button */
   cursor: pointer;
@@ -872,7 +811,7 @@ footer a:hover,
   letter-spacing: 0.1ch;
 }
 
-.contact-form-container .cta-button:hover {
+.contact-form-container .button:hover {
   background-color: #c9a45e;
   color: #ffffff;
   border-color: #c9a45e;
@@ -960,7 +899,7 @@ footer a:hover,
   animation: heroEntrance 1.2s ease-out 0.4s forwards;
 }
 
-.hero-cover .cta-button {
+.hero-cover .button {
   opacity: 0;
   animation: heroEntrance 1.2s ease-out 0.8s forwards;
 }
@@ -998,13 +937,13 @@ footer a:hover,
 
 .login-header h1,
 .login-header p,
-.box.invert .form-group label {
+[data-variant="invert"] .form-group label {
   color: #c9a45e;
 }
 
 /* Fat-Finger Touch Targets */
-.box.invert input,
-.box.invert select {
+[data-variant="invert"] input,
+[data-variant="invert"] select {
   min-height: 3.5rem; /* Large enough for thumbs */
   font-size: 1.1rem; /* Prevents iOS zoom-on-focus */
   padding: var(--s0);
@@ -1014,7 +953,7 @@ footer a:hover,
   width: 100%;
 }
 
-.box.invert .cta-button {
+[data-variant="invert"] .button {
   min-height: 3.5rem;
   font-size: 1.1rem;
   font-weight: 700;
@@ -1030,40 +969,40 @@ footer a:hover,
   cursor: pointer;
 }
 
-.box.invert .cta-button:hover {
+[data-variant="invert"] .button:hover {
   background-color: #c9a45e;
   color: #ffffff;
 }
 
 /* --- High-Visibility Security Visual Feedback --- */
 
-/* 1. Neutral State: When the box is empty (placeholder is visible) 
+/* 1. Neutral State: When the box is empty (placeholder is visible)
    We use a high-specificity selector to force the grey border */
-.box.invert input[type="password"] {
+[data-variant="invert"] input[type="password"] {
   border: 2px solid #444 !important; /* Forces the neutral dark grey */
   transition: all 0.2s ease-in-out;
 }
 
-/* 2. The 'Invalid' state: ONLY show red IF the user has started typing 
+/* 2. The 'Invalid' state: ONLY show red IF the user has started typing
    AND the input is currently focused */
-.box.invert input[type="password"]:not(:placeholder-shown):focus:invalid {
+[data-variant="invert"] input[type="password"]:not(:placeholder-shown):focus:invalid {
   border-color: var(--colors-danger-text) !important;
   box-shadow: 0 0 0 4px rgba(255, 77, 77, 0.4);
 }
 
 /* 3. The 'Valid' state: Green Light when it matches perfectly */
-.box.invert input[type="password"]:focus:valid {
+[data-variant="invert"] input[type="password"]:focus:valid {
   border-color: var(--colors-success-text) !important;
   box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.4);
 }
 
 /* 4. Persistence: Keep it green after they finish and click away */
-.box.invert input[type="password"]:valid:not(:placeholder-shown) {
+[data-variant="invert"] input[type="password"]:valid:not(:placeholder-shown) {
   border-color: var(--colors-success-text) !important;
 }
 
 /* 5. Suppress the 'Standard' browser red (Firefox especially) */
-.box.invert input:invalid {
+[data-variant="invert"] input:invalid {
   box-shadow: none;
 }
 

@@ -15,7 +15,7 @@
     {% regroup assets by repertoire as grouped_assets %}
 
     {% for group in grouped_assets %}
-    <article class="box invert l-stack card-flex">
+    <article class="card l-stack card-flex" data-variant="invert">
       
       <div class="repertoire-header">
         <h3 class="text-primary mb-0">{{ group.grouper.title }}</h3>
@@ -79,7 +79,7 @@
     </article>
 
     {% empty %}
-    <div class="box invert full-width text-center">
+    <div class="card full-width text-center" data-variant="invert">
       <p>No rehearsal materials have been uploaded for this section yet.</p>
     </div>
     {% endfor %}

@@ -17,7 +17,7 @@
   <div id="form-section" class="l-stack">
     {% if messages %} 
       {% for message in messages %}
-        <div class="box invert l-stack" style="border: 2px solid {% if message.tags == 'error' %}var(--colors-danger-text){% else %}var(--colors-success-text){% endif %}; text-align: center; margin-bottom: var(--s2);" role="alert">
+        <div class="card l-stack" data-variant="invert" style="border: 2px solid {% if message.tags == 'error' %}var(--colors-danger-text){% else %}var(--colors-success-text){% endif %}; text-align: center; margin-bottom: var(--s2);" role="alert">
           <h2 style="color: {% if message.tags == 'error' %}var(--colors-danger-text){% else %}var(--colors-success-text){% endif %}; margin-bottom: 0;">
             {% if message.tags == 'error' %}Submission Error{% else %}Message Received!{% endif %}
           </h2>
@@ -28,7 +28,7 @@
 
     <div class="switcher contact-forms-layout">
       
-      <section class="contact-form-container box invert l-stack">
+      <section class="card contact-form-container l-stack" data-variant="invert">
         <h2>General Enquiry</h2>
         <form action="{% url 'contact' %}" method="POST" class="l-stack">
           {% csrf_token %}
@@ -61,7 +61,7 @@
         </form>
       </section>
 
-      <section class="contact-form-container box invert l-stack">
+      <section class="card contact-form-container l-stack" data-variant="invert">
         <h2>Join the Consort</h2>
         <form action="{% url 'contact' %}" method="POST" class="l-stack">
           {% csrf_token %}
