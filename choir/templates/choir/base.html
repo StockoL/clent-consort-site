@@ -59,7 +59,7 @@
 
   <body id="top" class="{% block body_class %}{% endblock body_class %}">
     <header class="site-header">
-      <div class="l-center header-inner">
+      <div class="wrapper header-inner">
         <a href="{% url 'home' %}" class="logo-link">
           <img
             src="{% static 'images/clent-consort-logo.webp' %}"
@@ -111,7 +111,7 @@
     </main>
 
     <footer class="invert footer-slim">
-      <div class="l-center">
+      <div class="wrapper">
         <div class="footer-grid">
           <div class="footer-col-left">
             {% if not user.is_authenticated %}
