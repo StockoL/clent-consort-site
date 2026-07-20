@@ -8,6 +8,57 @@ from django.utils.html import strip_tags
 from tinymce.models import HTMLField
 
 # ==============================================================================
+# 0. PROJECTS
+# ==============================================================================
+
+
+class Project(models.Model):
+    """
+    The central container for a choir season or concert cycle (e.g.
+    "Christmas 2026", "Summer Tour 2028"). Every Event hangs off a Project
+    (see Event.project), and Repertoire is attached at the Project level
+    (see Project.repertoire, added once Event.project is wired up) rather
+    than per-event, so a piece can be reused across projects without
+    duplicating rows. Status drives what's exposed to members vs.
+    committee - see get_active().
+    """
+
+    STATUS_CHOICES = [
+        ("PLANNING", "Planning"),
+        ("ACTIVE", "Active"),
+        ("ARCHIVED", "Archived"),
+    ]
+
+    name = models.CharField(
+        max_length=150, help_text="e.g., Christmas 2026 or Summer Tour 2028"
+    )
+    status = models.CharField(max_length=8, choices=STATUS_CHOICES, default="PLANNING")
+    description = models.TextField(blank=True)
+
+    # Optional - a Project can exist (PLANNING) before firm dates are known.
+    start_date = models.DateField(blank=True, null=True)
+    end_date = models.DateField(blank=True, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-start_date", "-created_at"]
+
+    def __str__(self):
+        return f"{self.name} ({self.get_status_display()})"
+
+    @classmethod
+    def get_active(cls):
+        """
+        Soft convention, not DB-enforced: if more than one Project is
+        ACTIVE at once (a deliberate handoff overlap between projects),
+        the one with the most recent start_date wins (see Meta.ordering).
+        Returns None if no Project is currently ACTIVE.
+        """
+        return cls.objects.filter(status="ACTIVE").first()
+
+
+# ==============================================================================
 # 1. PEOPLE & FINANCE
 # ==============================================================================
 

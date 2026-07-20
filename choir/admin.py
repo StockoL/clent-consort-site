@@ -9,9 +9,24 @@ from .models import (
     GiftAidDeclaration,
     LearningAsset,
     MemberProfile,
+    Project,
     Repertoire,
     SubscriptionPayment,
 )
+
+
+# ==============================================================================
+# 0. PROJECTS
+# ==============================================================================
+@admin.register(Project)
+class ProjectAdmin(admin.ModelAdmin):
+    # Day-to-day management happens on the committee's own frontend pages
+    # (committee_projects/committee_project_edit) - this registration exists
+    # so admin access still works for direct DB inspection, matching every
+    # other model in this app staying admin-registered regardless of
+    # whether a frontend view also exists.
+    list_display = ("name", "status", "start_date")
+    list_filter = ("status",)
 
 
 # ==============================================================================
