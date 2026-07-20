@@ -5,13 +5,13 @@
 {% block extra_head %}{% endblock extra_head %}
 
 {% block content %}
-<div class="l-center l-stack section-padding">
+<div class="wrapper l-stack section-padding">
   <div class="text-center">
     <h1>{{ voice_part_name }} Learning Hub</h1>
     <p>Access your rehearsal tracks and sheet music below.</p>
   </div>
 
-  <div class=".l-stack l-stack--large mt-s2">
+  <div class="l-stack l-stack--large mt-s2">
     {% regroup assets by repertoire as grouped_assets %}
 
     {% for group in grouped_assets %}
