@@ -69,4 +69,14 @@
   --colors-text-muted: #aaaaaa;
   --colors-border-subtle: rgba(255, 255, 255, 0.1);
   --colors-border-strong: rgba(255, 255, 255, 0.2);
+
+  /* This block only redefined the *variables* above - nothing actually
+     applied --colors-text-base as a real color, so text kept inheriting
+     body's #333 (light-theme default) straight through onto these dark
+     backgrounds, illegible almost everywhere a bare .card[data-variant=
+     "invert"] was used without its own explicit color (about.html's
+     repertoire-meta card, events.html's featured-event sidebar card,
+     the login/account form cards, likely others). This is what actually
+     makes the dark scope work as a scope. */
+  color: var(--colors-text-base);
 }

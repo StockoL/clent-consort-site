@@ -34,6 +34,11 @@
 
 body {
   color: #333;
+  /* reset.css only zeroes margin-block (top/bottom) - the browser's
+     default inline (left/right) body margin was never zeroed anywhere
+     else once style.css's own margin: 0 was decanted away, causing an
+     unwanted gap at the viewport edges on every page. */
+  margin: 0;
 
   /* The Magic Sticky Footer Flexbox */
   display: flex;
