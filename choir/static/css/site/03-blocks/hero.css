@@ -5,7 +5,11 @@
 .hero-cover {
   display: flex;
   flex-direction: column;
-  min-height: 80vh;
+  /* Fill <main> exactly rather than a fixed 80vh, so the hero always
+     touches the footer regardless of viewport height - main is already
+     flex: 1 0 auto inside body's flex column (the sticky-footer
+     pattern), which gives it a definite resolved height to fill. */
+  min-height: 100%;
   padding: var(--s1);
   background:
     linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
