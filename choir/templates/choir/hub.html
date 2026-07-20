@@ -49,7 +49,7 @@
               {# Document / Sheet Music Integration #}
               {% elif ".pdf" in asset.file_upload.name|lower %}
                 <div class="media-flex-row mt-s-min">
-                  <a href="{{ asset.file_upload.url }}" target="_blank" rel="noopener noreferrer" class="cta-button btn-small w-100 text-center">
+                  <a href="{{ asset.file_upload.url }}" target="_blank" rel="noopener noreferrer" class="button btn-small w-100 text-center" data-variant="primary">
                     📄 Open Score
                   </a>
                   </div>
@@ -57,7 +57,7 @@
               {# Generic File Backup #}
               {% else %}
                 <div class="media-flex-row mt-s-min">
-                  <a href="{{ asset.file_upload.url }}" target="_blank" class="cta-button btn-small w-100 text-center">
+                  <a href="{{ asset.file_upload.url }}" target="_blank" class="button btn-small w-100 text-center" data-variant="primary">
                     Open Resource
                   </a>
                 </div>
@@ -65,7 +65,7 @@
 
             {% elif asset.external_url %}
               <div class="media-flex-row mt-s-min">
-                <a href="{{ asset.external_url }}" target="_blank" rel="noopener noreferrer" class="cta-button btn-small w-100 text-center">
+                <a href="{{ asset.external_url }}" target="_blank" rel="noopener noreferrer" class="button btn-small w-100 text-center" data-variant="primary">
                   🌐 External Link
                 </a>
               </div>

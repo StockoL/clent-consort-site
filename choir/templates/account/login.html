@@ -30,7 +30,7 @@
         <input type="hidden" name="next" value="{{ request.GET.next }}" />
       {% endif %}
 
-      <button type="submit" class="cta-button btn-block mt-s-1">Sign In</button>
+      <button type="submit" class="button btn-block mt-s-1" data-variant="primary">Sign In</button>
     </form>
 
     <div class="text-center mt-s-min">
@@ -41,7 +41,7 @@
 
     {% if form.errors %}
     <div class="text-error text-center mt-s-1">
-      <p style="color: #ff4d4d;">Your email and password didn't match. Please try again.</p>
+      <p class="text-error">Your email and password didn't match. Please try again.</p>
     </div>
     {% endif %}
   </section>

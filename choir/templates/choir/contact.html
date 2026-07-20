@@ -17,8 +17,8 @@
   <div id="form-section" class="l-stack">
     {% if messages %} 
       {% for message in messages %}
-        <div class="box invert l-stack" style="border: 2px solid {% if message.tags == 'error' %}#ff4d4d{% else %}#4caf50{% endif %}; text-align: center; margin-bottom: var(--s2);" role="alert">
-          <h2 style="color: {% if message.tags == 'error' %}#ff4d4d{% else %}#4caf50{% endif %}; margin-bottom: 0;">
+        <div class="box invert l-stack" style="border: 2px solid {% if message.tags == 'error' %}var(--colors-danger-text){% else %}var(--colors-success-text){% endif %}; text-align: center; margin-bottom: var(--s2);" role="alert">
+          <h2 style="color: {% if message.tags == 'error' %}var(--colors-danger-text){% else %}var(--colors-success-text){% endif %}; margin-bottom: 0;">
             {% if message.tags == 'error' %}Submission Error{% else %}Message Received!{% endif %}
           </h2>
           <p>{{ message }}</p>
@@ -36,28 +36,28 @@
           <div class="form-group l-stack l-stack--small">
             <label for="{{ enquiry_form.subject.id_for_label }}">Subject</label>
             {{ enquiry_form.subject }}
-            <div style="color: #ff4d4d; font-size: 0.85em;">{{ enquiry_form.subject.errors }}</div>
+            <div class="form-error">{{ enquiry_form.subject.errors }}</div>
           </div>
 
           <div class="form-group l-stack l-stack--small">
             <label for="{{ enquiry_form.name.id_for_label }}">Name</label>
             {{ enquiry_form.name }}
-            <div style="color: #ff4d4d; font-size: 0.85em;">{{ enquiry_form.name.errors }}</div>
+            <div class="form-error">{{ enquiry_form.name.errors }}</div>
           </div>
 
           <div class="form-group l-stack l-stack--small">
             <label for="{{ enquiry_form.email.id_for_label }}">Email</label>
             {{ enquiry_form.email }}
-            <div style="color: #ff4d4d; font-size: 0.85em;">{{ enquiry_form.email.errors }}</div>
+            <div class="form-error">{{ enquiry_form.email.errors }}</div>
           </div>
 
           <div class="form-group l-stack l-stack--small">
             <label for="{{ enquiry_form.message.id_for_label }}">Message</label>
             {{ enquiry_form.message }}
-            <div style="color: #ff4d4d; font-size: 0.85em;">{{ enquiry_form.message.errors }}</div>
+            <div class="form-error">{{ enquiry_form.message.errors }}</div>
           </div>
 
-          <button type="submit" class="cta-button">Send Message</button>
+          <button type="submit" class="button" data-variant="primary">Send Message</button>
         </form>
       </section>
 
@@ -69,28 +69,28 @@
           <div class="form-group l-stack l-stack--small">
             <label for="{{ audition_form.name.id_for_label }}">Name</label>
             {{ audition_form.name }}
-            <div style="color: #ff4d4d; font-size: 0.85em;">{{ audition_form.name.errors }}</div>
+            <div class="form-error">{{ audition_form.name.errors }}</div>
           </div>
 
           <div class="form-group l-stack l-stack--small">
             <label for="{{ audition_form.email.id_for_label }}">Email</label>
             {{ audition_form.email }}
-            <div style="color: #ff4d4d; font-size: 0.85em;">{{ audition_form.email.errors }}</div>
+            <div class="form-error">{{ audition_form.email.errors }}</div>
           </div>
 
           <div class="form-group l-stack l-stack--small">
             <label for="{{ audition_form.voice_part.id_for_label }}">Voice Type</label>
             {{ audition_form.voice_part }}
-            <div style="color: #ff4d4d; font-size: 0.85em;">{{ audition_form.voice_part.errors }}</div>
+            <div class="form-error">{{ audition_form.voice_part.errors }}</div>
           </div>
 
           <div class="form-group l-stack l-stack--small">
             <label for="{{ audition_form.experience.id_for_label }}">Choral Experience</label>
             {{ audition_form.experience }}
-            <div style="color: #ff4d4d; font-size: 0.85em;">{{ audition_form.experience.errors }}</div>
+            <div class="form-error">{{ audition_form.experience.errors }}</div>
           </div>
 
-          <button type="submit" class="cta-button">Register Your Interest</button>
+          <button type="submit" class="button" data-variant="primary">Register Your Interest</button>
         </form>
       </section>
 

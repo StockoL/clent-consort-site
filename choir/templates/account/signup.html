@@ -20,14 +20,14 @@
           {{ field }}
           
           {% if field.errors %}
-            <div style="color: #ff4d4d; font-size: 0.85rem; margin-top: 0.25rem;">
+            <div class="form-error" style="margin-top: 0.25rem;">
               {{ field.errors }}
             </div>
           {% endif %}
         </div>
       {% endfor %}
 
-      <button type="submit" class="cta-button btn-block mt-s-1">Complete Registration</button>
+      <button type="submit" class="button btn-block mt-s-1" data-variant="primary">Complete Registration</button>
     </form>
   </section>
 </div>

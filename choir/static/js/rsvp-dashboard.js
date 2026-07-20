@@ -47,13 +47,10 @@ function switchMasterView(view) {
   const btnEvents = document.getElementById("master-btn-events");
   const btnStats = document.getElementById("master-btn-stats");
 
-  if (view === "events") {
-    btnEvents.className = "cta-button btn-small";
-    btnStats.className = "cta-button-outline btn-small";
-  } else {
-    btnEvents.className = "cta-button-outline btn-small";
-    btnStats.className = "cta-button btn-small";
-  }
+  btnEvents.className = "button btn-small";
+  btnStats.className = "button btn-small";
+  btnEvents.setAttribute("data-variant", view === "events" ? "primary" : "outline");
+  btnStats.setAttribute("data-variant", view === "stats" ? "primary" : "outline");
 }
 
 /**

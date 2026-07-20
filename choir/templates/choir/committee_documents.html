@@ -8,7 +8,7 @@
     <h1 class="text-primary">Committee Document Vault</h1>
     <p>Secure storage for minutes, policies, and reports.</p>
     
-    <a href="{% url 'committee_hub' %}" class="cta-button-outline btn-small mt-s-1" style="text-decoration: none; display: inline-block;">
+    <a href="{% url 'committee_hub' %}" class="button btn-small mt-s-1" data-variant="outline" style="text-decoration: none; display: inline-block;">
       ← Back to Hub
     </a>
   </div>
@@ -36,7 +36,7 @@
           </div>
         </div>
 
-        <button type="submit" class="cta-button mt-s1 w-100">📤 Upload to Vault</button>
+        <button type="submit" class="button mt-s1 w-100" data-variant="primary">📤 Upload to Vault</button>
       </form>
     </section>
 
@@ -52,7 +52,7 @@
               <span class="text-small text-muted">{{ doc.get_doc_type_display }} | Uploaded {{ doc.uploaded_at|date:"j M Y" }}</span>
             </div>
             
-            <a href="{{ doc.file.url }}" target="_blank" class="cta-button-outline btn-small" style="padding: 0.25rem 0.75rem;">
+            <a href="{{ doc.file.url }}" target="_blank" class="button btn-small" data-variant="outline" style="padding: 0.25rem 0.75rem;">
               📄 View
             </a>
           </li>

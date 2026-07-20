@@ -8,7 +8,7 @@
     <h1 class="text-primary">Committee Event Scheduler</h1>
     <p>Plan and schedule events for the choir.</p>
     
-    <a href="{% url 'committee_hub' %}" class="cta-button-outline btn-small mt-s-1" style="text-decoration: none; display: inline-block;">
+    <a href="{% url 'committee_hub' %}" class="button btn-small mt-s-1" data-variant="outline" style="text-decoration: none; display: inline-block;">
       ← Back to Hub
     </a>
   </div>
@@ -42,7 +42,7 @@
           {{ form.location.errors }}
         </div>
 
-        <button type="submit" class="cta-button">Publish Event</button>
+        <button type="submit" class="button" data-variant="primary">Publish Event</button>
       </form>
     </section>
 

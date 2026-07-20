@@ -6,9 +6,9 @@
 <div class="wrapper l-stack section-padding">
   <div class="text-center">
     <h1 class="text-primary">Financial Ledger</h1>
-    <p>Subscription tracking for <strong style="color: #f57f17;">{{ current_term }}</strong>.</p>
+    <p>Subscription tracking for <strong class="text-warning">{{ current_term }}</strong>.</p>
     
-    <a href="{% url 'committee_hub' %}" class="cta-button-outline btn-small mt-s-1" style="text-decoration: none; display: inline-block;">
+    <a href="{% url 'committee_hub' %}" class="button btn-small mt-s-1" data-variant="outline" style="text-decoration: none; display: inline-block;">
       ← Back to Hub
     </a>
   </div>
@@ -39,25 +39,19 @@
           <!-- NEW GIFT AID COLUMN -->
           <td style="padding: 1rem;">
             {% if row.has_gift_aid %}
-              <span style="color: #2e7d32; font-size: 0.85rem; font-weight: bold;">✓ Signed</span>
+              <span class="badge" data-status="success">✓ Signed</span>
             {% else %}
               <span class="text-muted" style="font-size: 0.85rem;">Missing</span>
             {% endif %}
           </td>
-          
+
           <td style="padding: 1rem;">
             {% if row.is_exempt %}
-              <span style="background: rgba(255,255,255,0.1); color: #aaa; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">
-                Exempt
-              </span>
+              <span class="badge">Exempt</span>
             {% elif row.payment %}
-              <span style="background: #2e7d32; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">
-                Paid (£{{ row.payment.amount }})
-              </span>
+              <span class="badge" data-status="success">Paid (£{{ row.payment.amount }})</span>
             {% else %}
-              <span style="background: rgba(245, 127, 23, 0.2); color: #f57f17; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">
-                Unpaid
-              </span>
+              <span class="badge" data-status="warning">Unpaid</span>
             {% endif %}
           </td>
           
@@ -74,7 +68,7 @@
                 <option value="CASH">Cash</option>
               </select>
               
-              <button type="submit" class="cta-button btn-small" style="padding: 0.25rem 0.75rem;">Log</button>
+              <button type="submit" class="button btn-small" data-variant="primary" style="padding: 0.25rem 0.75rem;">Log</button>
             </form>
             {% else %}
               <span class="text-small text-muted">Recorded: {{ row.payment.date_paid|date:"j M Y" }}</span>

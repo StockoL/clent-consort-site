@@ -20,7 +20,7 @@ const initGiftAidForm = () => {
         "Please check your input formatting. A valid UK postcode must be between 5 and 8 alphanumeric characters long.",
       );
       postcodeField.focus();
-      postcodeField.style.borderColor = "#ff4d4d";
+      postcodeField.style.borderColor = "var(--colors-danger-text)";
     } else {
       event.preventDefault();
       alert(

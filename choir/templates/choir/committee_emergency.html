@@ -28,7 +28,7 @@
               <td style="padding: 1rem;">
                 <strong>{{ member.get_full_name }}</strong>
                 {% if member.profile.is_under_18 %}
-                  <span style="background: #ff4444; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-left: 0.5rem; text-transform: uppercase; font-weight: bold;">Under 18</span>
+                  <span style="background: var(--colors-danger); color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-left: 0.5rem; text-transform: uppercase; font-weight: bold;">Under 18</span>
                 {% endif %}
               </td>
               
@@ -39,7 +39,7 @@
               <td style="padding: 1rem;">
                 {{ member.profile.emergency_contact_name }} 
                 {% if member.profile.emergency_contact_relation %}
-                  <span style="color: #aaa; font-size: 0.9em;">({{ member.profile.emergency_contact_relation }})</span>
+                  <span class="text-muted" style="font-size: 0.9em;">({{ member.profile.emergency_contact_relation }})</span>
                 {% endif %}
                 <br>
                 <a href="tel:{{ member.profile.emergency_contact_phone }}" style="color: var(--primary); text-decoration: none;">
@@ -47,7 +47,7 @@
                 </a>
               </td>
               
-              <td style="padding: 1rem; color: #ff9999; max-width: 300px;">
+              <td style="padding: 1rem; color: var(--colors-danger-text); max-width: 300px;">
                 {{ member.profile.medical_accessibility_notes|default:"None provided" }}
               </td>
               

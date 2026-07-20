@@ -20,9 +20,9 @@
   {% if existing_declaration %}
   <div
     class="box invert u-measure--large-card u-margin-inline-auto"
-    style="border-left: 4px solid #4caf50"
+    style="border-left: 4px solid var(--colors-success-text)"
   >
-    <h2 style="color: #4caf50; margin-top: 0; text-align: center">
+    <h2 style="color: var(--colors-success-text); margin-top: 0; text-align: center">
       ✓ Declaration Active
     </h2>
     <p style="text-align: center">
@@ -45,7 +45,7 @@
       method="POST"
     >
       {% csrf_token %} {% if form.non_field_errors %}
-      <div style="color: #ff4d4d; margin-bottom: 1rem">
+      <div class="text-error" style="margin-bottom: 1rem">
         {{ form.non_field_errors }}
       </div>
       {% endif %}
@@ -54,7 +54,7 @@
         <div class="form-group l-stack l-stack--small">
           <label for="{{ form.first_name.id_for_label }}">First Name</label>
           {{ form.first_name }}
-          <div style="color: #ff4d4d; font-size: 0.85em">
+          <div class="form-error">
             {{ form.first_name.errors }}
           </div>
         </div>
@@ -62,7 +62,7 @@
         <div class="form-group l-stack l-stack--small">
           <label for="{{ form.last_name.id_for_label }}">Last Name</label>
           {{ form.last_name }}
-          <div style="color: #ff4d4d; font-size: 0.85em">
+          <div class="form-error">
             {{ form.last_name.errors }}
           </div>
         </div>
@@ -76,7 +76,7 @@
             >Home Address (Line 1)</label
           >
           {{ form.address_line_1 }}
-          <div style="color: #ff4d4d; font-size: 0.85em">
+          <div class="form-error">
             {{ form.address_line_1.errors }}
           </div>
         </div>
@@ -84,7 +84,7 @@
         <div class="form-group l-stack l-stack--small">
           <label for="{{ form.town_city.id_for_label }}">Town or City</label>
           {{ form.town_city }}
-          <div style="color: #ff4d4d; font-size: 0.85em">
+          <div class="form-error">
             {{ form.town_city.errors }}
           </div>
         </div>
@@ -92,7 +92,7 @@
         <div class="form-group l-stack l-stack--small">
           <label for="{{ form.postcode.id_for_label }}">Postcode</label>
           {{ form.postcode }}
-          <div style="color: #ff4d4d; font-size: 0.85em">
+          <div class="form-error">
             {{ form.postcode.errors }}
           </div>
           <p
@@ -132,12 +132,12 @@
             responsibility to pay any difference.
           </label>
         </div>
-        <div style="color: #ff4d4d; font-size: 0.85em">
+        <div class="form-error">
           {{ form.consent_given.errors }}
         </div>
       </div>
 
-      <button type="submit" class="cta-button" style="margin-top: var(--s1)">
+      <button type="submit" class="button" data-variant="primary" style="margin-top: var(--s1)">
         Submit Registration
       </button>
     </form>

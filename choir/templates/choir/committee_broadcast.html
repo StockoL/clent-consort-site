@@ -5,7 +5,7 @@
     <h1 class="text-primary">Committee Broadcast</h1>
     <p>Send announcements to all committee members.</p>
 
-    <a href="{% url 'committee_hub' %}" class="cta-button-outline btn-small mt-s-1" style="text-decoration: none; display: inline-block;">
+    <a href="{% url 'committee_hub' %}" class="button btn-small mt-s-1" data-variant="outline" style="text-decoration: none; display: inline-block;">
       ← Back to Hub
     </a>
   </div>
@@ -15,7 +15,7 @@
     <form method="POST">
       {% csrf_token %}
       {{ form.as_p }}
-      <button type="submit" class="cta-button">Send Email</button>
+      <button type="submit" class="button" data-variant="primary">Send Email</button>
     </form>
   </section>
 </div>

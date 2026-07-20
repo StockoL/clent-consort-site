@@ -8,12 +8,12 @@
     <h1 class="text-primary">RSVP Dashboard</h1>
     <p>Live event logistics and overall membership attendance tracking.</p>
     
-    <a href="{% url 'committee_hub' %}" class="cta-button-outline btn-small mt-s-1" style="text-decoration: none; display: inline-block;">
+    <a href="{% url 'committee_hub' %}" class="button btn-small mt-s-1" data-variant="outline" style="text-decoration: none; display: inline-block;">
       ← Back to Hub
     </a>
     <div style="margin-top: 1rem; display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap;">
-      <button onclick="switchMasterView('events')" id="master-btn-events" class="cta-button btn-small">Event Logistics</button>
-      <button onclick="switchMasterView('stats')" id="master-btn-stats" class="cta-button-outline btn-small">Member Overview</button>
+      <button onclick="switchMasterView('events')" id="master-btn-events" class="button btn-small" data-variant="primary">Event Logistics</button>
+      <button onclick="switchMasterView('stats')" id="master-btn-stats" class="button btn-small" data-variant="outline">Member Overview</button>
     </div>
   </div>
 
@@ -76,7 +76,7 @@
           {% if data.absent %}
             <ul style="column-count: 2; column-gap: 2rem; list-style-type: none; padding-left: 0;" class="text-small">
               {% for rsvp in data.absent %}
-                <li style="padding: 0.5rem 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0.5rem; break-inside: avoid; color: #ff4d4d;">
+                <li style="padding: 0.5rem 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0.5rem; break-inside: avoid; color: var(--colors-danger-text);">
                   
                   <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ rsvp.user.get_full_name }}">
                     ❌ {{ rsvp.user.first_name }} {{ rsvp.user.last_name }}
@@ -99,13 +99,13 @@
         <div id="list-{{ data.event.id }}-pending" class="rsvp-list-{{ data.event.id }}" style="display: none;">
           {% if data.pending %}
             <div style="margin-bottom: 1rem; text-align: center;">
-               <a href="mailto:?bcc={{ data.pending_emails }}&subject=RSVP Reminder: {{ data.event.get_event_type_display }}&body=Hi everyone,%0A%0APlease could you log into the Clent Consort portal and update your RSVP for the upcoming {{ data.event.get_event_type_display }}.%0A%0AThank you!" class="cta-button-outline btn-small" style="font-size: 0.8rem; padding: 0.25rem 0.5rem; display: inline-block; text-decoration: none;">
+               <a href="mailto:?bcc={{ data.pending_emails }}&subject=RSVP Reminder: {{ data.event.get_event_type_display }}&body=Hi everyone,%0A%0APlease could you log into the Clent Consort portal and update your RSVP for the upcoming {{ data.event.get_event_type_display }}.%0A%0AThank you!" class="button btn-small" data-variant="outline" style="font-size: 0.8rem; padding: 0.25rem 0.5rem; display: inline-block; text-decoration: none;">
                  ✉️ Email Reminder to {{ data.pending.count }} Members
                </a>
             </div>
             <ul style="column-count: 2; column-gap: 2rem; list-style-type: none; padding-left: 0;" class="text-small">
               {% for rsvp in data.pending %}
-                <li style="padding: 0.5rem 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0.5rem; break-inside: avoid; color: #f57f17;">
+                <li style="padding: 0.5rem 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0.5rem; break-inside: avoid; color: var(--colors-warning-text);">
                   
                   <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ rsvp.user.get_full_name }}">
                     ⏳ {{ rsvp.user.first_name }} {{ rsvp.user.last_name }}
@@ -153,17 +153,17 @@
             
             <td style="padding: 1rem; text-align: center;">
               {% if stat.rate >= 80 %}
-                <span style="color: #2e7d32; font-weight: bold;">{{ stat.rate }}%</span>
+                <span style="color: var(--colors-success-text); font-weight: bold;">{{ stat.rate }}%</span>
               {% elif stat.rate >= 50 %}
-                <span style="color: #f57f17; font-weight: bold;">{{ stat.rate }}%</span>
+                <span style="color: var(--colors-warning-text); font-weight: bold;">{{ stat.rate }}%</span>
               {% else %}
-                <span style="color: #ff4d4d; font-weight: bold;">{{ stat.rate }}%</span>
+                <span style="color: var(--colors-danger-text); font-weight: bold;">{{ stat.rate }}%</span>
               {% endif %}
             </td>
             
             <td style="padding: 1rem; text-align: center;">{{ stat.attending }}</td>
-            <td style="padding: 1rem; text-align: center; color: #ff4d4d;">{{ stat.absent }}</td>
-            <td style="padding: 1rem; text-align: center; color: #f57f17;">{{ stat.pending }}</td>
+            <td style="padding: 1rem; text-align: center; color: var(--colors-danger-text);">{{ stat.absent }}</td>
+            <td style="padding: 1rem; text-align: center; color: var(--colors-warning-text);">{{ stat.pending }}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -196,7 +196,7 @@ function overrideRSVP(eventId, attendanceId, selectElement) {
         if (data.success) {
             // 1. Success Flash
             selectElement.style.opacity = '1';
-            selectElement.style.backgroundColor = '#2e7d32'; 
+            selectElement.style.backgroundColor = 'var(--colors-success)';
             selectElement.style.color = '#fff';
             setTimeout(() => {
                 selectElement.style.backgroundColor = 'rgba(0,0,0,0.5)';
@@ -227,10 +227,10 @@ function overrideRSVP(eventId, attendanceId, selectElement) {
                 listItem.style.color = ''; // Reset to default white
                 nameSpan.innerHTML = nameSpan.innerHTML.replace(/^[❌⏳✅]\s*/, '✅ ');
             } else if (newStatus === 'absent') {
-                listItem.style.color = '#ff4d4d'; // Red
+                listItem.style.color = 'var(--colors-danger-text)';
                 nameSpan.innerHTML = nameSpan.innerHTML.replace(/^[❌⏳✅]\s*/, '❌ ');
             } else if (newStatus === 'pending') {
-                listItem.style.color = '#f57f17'; // Orange
+                listItem.style.color = 'var(--colors-warning-text)';
                 nameSpan.innerHTML = nameSpan.innerHTML.replace(/^[❌⏳✅]\s*/, '⏳ ');
             }
 

@@ -19,10 +19,10 @@
                 
                 <form method="post" action="{% url 'account_confirm_email' confirmation.key %}">
                     {% csrf_token %}
-                    <button class="cta-button" type="submit">{% trans "Confirm Address" %}</button>
+                    <button class="button" data-variant="primary" type="submit">{% trans "Confirm Address" %}</button>
                 </form>
             {% else %}
-                <div class="alert alert--error mt-s-1">
+                <div class="alert mt-s-1" data-status="danger">
                     <p class="mb-0">{% trans "This confirmation link has expired or is invalid. Please log in to request a new one." %}</p>
                 </div>
             {% endif %}

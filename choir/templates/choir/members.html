@@ -10,7 +10,7 @@
     <h1>
       Members Area
       {% if has_paid_current_term %}
-        <span style="font-size: 0.8rem; background-color: #2e7d32; color: white; padding: 0.2rem 0.6rem; border-radius: 12px; vertical-align: middle; margin-left: 0.5rem; display: inline-block;">
+        <span class="badge" data-status="success" style="vertical-align: middle; margin-left: 0.5rem;">
           ✓ {{ current_term }} Paid
         </span>
       {% endif %}
@@ -18,11 +18,11 @@
     <p>Welcome back, {{ user.first_name|default:user.username }}.</p>
     
     <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 1rem; margin-top: 1rem;">
-      <a href="{% url 'settings' %}" class="cta-button btn-small">
+      <a href="{% url 'settings' %}" class="button btn-small" data-variant="primary">
         Update Profile
       </a>
       
-      <a href="{% url 'committee_hub' %}" class="cta-button btn-small">
+      <a href="{% url 'committee_hub' %}" class="button btn-small" data-variant="primary">
         {% if user.is_staff %}
           Committee Hub
         {% else %}
@@ -30,7 +30,7 @@
         {% endif %}
       </a>
       
-      <a href="#repertoire-section" class="cta-button-outline hide-on-desktop">
+      <a href="#repertoire-section" class="button hide-on-desktop" data-variant="outline">
         ↓ Jump to Music
       </a>
     </div>
@@ -78,7 +78,7 @@
       {{ attendance.event.date_time|time:"g:i A" }} <br />📍 {{ attendance.event.location }}
     </p>
     
-    <a href="{% url 'download_ics' attendance.event.id %}" class="cta-button-outline" style="padding: 0.5rem 1rem; font-size: 0.75rem; align-self: flex-start; margin-top: 0.5rem;">
+    <a href="{% url 'download_ics' attendance.event.id %}" class="button" data-variant="outline" style="padding: 0.5rem 1rem; font-size: 0.75rem; align-self: flex-start; margin-top: 0.5rem;">
       📅 Add to Calendar
     </a>
   </div>
@@ -134,10 +134,10 @@
       <div class="text-center">
         <p class="text-primary"><h2>Access Scores & Learning Tracks:</h2>
         <div class="flex-center-wrap">
-          <a href="{% url 'hub' 'soprano' %}" class="cta-button btn-small">Sop</a>
-          <a href="{% url 'hub' 'alto' %}" class="cta-button btn-small">Alto</a>
-          <a href="{% url 'hub' 'tenor' %}" class="cta-button btn-small">Ten</a>
-          <a href="{% url 'hub' 'bass' %}" class="cta-button btn-small">Bass</a>
+          <a href="{% url 'hub' 'soprano' %}" class="button btn-small" data-variant="primary">Sop</a>
+          <a href="{% url 'hub' 'alto' %}" class="button btn-small" data-variant="primary">Alto</a>
+          <a href="{% url 'hub' 'tenor' %}" class="button btn-small" data-variant="primary">Ten</a>
+          <a href="{% url 'hub' 'bass' %}" class="button btn-small" data-variant="primary">Bass</a>
         </div>
       </div>
     </section>
@@ -172,11 +172,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (result.success) {
                     // Update the color immediately on success without page reload
                     if (newStatus === 'ATTENDING') {
-                        this.style.backgroundColor = '#2e7d32'; // Green
+                        this.style.backgroundColor = 'var(--colors-success)';
                     } else if (newStatus === 'ABSENT') {
-                        this.style.backgroundColor = '#c62828'; // Red
+                        this.style.backgroundColor = 'var(--colors-danger)';
                     } else {
-                        this.style.backgroundColor = '#f57f17'; // Orange
+                        this.style.backgroundColor = 'var(--colors-warning)';
                     }
                 } else {
                     alert('Error updating RSVP. Please try again.');
