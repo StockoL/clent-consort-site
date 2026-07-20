@@ -1,15 +1,15 @@
 {% extends 'choir/base.html' %}
 {% block content %}
-<div class="l-center l-stack section-padding">
+<div class="wrapper l-stack section-padding">
   <div class="text-center">
     <h1 class="text-primary">Committee Broadcast</h1>
     <p>Send announcements to all committee members.</p>
-    
+
     <a href="{% url 'committee_hub' %}" class="cta-button-outline btn-small mt-s-1" style="text-decoration: none; display: inline-block;">
       ← Back to Hub
     </a>
   </div>
-<div class="l-center section-padding">
+
   <section class="box invert">
     <h2>Send Choir Broadcast</h2>
     <form method="POST">
