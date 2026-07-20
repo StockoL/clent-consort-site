@@ -188,7 +188,7 @@ def giftaid_view(request):
             declaration = form.save(commit=False)
             declaration.member = user_profile
             declaration.save()
-            return redirect("dashboard")
+            return redirect("members")
     else:
         form = GiftAidForm()
 

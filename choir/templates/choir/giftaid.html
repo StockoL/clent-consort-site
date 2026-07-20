@@ -1,9 +1,9 @@
 {% extends 'choir/base.html' %}
-{% load static %} {% block content %}
+{% load static %}
 
 {% block title %}Gift Aid Registration - Clent Consort{% endblock %}
 
-{% block extra_head %}
+{% block content %}
 <div
   class="l-center l-stack l-stack--large form-page-wrapper"
   style="padding-top: var(--s3); padding-bottom: var(--s4)"
@@ -146,7 +146,7 @@
 
   <div class="u-text-center" style="margin-top: var(--s2)">
     <a
-      href="{% url 'dashboard' %}"
+      href="{% url 'members' %}"
       style="color: #c9a45e; text-decoration: none"
       >&larr; Back to Member Dashboard</a
     >
