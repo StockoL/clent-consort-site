@@ -155,7 +155,7 @@ def dashboard_view(request):
     current_repertoire = sorted(list(repertoire_set), key=lambda x: x.title)
 
     # --- C. FINANCIAL TRACKING (Progressive Disclosure) ---
-    current_term = "Autumn 2026"  # Update this string at the start of each new term
+    current_term = settings.CURRENT_TERM
 
     # Check if a payment record exists for this user for this specific term
     has_paid_current_term = SubscriptionPayment.objects.filter(
@@ -523,7 +523,7 @@ def committee_emergency_roster(request):
 def committee_financials_view(request):
     """Unified ledger to track and log termly subscriptions."""
 
-    current_term = "Autumn 2026"  # Must match the string in dashboard_view!
+    current_term = settings.CURRENT_TERM
 
     # --- 1. HANDLE INCOMING PAYMENTS (POST) ---
     if request.method == "POST":

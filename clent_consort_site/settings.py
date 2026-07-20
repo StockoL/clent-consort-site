@@ -207,6 +207,12 @@ else:
 # Add so views.py can find it
 CHOIR_CONTACT_EMAIL = "hello@clentconsort.org"
 
+# Single source of truth for the current subscription term - previously
+# hand-duplicated as a local string in both dashboard_view and
+# committee_financials_view in choir/views.py. Update this at the start of
+# each new term.
+CURRENT_TERM = "Autumn 2026"
+
 # ==============================================================================
 # AUTHENTICATION & ALLAUTH CONFIGURATION
 # ==============================================================================
