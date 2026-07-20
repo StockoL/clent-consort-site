@@ -1,13 +1,12 @@
 /* ==========================================================================
-   BLOCK: BACK TO TOP BUTTON (decanted from style.css "v1", unchanged)
+   BLOCK: BACK TO TOP BUTTON (decanted from style.css "v1")
    ==========================================================================
    NOTE (pre-existing, not introduced by this decanting pass):
-   js/back-to-top.js toggles an "is-visible" class plus aria-hidden/
-   tabindex based on scroll position, but no CSS rule anywhere actually
-   ties visual show/hide to that class - the button is always visually
-   present (position: fixed, no opacity/display toggle). Only the ARIA
-   state changes on scroll. Flagged, not fixed here - out of scope for a
-   content-preserving relocation.
+   js/back-to-top.js also toggles an "is-visible" class plus aria-hidden/
+   tabindex based on scroll position, but no CSS rule ties visual
+   show/hide to THAT class - the button stays visually present
+   regardless of scroll position, only its ARIA state changes. Left
+   as-is (not part of the footer-collision fix below).
    ========================================================================== */
 
 .back-to-top {
@@ -37,4 +36,12 @@
   color: #1a1a1a;
   transform: translateY(-4px);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Hide once the footer (which already has its own "Top ↑" link) enters
+   the viewport - js/back-to-top.js toggles this via an
+   IntersectionObserver on the <footer> element. */
+.back-to-top.is-near-footer {
+  opacity: 0;
+  pointer-events: none;
 }

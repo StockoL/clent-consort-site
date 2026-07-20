@@ -22,6 +22,18 @@ const initBackToTop = () => {
     }
   });
 
+  // Hide once the footer (which has its own "Top" link) scrolls into
+  // view, so the two controls don't overlap/duplicate at the page end.
+  const footer = document.querySelector("footer");
+  if (footer && "IntersectionObserver" in window) {
+    const footerObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        backToTopButton.classList.toggle("is-near-footer", entry.isIntersecting);
+      });
+    });
+    footerObserver.observe(footer);
+  }
+
   backToTopButton.addEventListener("click", () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
