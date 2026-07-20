@@ -17,6 +17,7 @@ def update_site_domain(apps, schema_editor):
 class Migration(migrations.Migration):
     dependencies = [
         ("choir", "0002_auditionapplication_enquiry_and_more"),
+        ("sites", "0001_initial"),
     ]
 
     operations = [
