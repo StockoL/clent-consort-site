@@ -4,125 +4,96 @@
 {% block title %}Gift Aid Registration - Clent Consort{% endblock %}
 
 {% block content %}
-<div
-  class="wrapper flow flow--large form-page-wrapper"
-  style="padding-top: var(--space-l); padding-bottom: var(--space-xl)"
->
-  <header class="u-text-center flow flow--small">
+<div class="wrapper wrapper--narrow flow section-padding">
+  <div class="text-center">
     <h1>Member Registration</h1>
-    <p class="u-measure u-margin-inline-auto u-muted">
+    <p>
       Please register your details with the Clent Consort. Completing this
       declaration allows us to claim Gift Aid and maximize our collective
       resources.
     </p>
-  </header>
+  </div>
 
   {% if existing_declaration %}
   <div
-    class="card u-measure--large-card u-margin-inline-auto" data-variant="invert"
+    class="card flow" data-variant="invert"
     style="border-left: 4px solid var(--colors-success-text)"
   >
-    <h2 style="color: var(--colors-success-text); margin-top: 0; text-align: center">
+    <h2 class="text-step-1 text-center" style="color: var(--colors-success-text)">
       ✓ Declaration Active
     </h2>
-    <p style="text-align: center">
+    <p class="text-center">
       Thank you! We have a valid statutory declaration on file for your
       subscriptions.
     </p>
-    <hr class="form-divider" style="border-color: #444" />
-    <p style="text-align: center; font-size: 0.9em; color: #aaa">
+    <hr class="divider" />
+    <p class="text-small text-muted text-center">
       <strong>Registered Name:</strong> {{ existing_declaration.first_name }} {{ existing_declaration.last_name }}<br />
       <strong>Signed On:</strong> {{ existing_declaration.date_signed|date:"jS F Y" }}
     </p>
   </div>
 
   {% else %}
-  <div class="card u-measure--large-card u-margin-inline-auto" data-variant="invert">
-    <form
-      id="giftaid-form"
-      class="flow"
-      action="{% url 'giftaid' %}"
-      method="POST"
-    >
-      {% csrf_token %} {% if form.non_field_errors %}
-      <div class="text-error" style="margin-bottom: 1rem">
+  <section class="card flow" data-variant="invert">
+    <form id="giftaid-form" method="POST" action="{% url 'giftaid' %}" class="flow">
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+      <div class="text-error">
         {{ form.non_field_errors }}
       </div>
       {% endif %}
 
-      <fieldset class="form-section flow flow--small">
+      <div class="flow flow--small">
         <div class="form-group flow flow--small">
           <label for="{{ form.first_name.id_for_label }}">First Name</label>
           {{ form.first_name }}
-          <div class="form-error">
-            {{ form.first_name.errors }}
-          </div>
+          <div class="form-error">{{ form.first_name.errors }}</div>
         </div>
 
         <div class="form-group flow flow--small">
           <label for="{{ form.last_name.id_for_label }}">Last Name</label>
           {{ form.last_name }}
-          <div class="form-error">
-            {{ form.last_name.errors }}
-          </div>
+          <div class="form-error">{{ form.last_name.errors }}</div>
         </div>
-      </fieldset>
+      </div>
 
-      <hr class="form-divider" style="border-color: #444" />
+      <hr class="divider" />
 
-      <fieldset class="form-section flow flow--small">
+      <div class="flow flow--small">
         <div class="form-group flow flow--small">
-          <label for="{{ form.address_line_1.id_for_label }}"
-            >Home Address (Line 1)</label
-          >
+          <label for="{{ form.address_line_1.id_for_label }}">Home Address (Line 1)</label>
           {{ form.address_line_1 }}
-          <div class="form-error">
-            {{ form.address_line_1.errors }}
-          </div>
+          <div class="form-error">{{ form.address_line_1.errors }}</div>
         </div>
 
         <div class="form-group flow flow--small">
           <label for="{{ form.town_city.id_for_label }}">Town or City</label>
           {{ form.town_city }}
-          <div class="form-error">
-            {{ form.town_city.errors }}
-          </div>
+          <div class="form-error">{{ form.town_city.errors }}</div>
         </div>
 
         <div class="form-group flow flow--small">
           <label for="{{ form.postcode.id_for_label }}">Postcode</label>
           {{ form.postcode }}
-          <div class="form-error">
-            {{ form.postcode.errors }}
-          </div>
-          <p
-            class="form-hint"
-            style="font-size: 0.8rem; color: #aaa; margin-top: 0"
-          >
+          <div class="form-error">{{ form.postcode.errors }}</div>
+          <p class="text-small text-muted">
             <strong>Hint:</strong> HMRC requires your official residential
             address to process claims.
           </p>
         </div>
-      </fieldset>
+      </div>
 
-      <hr class="form-divider" style="border-color: #444" />
+      <hr class="divider" />
 
-      <div class="form-checkbox-container flow flow--small">
-        <p
-          class="form-hint"
-          style="font-size: 0.8rem; color: #aaa; margin-bottom: 0.5rem"
-        >
+      <div class="flow flow--small">
+        <p class="text-small text-muted">
           <strong>Note:</strong> If you are not a UK taxpayer, please leave this
           section blank.
         </p>
 
-        <div style="display: flex; gap: var(--space-xs); align-items: flex-start">
-          <div style="margin-top: 0.3rem">{{ form.consent_given }}</div>
-
-          <label
-            for="{{ form.consent_given.id_for_label }}"
-            style="line-height: 1.5; cursor: pointer"
-          >
+        <div class="cluster" style="align-items: flex-start;">
+          {{ form.consent_given }}
+          <label for="{{ form.consent_given.id_for_label }}" style="cursor: pointer;">
             <strong style="color: #c9a45e">Yes, I want to Gift Aid.</strong> I
             want Clent Consort to treat all subscriptions and donations I make
             from this date forward, and any I have made in the past 4 years, as
@@ -132,24 +103,18 @@
             responsibility to pay any difference.
           </label>
         </div>
-        <div class="form-error">
-          {{ form.consent_given.errors }}
-        </div>
+        <div class="form-error">{{ form.consent_given.errors }}</div>
       </div>
 
-      <button type="submit" class="button" data-variant="primary" style="margin-top: var(--space-s)">
+      <button type="submit" class="button" data-variant="primary">
         Submit Registration
       </button>
     </form>
-  </div>
+  </section>
   {% endif %}
 
-  <div class="u-text-center" style="margin-top: var(--space-m)">
-    <a
-      href="{% url 'members' %}"
-      style="color: #c9a45e; text-decoration: none"
-      >&larr; Back to Member Dashboard</a
-    >
+  <div class="text-center" style="--flow-space: var(--space-m)">
+    <a href="{% url 'members' %}" style="color: #c9a45e; text-decoration: none">&larr; Back to Member Dashboard</a>
   </div>
 </div>
 {% endblock %}
