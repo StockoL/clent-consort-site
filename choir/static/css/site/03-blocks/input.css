@@ -1,0 +1,41 @@
+/* ==========================================================================
+   BLOCK: FORM CONTROLS
+   ========================================================================== */
+
+.label {
+  display: block;
+  font-weight: 600;
+  font-size: var(--typography-step-0);
+  color: var(--colors-text-base);
+}
+
+.input {
+  width: 100%; /* Allows layout compositions to dictate actual width */
+  font-family: inherit;
+  font-size: var(--typography-step-0);
+  color: var(--colors-text-base);
+  background-color: var(--colors-surface-base);
+  border: 1px solid var(--colors-border-subtle);
+  border-radius: 4px;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  transition:
+    border-color var(--transitions-dur-fast) ease,
+    box-shadow var(--transitions-dur-fast) ease;
+}
+
+.input:focus-visible {
+  outline: none;
+  border-color: var(--colors-action-primary);
+  box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.2);
+}
+
+.input[aria-invalid="true"] {
+  border-color: var(--colors-danger);
+  background-color: var(--colors-danger-bg);
+}
+
+.input:disabled {
+  background-color: var(--colors-surface-sunken);
+  color: var(--colors-text-muted);
+  cursor: not-allowed;
+}

@@ -1,0 +1,19 @@
+/* ==========================================================================
+   BLOCK: MODAL (Native Dialog)
+   ========================================================================== */
+
+.modal {
+  padding: var(--spacing-lg);
+  border: none;
+  border-radius: 8px;
+  background-color: var(--colors-surface-base);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  max-inline-size: var(--layout-measure);
+  width: 90vw;
+  margin: auto; /* Reset browser dialog defaults */
+}
+
+.modal::backdrop {
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}

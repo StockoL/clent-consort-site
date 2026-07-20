@@ -1,0 +1,8 @@
+/* ==========================================================================
+   UTILITY: INDENT ACCENT
+   ========================================================================== */
+
+.indent {
+  border-inline-start: var(--indent-size, 4px) solid
+    var(--indent-color, currentColor);
+}

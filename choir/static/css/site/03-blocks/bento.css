@@ -1,0 +1,42 @@
+/* ==========================================================================
+   BLOCK: BENTO
+   ========================================================================== */
+
+.bento {
+  --bento-cols: 1; /* Mobile-first default */
+
+  display: grid;
+  gap: var(--gutter, 1rem);
+  grid-template-columns: repeat(var(--bento-cols), 1fr);
+  grid-auto-rows: minmax(12rem, auto);
+  grid-auto-flow: dense;
+}
+
+@media (min-width: 45rem) {
+  .bento {
+    --bento-cols: 4; /* Large viewport baseline */
+  }
+
+  /*
+   * CUBE Exceptions
+   * Controls specific column and row tracking behaviors for child elements.
+   * Scoped to direct children of .bento — the attribute belongs on the
+   * individual grid item (e.g. a .card), not on the .bento container itself.
+   */
+  .bento > [data-span="2"] {
+    grid-column: span 2;
+  }
+  .bento > [data-span="3"] {
+    grid-column: span 3;
+  }
+  .bento > [data-span="full"] {
+    grid-column: 1 / -1;
+  }
+
+  .bento > [data-row-span="2"] {
+    grid-row: span 2;
+  }
+  .bento > [data-row-span="3"] {
+    grid-row: span 3;
+  }
+}

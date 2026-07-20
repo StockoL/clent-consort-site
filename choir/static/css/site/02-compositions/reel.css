@@ -1,0 +1,22 @@
+/* ==========================================================================
+   COMPOSITION: REEL
+   ========================================================================== */
+
+/*
+ * The Reel
+ * Creates a horizontally scrollable container that snaps elements into place.
+ * Excellent for image galleries, product cards, or horizontal menus.
+ */
+.reel {
+  display: flex;
+  gap: var(--gutter, 1rem);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  padding-block-end: 1rem; /* Intrinsic padding for the native scrollbar */
+}
+
+.reel > * {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+}

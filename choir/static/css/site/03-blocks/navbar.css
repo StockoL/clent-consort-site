@@ -1,0 +1,94 @@
+/* ==========================================================================
+   BLOCK: NAVBAR
+   ========================================================================== */
+
+.navbar {
+  --navbar-bg: var(--colors-surface-base);
+  --navbar-border: var(--colors-border-subtle);
+
+  background-color: var(--navbar-bg);
+  border-bottom: 1px solid var(--navbar-border);
+  position: relative;
+  z-index: 50;
+  padding-block: var(--spacing-md);
+}
+
+.navbar__brand {
+  font-weight: 800;
+  font-size: var(--typography-step-1);
+  color: var(--colors-text-base);
+  text-decoration: none;
+  letter-spacing: -0.02em;
+}
+
+.navbar__link {
+  color: var(--colors-text-muted);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: var(--typography-step-0);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: 4px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.navbar__link:hover,
+.navbar__link:focus-visible {
+  color: var(--colors-text-base);
+  background-color: var(--colors-surface-sunken);
+}
+
+/* Mobile Toggle Behavior */
+@media (max-width: 44.99rem) {
+  .navbar__menu {
+    display: none;
+    flex-basis: 100%;
+    padding-block-start: var(--spacing-md);
+  }
+
+  .navbar__menu[data-state="open"] {
+    display: block;
+    animation: fadeIn var(--transitions-dur-fast) var(--transitions-spring-smooth);
+  }
+
+  /* Force vertical stacking on mobile by adjusting the inner cluster */
+  .navbar__menu .cluster {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .navbar__toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--colors-text-base);
+    cursor: pointer;
+    padding: var(--spacing-xs);
+  }
+}
+
+@media (min-width: 45rem) {
+  .navbar__toggle {
+    display: none;
+  }
+  .navbar__menu {
+    display: block !important;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

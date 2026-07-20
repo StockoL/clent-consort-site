@@ -1,0 +1,49 @@
+/* ==========================================================================
+   BLOCK: BUTTON
+   ========================================================================== */
+
+.button {
+  /* Internal state variables with sensible default (Murmur) */
+  --button-bg: transparent;
+  --button-text: var(--colors-text-base);
+  --button-border: var(--colors-border-subtle);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs); /* For icons */
+  padding: var(--spacing-xs) var(--spacing-md);
+
+  background-color: var(--button-bg);
+  color: var(--button-text);
+  border: 1px solid var(--button-border);
+  border-radius: 4px;
+
+  font-family: inherit;
+  font-size: var(--typography-step-0);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    filter var(--transitions-dur-base) ease,
+    background-color var(--transitions-dur-base) ease;
+}
+
+/* 
+ * Interactive States
+ * Brightness filter works universally across all color variants 
+ */
+.button:hover,
+.button:focus-visible {
+  filter: brightness(0.9);
+}
+
+/* 
+ * CUBE Exceptions (Variants)
+ * We only need to redefine the variables, not the CSS rules!
+ */
+.button[data-variant="primary"] {
+  --button-bg: var(--colors-action-primary);
+  --button-text: var(--colors-text-on-action);
+  --button-border: var(--colors-action-primary);
+}

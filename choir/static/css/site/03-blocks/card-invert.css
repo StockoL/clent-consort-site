@@ -1,0 +1,19 @@
+/* ==========================================================================
+   BLOCK: CARD (project exception, extends the vendored card.css)
+   ==========================================================================
+   The dark background/text/border-subtle job is now handled automatically
+   by the dark-scope token override in 01-global/tokens.css ([data-variant
+   ="invert"] overrides --colors-surface-base/--colors-text-base/etc, and
+   .card already reads those tokens). This file only adds the cosmetic
+   flourishes that are genuinely specific to this site's card, not just
+   "invert colors": rounder corners, the particular drop shadow, and the
+   gold-tinted border (rather than a neutral one).
+   ========================================================================== */
+
+.card[data-variant="invert"] {
+  border-radius: 20px;
+  border-color: rgba(201, 164, 94, 0.3);
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.3),
+    0 40px 60px -15px rgba(0, 0, 0, 0.4);
+}

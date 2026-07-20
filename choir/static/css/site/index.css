@@ -1,16 +1,59 @@
 /* ==========================================================================
-   CLENT CONSORT - SITE-SPECIFIC CUBE LAYERS ("v2")
+   CLENT CONSORT - SITE CSS ENGINE ("v2")
    ==========================================================================
-   Mirrors ../looseleaf-ui's own tier structure (01-global, 02-compositions,
-   03-blocks, 04-utilities) so this project's own additions live in the same
-   shape as the design system they extend. Native @import + @layer, no
-   build step - loaded after css/looseleaf.css so these rules win
-   source-order ties within the same shared layer names.
+   Mirrors ../looseleaf-ui/src/index.css exactly, with looseleaf-ui's
+   individual source files copied in verbatim (vendored - re-synced by
+   re-copying when looseleaf-ui changes, never hand-edited) alongside this
+   project's own additions in the same tier folders. Native @import +
+   @layer, no build step.
 
-   02-compositions/ and 04-utilities/ are currently empty - nothing has
-   been migrated into them yet. css/style.css ("v1") remains the source of
-   truth for everything not yet reassessed into this structure.
+   css/style.css ("v1") remains loaded before this file and stays the
+   source of truth for anything not yet decanted into these tiers.
    ========================================================================== */
 
+@layer reset, global, compositions, blocks, utilities;
+
+/* --------------------------------------------------------------------------
+   LAYER 1: RESET & GLOBAL ENVIRONMENT
+   -------------------------------------------------------------------------- */
+@import "01-global/reset.css" layer(reset);
+@import "01-global/variables.css" layer(global);
 @import "01-global/tokens.css" layer(global);
+@import "01-global/global-styles.css" layer(global);
+
+/* --------------------------------------------------------------------------
+   LAYER 2: LAYOUT COMPOSITIONS (Aesthetics-Agnostic Structural Rules)
+   -------------------------------------------------------------------------- */
+@import "02-compositions/wrapper.css" layer(compositions);
+@import "02-compositions/center.css" layer(compositions);
+@import "02-compositions/flow.css" layer(compositions);
+@import "02-compositions/cluster.css" layer(compositions);
+@import "02-compositions/sidebar.css" layer(compositions);
+@import "02-compositions/grid.css" layer(compositions);
+@import "02-compositions/reel.css" layer(compositions);
+@import "02-compositions/switcher.css" layer(compositions);
+
+/* --------------------------------------------------------------------------
+   LAYER 3: CUBE BLOCKS (Encapsulated Component Styling)
+   -------------------------------------------------------------------------- */
+@import "03-blocks/button.css" layer(blocks);
+@import "03-blocks/input.css" layer(blocks);
+@import "03-blocks/badge.css" layer(blocks);
+@import "03-blocks/accordion.css" layer(blocks);
+@import "03-blocks/dropdown.css" layer(blocks);
 @import "03-blocks/card.css" layer(blocks);
+@import "03-blocks/card-invert.css" layer(blocks);
+@import "03-blocks/navbar.css" layer(blocks);
+@import "03-blocks/modal.css" layer(blocks);
+@import "03-blocks/offcanvas.css" layer(blocks);
+@import "03-blocks/alert.css" layer(blocks);
+@import "03-blocks/bento.css" layer(blocks);
+
+/* --------------------------------------------------------------------------
+   LAYER 4: UTILITIES (Single-Purpose Overrides)
+   -------------------------------------------------------------------------- */
+@import "04-utilities/accessibility.css" layer(utilities);
+@import "04-utilities/indent.css" layer(utilities);
+@import "04-utilities/text.css" layer(utilities);
+@import "04-utilities/colors.css" layer(utilities);
+@import "04-utilities/animations.css" layer(utilities);

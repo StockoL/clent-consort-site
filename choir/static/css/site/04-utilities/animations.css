@@ -1,0 +1,112 @@
+/* ==========================================================================
+   UTILITY: ANIMATIONS
+   ========================================================================== */
+
+/* --- The Lift & Scale --- */
+.anim-lift {
+  transition:
+    transform var(--transitions-dur-base) var(--transitions-spring-snappy),
+    box-shadow var(--transitions-dur-base) var(--transitions-spring-snappy);
+  will-change: transform;
+}
+
+.anim-lift:hover {
+  transform: translateY(calc(var(--spacing-xs) * -1)) scale(1.02);
+}
+
+/* --- The Ambient Mesh --- */
+.bg-mesh {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--colors-surface-base);
+  z-index: 0;
+}
+
+.bg-mesh::before,
+.bg-mesh::after {
+  content: "";
+  position: absolute;
+  width: 150vw;
+  height: 150vh;
+  top: -25vh;
+  left: -25vw;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    circle,
+    rgba(0, 112, 243, 0.05) 0%,
+    transparent 60%
+  );
+  animation: mesh-drift 15s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+.bg-mesh::after {
+  background: radial-gradient(
+    circle,
+    rgba(168, 85, 247, 0.05) 0%,
+    transparent 50%
+  );
+  animation: mesh-drift 20s ease-in-out infinite alternate-reverse;
+  top: 10vh;
+  left: 20vw;
+}
+
+@keyframes mesh-drift {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(5%, 5%) scale(1.1);
+  }
+  100% {
+    transform: translate(-5%, -5%) scale(0.9);
+  }
+}
+
+/* --- The Infinite Marquee --- */
+.marquee {
+  --marquee-speed: 40s;
+  display: flex;
+  overflow: hidden;
+  user-select: none;
+  gap: var(--gutter, 1rem);
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 10%,
+    black 90%,
+    transparent
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 10%,
+    black 90%,
+    transparent
+  );
+}
+
+.marquee__track {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: var(--gutter, 1rem);
+  min-width: 100%;
+  animation: ll-marquee var(--marquee-speed) linear infinite;
+}
+
+.marquee:hover .marquee__track,
+.marquee:focus-within .marquee__track {
+  animation-play-state: paused;
+}
+
+@keyframes ll-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-100% - var(--gutter, 1rem)));
+  }
+}

@@ -1,0 +1,18 @@
+/* ==========================================================================
+   UTILITY: TEXT ADJUSTMENTS
+   ========================================================================== */
+
+.text-center {
+  text-align: center;
+}
+
+.text-uppercase {
+  text-transform: uppercase;
+  letter-spacing: 0.04ch; /* Automatically applies kerning to prevent squishing */
+}
+
+.truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

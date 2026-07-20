@@ -9,4 +9,34 @@
 :root {
   --fonts-heading: "Cinzel", serif;
   --fonts-body: "Inter", sans-serif;
+
+  /* Gold is this site's actual brand/action color, not looseleaf's generic
+     blue default - this one override cascades into every looseleaf block
+     and utility that consumes --colors-action-primary (buttons, links,
+     focus rings, .text-primary, .bg-primary). */
+  --colors-action-primary: #c9a45e;
+
+  /* Text-on-gold is the same dark charcoal in every context (not a
+     light/dark-surface concern), matching the old .cta-button's
+     color: #1a1a1a. */
+  --colors-text-on-action: #1a1a1a;
+}
+
+/* ==========================================================================
+   DARK SCOPE
+   ==========================================================================
+   Values sourced from the current .box.invert / .u-muted rules in
+   css/style.css, not invented. Any looseleaf block or utility that reads
+   the --colors-* tokens automatically re-themes correctly when used inside
+   an element carrying .invert or [data-variant="invert"] - the same
+   mechanism every dark card on this site already uses.
+   ========================================================================== */
+.invert,
+[data-variant="invert"] {
+  --colors-surface-base: #1a1a1a;
+  --colors-surface-sunken: #141414;
+  --colors-text-base: #ffffff;
+  --colors-text-muted: #aaaaaa;
+  --colors-border-subtle: rgba(255, 255, 255, 0.1);
+  --colors-border-strong: rgba(255, 255, 255, 0.2);
 }

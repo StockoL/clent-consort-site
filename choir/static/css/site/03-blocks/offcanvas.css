@@ -1,0 +1,43 @@
+/* ==========================================================================
+   BLOCK: OFFCANVAS (Drawer via Native Dialog)
+   ========================================================================== */
+
+.offcanvas {
+  margin: 0;
+  margin-inline-start: auto; /* Aligns to the right edge by default */
+  height: 100dvh;
+  max-height: 100dvh;
+  width: 100%;
+  max-inline-size: 24rem;
+  border: none;
+  background-color: var(--colors-surface-base);
+  padding: var(--spacing-lg);
+  box-shadow: -10px 0 25px rgba(0, 0, 0, 0.1);
+  color: var(--colors-text-base);
+
+  /* Animation defaults */
+  transform: translateX(100%);
+  transition: transform var(--transitions-dur-base) var(--transitions-spring-smooth);
+}
+
+/* The native [open] attribute triggers the transformation */
+.offcanvas[open] {
+  transform: translateX(0);
+}
+
+.offcanvas::backdrop {
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+/* CUBE Exception: Left Alignment */
+.offcanvas[data-position="left"] {
+  margin-inline-start: 0;
+  margin-inline-end: auto;
+  transform: translateX(-100%);
+  box-shadow: 10px 0 25px rgba(0, 0, 0, 0.1);
+}
+
+.offcanvas[data-position="left"][open] {
+  transform: translateX(0);
+}

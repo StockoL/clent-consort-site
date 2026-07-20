@@ -1,0 +1,49 @@
+/* ==========================================================================
+   BLOCK: BADGE
+   ========================================================================== */
+
+.badge {
+  --badge-bg: var(--colors-surface-sunken);
+  --badge-text: var(--colors-text-base);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85em;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.25em 0.65em;
+  border-radius: 999px;
+  background-color: var(--badge-bg);
+  color: var(--badge-text);
+}
+
+/* CUBE Exceptions (Status Variants) */
+.badge[data-status="info"] {
+  --badge-bg: var(--colors-info-bg);
+  --badge-text: var(--colors-info-text);
+}
+
+.badge[data-status="success"] {
+  --badge-bg: var(--colors-success-bg);
+  --badge-text: var(--colors-success-text);
+}
+
+.badge[data-status="warning"] {
+  --badge-bg: var(--colors-warning-bg);
+  --badge-text: var(--colors-warning-text);
+}
+
+.badge[data-status="danger"] {
+  --badge-bg: var(--colors-danger-bg);
+  --badge-text: var(--colors-danger-text);
+}
+
+/* CUBE Exception: Floating Placement */
+.badge[data-placement="floating"] {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+}

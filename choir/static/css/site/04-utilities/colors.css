@@ -1,0 +1,26 @@
+/* ==========================================================================
+   UTILITY: COLORS (Text & Surface)
+   ========================================================================== */
+
+/* --- Text Colors --- */
+.text-primary {
+  color: var(--colors-action-primary);
+}
+.text-muted {
+  color: var(--colors-text-muted);
+}
+.text-danger {
+  color: var(--colors-danger);
+}
+
+/* --- Surface Colors --- */
+.bg-surface-base {
+  background-color: var(--colors-surface-base);
+}
+.bg-surface-sunken {
+  background-color: var(--colors-surface-sunken);
+}
+.bg-primary {
+  background-color: var(--colors-action-primary);
+  color: var(--colors-text-on-action);
+}
