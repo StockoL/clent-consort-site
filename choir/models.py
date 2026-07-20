@@ -278,6 +278,8 @@ class Event(models.Model):
     ]
     event_type = models.CharField(max_length=3, choices=EVENT_TYPES, default="REH")
 
+    project = models.ForeignKey(Project, on_delete=models.PROTECT, related_name="events")
+
     date_time = models.DateTimeField()
     location = models.CharField(max_length=200, default="St Laurence's Church")
     additional_notes = HTMLField(blank=True)

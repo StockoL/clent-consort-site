@@ -9,6 +9,7 @@ from .models import (
     Event,
     GiftAidDeclaration,
     MemberProfile,
+    Project,
 )
 
 
@@ -171,10 +172,21 @@ class CommitteeDocumentForm(forms.ModelForm):
 class QuickEventScheduleForm(forms.ModelForm):
     """Frontend form allowing committee members to quickly schedule future dates."""
 
+    # Excludes ARCHIVED projects - scheduling a new rehearsal/performance
+    # against a closed-out project would be a mistake, not a valid choice.
+    # Defaults to whichever project is currently ACTIVE, since that's the
+    # overwhelmingly common case (scheduling another date within the
+    # project already in progress).
+    project = forms.ModelChoiceField(
+        queryset=Project.objects.exclude(status="ARCHIVED"),
+        initial=Project.get_active,
+        widget=forms.Select(attrs={"class": "form-control"}),
+    )
+
     class Meta:
         model = Event
         # We explicitly expose ONLY the logistical essentials they need to schedule a date
-        fields = ["event_type", "date_time", "location"]
+        fields = ["project", "event_type", "date_time", "location"]
 
         widgets = {
             "event_type": forms.Select(attrs={"class": "form-control"}),

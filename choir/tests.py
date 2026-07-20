@@ -2,11 +2,12 @@ from datetime import timedelta
 
 from allauth.account.models import EmailAddress
 from django.contrib.auth.models import User
+from django.db import IntegrityError, transaction
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Attendance, ChoirCommunication, Enquiry, Event
+from .models import Attendance, ChoirCommunication, Enquiry, Event, Project
 
 
 class AttendanceAutoCreationTests(TestCase):
@@ -20,7 +21,9 @@ class AttendanceAutoCreationTests(TestCase):
         ]
         User.objects.create_user(username="inactive", password="pw", is_active=False)
 
+        project = Project.objects.create(name="Test Project", status="ACTIVE")
         event = Event.objects.create(
+            project=project,
             date_time=timezone.now() + timedelta(days=7),
             location="Test Venue",
         )
@@ -30,6 +33,77 @@ class AttendanceAutoCreationTests(TestCase):
         )
         for user in active_users:
             self.assertTrue(Attendance.objects.filter(event=event, user=user).exists())
+
+
+class ProjectModelTests(TestCase):
+    """Guards the two load-bearing pieces of the Project-centric migration:
+    Event.project is genuinely required at the DB level (not just in
+    Python), and Project.get_active() picks the right project when more
+    than one happens to be ACTIVE at once (a deliberately allowed, not
+    DB-enforced, overlap - see Project.get_active()'s docstring)."""
+
+    def test_event_requires_a_project(self):
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                Event.objects.create(
+                    date_time=timezone.now() + timedelta(days=7),
+                    location="Test Venue",
+                )
+
+    def test_get_active_prefers_most_recent_start_date(self):
+        Project.objects.create(
+            name="Older Active Project", status="ACTIVE", start_date="2026-01-01"
+        )
+        newer = Project.objects.create(
+            name="Newer Active Project", status="ACTIVE", start_date="2026-06-01"
+        )
+        Project.objects.create(name="Planning Project", status="PLANNING")
+
+        self.assertEqual(Project.get_active(), newer)
+
+    def test_get_active_returns_none_when_no_project_is_active(self):
+        Project.objects.create(name="Planning Project", status="PLANNING")
+        self.assertIsNone(Project.get_active())
+
+
+class CommitteeScheduleEventTests(TestCase):
+    """Guards QuickEventScheduleForm's project field - added as a hard
+    blocker alongside Event.project becoming required, since this form is
+    the only frontend path that creates Event rows. Without a project
+    field here, every committee-scheduled event would fail validation."""
+
+    def setUp(self):
+        self.staff = User.objects.create_user(
+            username="committee", password="pw", is_staff=True
+        )
+        self.client.login(username="committee", password="pw")
+        self.project = Project.objects.create(name="Christmas 2026", status="ACTIVE")
+
+    def test_scheduling_an_event_requires_and_sets_a_project(self):
+        response = self.client.post(
+            reverse("committee_schedule"),
+            {
+                "project": self.project.id,
+                "event_type": "REH",
+                "date_time": "2026-12-01T19:00",
+                "location": "St Leonard's Church",
+            },
+        )
+        self.assertRedirects(response, reverse("committee_hub"))
+        event = Event.objects.latest("date_time")
+        self.assertEqual(event.project, self.project)
+
+    def test_scheduling_without_a_project_fails_validation(self):
+        response = self.client.post(
+            reverse("committee_schedule"),
+            {
+                "event_type": "REH",
+                "date_time": "2026-12-01T19:00",
+                "location": "St Leonard's Church",
+            },
+        )
+        self.assertEqual(response.status_code, 200)  # re-renders, doesn't 500
+        self.assertFalse(Event.objects.exists())
 
 
 class CommitteePermissionModelTests(TestCase):

@@ -23,7 +23,13 @@
 
       <form method="POST" class="flow">
         {% csrf_token %}
-        
+
+        <div class="form-group flow flow--small">
+          <label style="color: #c9a45e; font-family: var(--fonts-heading); font-size: 0.8rem; text-transform: uppercase;">Project</label>
+          {{ form.project }}
+          {{ form.project.errors }}
+        </div>
+
         <div class="form-group flow flow--small">
           <label style="color: #c9a45e; font-family: var(--fonts-heading); font-size: 0.8rem; text-transform: uppercase;">Event Type</label>
           {{ form.event_type }}

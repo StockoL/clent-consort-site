@@ -119,8 +119,8 @@ class AttendanceInline(admin.TabularInline):
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
-    list_display = ("event_type", "date_time", "location")
-    list_filter = ("event_type", "date_time")
+    list_display = ("event_type", "date_time", "location", "project")
+    list_filter = ("event_type", "date_time", "project")
 
     # This single line replaces the clunky Ctrl-Click box with a beautiful dual-panel UI
     filter_horizontal = ("pieces",)
