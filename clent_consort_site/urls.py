@@ -10,6 +10,7 @@ from django.views.generic import RedirectView, TemplateView
 from choir.views import (
     about_view,
     committee_broadcast,
+    committee_document_delete_view,
     committee_documents_view,
     committee_emergency_roster,
     committee_financials_delete_view,
@@ -97,6 +98,11 @@ urlpatterns = [
         "members/committee/documents/",
         committee_documents_view,
         name="committee_documents",
+    ),
+    path(
+        "members/committee/documents/<int:document_id>/delete/",
+        committee_document_delete_view,
+        name="committee_document_delete",
     ),
     path(
         "members/committee/financials/",

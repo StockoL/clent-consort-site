@@ -6,6 +6,7 @@ from .models import (
     AvailabilityPoll,
     AvailabilityResponse,
     ChoirCommunication,
+    CommitteeDocument,
     Enquiry,
     Event,
     GiftAidDeclaration,
@@ -201,3 +202,15 @@ class ChoirCommunicationAdmin(admin.ModelAdmin):
         if getattr(obj, "author", None) is None:
             obj.author = request.user
         obj.save()
+
+
+# ==============================================================================
+# 6. COMMITTEE DOCUMENTS
+# ==============================================================================
+@admin.register(CommitteeDocument)
+class CommitteeDocumentAdmin(admin.ModelAdmin):
+    # Day-to-day management happens on the committee's own frontend page
+    # (committee_documents) - this registration exists for direct DB
+    # inspection, matching every other model in this app.
+    list_display = ("title", "doc_type", "uploaded_by", "uploaded_at")
+    list_filter = ("doc_type", "uploaded_at")

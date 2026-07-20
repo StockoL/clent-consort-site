@@ -697,6 +697,24 @@ def committee_documents_view(request):
 
 
 @login_required
+@require_POST
+def committee_document_delete_view(request, document_id):
+    """Deletes a document from the vault. Staff-gated in-body rather than
+    via @user_passes_test(is_committee) - matches committee_documents_view's
+    existing "open read, staff write" split just above: any active member
+    can view the vault, but only staff can change what's in it."""
+    if not request.user.is_staff:
+        messages.error(request, "Only committee members can delete documents.")
+        return redirect("committee_documents")
+
+    document = get_object_or_404(CommitteeDocument, id=document_id)
+    title = document.title
+    document.delete()
+    messages.success(request, f"'{title}' deleted from the vault.")
+    return redirect("committee_documents")
+
+
+@login_required
 @user_passes_test(is_committee)
 def committee_emergency_roster(request):
     """

@@ -1,9 +1,11 @@
+import tempfile
 from datetime import timedelta
 
 from allauth.account.models import EmailAddress
 from django.contrib.auth.models import User
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError, transaction
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -12,6 +14,7 @@ from .models import (
     AvailabilityPoll,
     AvailabilityResponse,
     ChoirCommunication,
+    CommitteeDocument,
     Enquiry,
     Event,
     Project,
@@ -617,3 +620,41 @@ class CommitteeFinancialsTests(TestCase):
             self.client.post(reverse("committee_toggle_exempt", args=[self.profile.id])),
         ):
             self.assertEqual(response.status_code, 302)
+
+
+@override_settings(MEDIA_ROOT=tempfile.mkdtemp())
+class CommitteeDocumentDeleteTests(TestCase):
+    """Guards the document vault's staff-gated delete endpoint - the
+    "open read, staff write" split already established for uploads in
+    committee_documents_view carries over to deletion too."""
+
+    def setUp(self):
+        self.document = CommitteeDocument.objects.create(
+            title="AGM Minutes",
+            doc_type="MIN",
+            file=SimpleUploadedFile("minutes.txt", b"minutes content"),
+        )
+
+    def test_staff_can_delete_document(self):
+        User.objects.create_user(username="committee", password="pw", is_staff=True)
+        self.client.login(username="committee", password="pw")
+
+        response = self.client.post(
+            reverse("committee_document_delete", args=[self.document.id])
+        )
+        self.assertRedirects(response, reverse("committee_documents"))
+        self.assertFalse(
+            CommitteeDocument.objects.filter(id=self.document.id).exists()
+        )
+
+    def test_non_staff_member_cannot_delete_document(self):
+        User.objects.create_user(username="member", password="pw")
+        self.client.login(username="member", password="pw")
+
+        response = self.client.post(
+            reverse("committee_document_delete", args=[self.document.id])
+        )
+        self.assertRedirects(response, reverse("committee_documents"))
+        self.assertTrue(
+            CommitteeDocument.objects.filter(id=self.document.id).exists()
+        )

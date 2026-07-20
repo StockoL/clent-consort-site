@@ -52,9 +52,19 @@
               <span class="text-small text-muted">{{ doc.get_doc_type_display }} | Uploaded {{ doc.uploaded_at|date:"j M Y" }}</span>
             </div>
             
-            <a href="{{ doc.file.url }}" target="_blank" class="button btn-small" data-variant="outline" style="padding: 0.25rem 0.75rem;">
-              📄 View
-            </a>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <a href="{{ doc.file.url }}" target="_blank" class="button btn-small" data-variant="outline" style="padding: 0.25rem 0.75rem;">
+                📄 View
+              </a>
+              {% if user.is_staff %}
+              <form method="POST" action="{% url 'committee_document_delete' doc.id %}" style="display: inline;" onsubmit="return confirm('Delete \'{{ doc.title|escapejs }}\' from the vault?');">
+                {% csrf_token %}
+                <button type="submit" class="button btn-small" data-variant="outline" style="padding: 0.25rem 0.75rem;">
+                  🗑️ Delete
+                </button>
+              </form>
+              {% endif %}
+            </div>
           </li>
           {% endfor %}
         </ul>
