@@ -48,6 +48,19 @@ body {
 }
 
 main {
+  /* Also a flex column itself (not just a flex item of body), so a
+     direct child can use flex: 1 to reliably fill 100% of its height
+     (e.g. the homepage hero) - percentage heights (min-height: 100%)
+     don't reliably resolve here, since body's own height only comes
+     from min-height: 100vh, not a definite height, which keeps the
+     resolved height of flex-grown descendants from counting as
+     "definite" for percentage-resolution purposes further down the
+     chain. flex-grow chaining sidesteps that entirely. Neutral for
+     every other page: align-items defaults to stretch (matching
+     normal block width behavior), and children without flex: 1 just
+     size to their own content height as before. */
+  display: flex;
+  flex-direction: column;
   flex: 1 0 auto; /* Forces the main content to stretch, pushing the footer down */
 }
 

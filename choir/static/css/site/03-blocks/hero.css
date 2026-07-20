@@ -5,11 +5,17 @@
 .hero-cover {
   display: flex;
   flex-direction: column;
-  /* Fill <main> exactly rather than a fixed 80vh, so the hero always
-     touches the footer regardless of viewport height - main is already
-     flex: 1 0 auto inside body's flex column (the sticky-footer
-     pattern), which gives it a definite resolved height to fill. */
-  min-height: 100%;
+  /* Fill <main> exactly, so the hero always touches the footer
+     regardless of viewport height. main is now itself a flex column
+     (see 01-global/base-overrides.css) specifically so flex: 1 works
+     here reliably - the earlier min-height: 100% attempt didn't
+     actually resolve, since body only has min-height: 100vh (not a
+     definite height), which keeps flex-grown descendants further down
+     the chain from counting as a definite percentage-resolution base.
+     flex-grow chaining doesn't have that requirement. min-height stays
+     as a floor so the hero never gets shorter than this regardless. */
+  flex: 1;
+  min-height: 80vh;
   padding: var(--s1);
   background:
     linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
