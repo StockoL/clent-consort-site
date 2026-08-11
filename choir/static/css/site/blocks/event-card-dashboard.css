@@ -5,12 +5,31 @@
 .event-card-highlight {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
   padding: 1.5rem 1.5rem 1.5rem var(--space-xs);
   background-color: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-left: 3px solid var(--primary);
+}
+
+/* --- Collapsible accordion treatment ---
+   The card's own padding already frames the trigger and (open) panel, and
+   .accordion__content's .flow.flow--small handles spacing *between* the
+   RSVP/body/notes rows internally - so the outer card doesn't need its own
+   gap between the trigger and panel (that gap unconditionally added 1rem
+   between them even while collapsed and the panel had ~0 rendered height,
+   leaving an odd empty strip). The trigger/content's own horizontal
+   padding is dropped too, since the card already supplies that inset. */
+.event-card-highlight .accordion__trigger {
+  padding-inline: 0;
+}
+
+.event-card-highlight .accordion__content {
+  padding-inline: 0;
+}
+
+.event-card-highlight .accordion__panel[data-state="open"] .accordion__content {
+  padding-top: var(--space-xs);
 }
 
 .event-card-header {
