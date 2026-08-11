@@ -7,14 +7,7 @@
 {% block content %}
 <div class="wrapper flow section-padding">
   <div class="text-center">
-    <h1>
-      Members Area
-      {% if has_paid_current_term %}
-        <span class="badge" data-status="success" style="vertical-align: middle; margin-left: 0.5rem;">
-          ✓ {{ current_term }} Paid
-        </span>
-      {% endif %}
-    </h1>
+    <h1>Members Area</h1>
     <p>Welcome back, {{ user.first_name|default:user.username }}.</p>
 
     <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 1rem; margin-top: 1rem;">
