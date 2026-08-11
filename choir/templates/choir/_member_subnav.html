@@ -2,27 +2,34 @@
 First reusable nav include in this codebase - base.html's main nav is
 hand-inlined per-link with this same aria-current + resolver_match.url_name
 idiom, factored out here since three dashboard pages all need it.
+
+Styled with the same .button.btn-small vocabulary as the action buttons
+above it (primary = active tab, outline = inactive) rather than a bespoke
+pill-tab treatment, so the dashboard reads as one consistent button group.
 {% endcomment %}
 <nav class="subnav" aria-label="Dashboard sections">
   <ul class="subnav-list">
     <li>
       <a
         href="{% url 'members' %}"
-        class="subnav-link"
+        class="button btn-small"
+        data-variant="{% if request.resolver_match.url_name == 'members' %}primary{% else %}outline{% endif %}"
         {% if request.resolver_match.url_name == 'members' %}aria-current="page"{% endif %}
       >Schedule &amp; Logistics</a>
     </li>
     <li>
       <a
         href="{% url 'member_repertoire' %}"
-        class="subnav-link"
+        class="button btn-small"
+        data-variant="{% if request.resolver_match.url_name == 'member_repertoire' %}primary{% else %}outline{% endif %}"
         {% if request.resolver_match.url_name == 'member_repertoire' %}aria-current="page"{% endif %}
       >Repertoire &amp; Learning</a>
     </li>
     <li>
       <a
         href="{% url 'member_polling' %}"
-        class="subnav-link"
+        class="button btn-small"
+        data-variant="{% if request.resolver_match.url_name == 'member_polling' %}primary{% else %}outline{% endif %}"
         {% if request.resolver_match.url_name == 'member_polling' %}aria-current="page"{% endif %}
       >Looking Ahead</a>
     </li>

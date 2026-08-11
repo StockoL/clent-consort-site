@@ -1,12 +1,11 @@
 /* ==========================================================================
    BLOCK: MEMBER DASHBOARD SUBNAV
    ==========================================================================
-   Visual pill-button treatment borrowed from blocks/rsvp-tabs.css (the
-   only other tab-like precedent in this design system). Active-state
-   selector borrowed from site-header.css's [aria-current="page"]
-   precedent instead of rsvp-tabs.css's JS-toggled .active class - these
-   are real <a> links routing to genuinely different views with
-   different querysets, not one page's data being shown/hidden.
+   Layout only - the links themselves are styled with the vendored
+   .button.btn-small vocabulary (blocks/button.css, blocks/button-
+   overrides.css) rather than a bespoke pill-tab treatment, so the
+   dashboard's action buttons and section tabs read as one consistent
+   group instead of two different components.
    ========================================================================== */
 
 .subnav-list {
@@ -16,27 +15,4 @@
   list-style: none;
   padding: 0;
   margin: 0;
-}
-
-.subnav-link {
-  display: inline-block;
-  padding: var(--space-2xs) var(--space-s);
-  border: 1px solid var(--colors-action-primary);
-  border-radius: 999px;
-  color: var(--colors-action-primary);
-  text-decoration: none;
-  font-size: var(--step--1);
-  text-transform: uppercase;
-  transition: all 0.2s ease;
-}
-
-.subnav-link:hover,
-.subnav-link:focus-visible {
-  background: rgba(201, 164, 94, 0.1);
-}
-
-.subnav-link[aria-current="page"] {
-  background: var(--colors-action-primary);
-  color: var(--colors-text-on-action);
-  font-weight: bold;
 }
