@@ -60,6 +60,26 @@ main > * {
      blowing the whole page out sideways instead of letting the reel's
      own overflow handle it internally. */
   min-width: 0;
+
+  /* Sections that center themselves with margin-inline: auto (i.e.
+     .wrapper) rely on width:auto so the browser's normal block-layout
+     rule sends all leftover space to width, none to the margins. As a
+     flex item, though, auto cross-axis margins are resolved by
+     flexbox instead: it sizes the item to its own content (shrink-to-
+     fit) first and only *then* offers any leftover space to the auto
+     margins - align-items: stretch never gets a say once a cross-axis
+     margin is auto. For most sections that content-based size is
+     never visibly different from the container's width, so this goes
+     unnoticed - but a section holding a horizontally-scrolling child
+     (events.html's .reel) has content far wider than the viewport, so
+     the shrink-to-fit size wins outright, there's no leftover space
+     for the margins to center with, and the section renders at that
+     oversized content width instead of the viewport's. Setting an
+     explicit width takes the item out of the auto-sizing branch
+     entirely, restoring plain block-layout behavior (fill the column,
+     then let max-inline-size + margin-inline: auto cap and center it
+     as usual). */
+  width: 100%;
 }
 
 /* looseleaf-ui's global-styles.css already maps h1-h6 to
