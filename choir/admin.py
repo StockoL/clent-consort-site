@@ -9,7 +9,6 @@ from .models import (
     CommitteeDocument,
     Enquiry,
     Event,
-    GiftAidDeclaration,
     LearningAsset,
     MemberProfile,
     Project,
@@ -102,7 +101,6 @@ class MemberProfileAdmin(admin.ModelAdmin):
     get_full_name.short_description = "Full Name"
 
 
-admin.site.register(GiftAidDeclaration)
 admin.site.register(SubscriptionPayment)
 
 

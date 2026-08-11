@@ -244,7 +244,6 @@ The Committee Hub replaces disparate Excel sheets with a centralised, secure com
 
 - **Zero-Fee Infrastructure:** Instead of integrating the Stripe API (which sacrifices 1.5% of choir funds to processing fees), the application acts as a manual BACS ledger. This architectural tradeoff intentionally prioritises the organization's financial health over flashy tech integrations.
 - **Separation of Concerns:** The database normalises user data by separating `is_under_18` (a strict Safeguarding flag) from `is_exempt_from_subs` (a Financial business logic flag). This allows the committee to grant a low-income adult a financial bursary without corrupting child-protection protocols.
-- **Compliance Tracking:** The ledger seamlessly integrates with the `GiftAidDeclaration` model, providing admins with an instant visual queue of whose payments are eligible for the 25% HMRC tax top-up.
 
 ### 6. Interactive RSVP Tracking (Vanilla JS)
 

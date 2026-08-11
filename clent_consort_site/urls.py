@@ -28,7 +28,6 @@ from choir.views import (
     dashboard_view,
     download_ics,
     events_view,
-    giftaid_view,
     home_view,
     hub_view,
     login_redirect_router,
@@ -61,7 +60,6 @@ urlpatterns = [
         member_poll_respond_view,
         name="member_poll_respond",
     ),
-    path("members/giftaid/", giftaid_view, name="giftaid"),
     path("members/hub/<str:voice_part>/<int:project_id>/", hub_view, name="hub"),
     path("members/settings/", settings_view, name="settings"),
     # --- Committee Area ---

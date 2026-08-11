@@ -18,7 +18,6 @@ from .forms import (
     AuditionForm,
     CommitteeDocumentForm,
     EnquiryForm,
-    GiftAidForm,
     ProfileUpdateForm,
     UserUpdateForm,
 )
@@ -28,7 +27,6 @@ from .models import (
     AvailabilityResponse,
     CommitteeDocument,
     Event,
-    GiftAidDeclaration,
     LearningAsset,
     Project,
     SubscriptionPayment,  # <-- Added for the new financial logic
@@ -286,46 +284,6 @@ def member_poll_respond_view(request, poll_id):
         defaults={"response": response_value},
     )
     return JsonResponse({"success": True, "response": response_value})
-
-
-@login_required
-def giftaid_view(request):
-    """Handles secure submission of a member's Gift Aid declaration."""
-    user_profile = request.user.profile
-
-    existing_declaration = GiftAidDeclaration.objects.filter(
-        member=user_profile
-    ).first()
-
-    if request.method == "POST":
-        # GiftAidDeclaration.member is a OneToOneField - the template only
-        # ever shows this form when no declaration exists yet, but a stale
-        # tab, double-click, or replayed request could still POST here with
-        # one already on file. Without this guard, form.save() below builds
-        # a brand-new GiftAidDeclaration and hits that uniqueness
-        # constraint directly - an uncaught IntegrityError (500 page)
-        # instead of a graceful message.
-        if existing_declaration:
-            messages.info(
-                request, "You already have a Gift Aid declaration on file."
-            )
-            return redirect("giftaid")
-
-        form = GiftAidForm(request.POST)
-        if form.is_valid():
-            # commit=False builds the object in memory to allow appending the user profile
-            declaration = form.save(commit=False)
-            declaration.member = user_profile
-            declaration.save()
-            return redirect("members")
-    else:
-        form = GiftAidForm()
-
-    context = {
-        "form": form,
-        "existing_declaration": existing_declaration,
-    }
-    return render(request, "choir/giftaid.html", context)
 
 
 @login_required
@@ -870,16 +828,11 @@ def committee_financials_view(request):
                 member=user.profile, term_reference=current_term
             ).first()
 
-            has_gift_aid = GiftAidDeclaration.objects.filter(
-                member=user.profile
-            ).exists()
-
             roster.append(
                 {
                     "user": user,
                     "profile": user.profile,
                     "payment": payment,
-                    "has_gift_aid": has_gift_aid,
                     "is_exempt": is_exempt,  # Pass this to the template
                 }
             )

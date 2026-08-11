@@ -8,7 +8,6 @@ from .models import (
     CommitteeDocument,
     Enquiry,
     Event,
-    GiftAidDeclaration,
     MemberProfile,
     Project,
     Repertoire,
@@ -85,32 +84,6 @@ class AuditionForm(forms.ModelForm):
         if bot_catcher:
             raise forms.ValidationError("Automated submission detected.")
         return bot_catcher
-
-
-class GiftAidForm(forms.ModelForm):
-    """
-    Form for capturing HMRC-compliant Gift Aid declarations.
-    Excludes the member field because we stamp it programmatically in the view.
-    """
-
-    class Meta:
-        model = GiftAidDeclaration
-        # Explicitly declare only the fields the user needs to manually fill out
-        fields = [
-            "first_name",
-            "last_name",
-            "address_line_1",
-            "town_city",
-            "postcode",
-            "consent_given",
-        ]
-
-        # Add labels or clean placeholders to keep the layout professional
-        labels = {
-            "address_line_1": "Address Line 1",
-            "town_city": "Town / City",
-            "consent_given": "I confirm I am a UK taxpayer and want Clent Consort to claim Gift Aid on my subscriptions.",
-        }
 
 
 class UserUpdateForm(forms.ModelForm):
@@ -217,9 +190,9 @@ class SubscriptionPaymentForm(forms.ModelForm):
     """
     Replaces committee_financials_view's old raw request.POST.get("amount")
     handling, which had zero validation - a non-numeric amount would 500
-    the whole view instead of re-rendering with an error. Excludes member,
-    same convention as GiftAidForm: it's stamped programmatically in the
-    view rather than editable through the form.
+    the whole view instead of re-rendering with an error. Excludes member:
+    it's stamped programmatically in the view rather than editable through
+    the form.
     """
 
     class Meta:

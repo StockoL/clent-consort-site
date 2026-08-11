@@ -141,29 +141,6 @@ class MemberProfile(models.Model):
         return f"{self.user.get_full_name()} ({self.get_voice_part_display()})"
 
 
-class GiftAidDeclaration(models.Model):
-    """
-    Stores financial compliance data.
-    """
-
-    member = models.OneToOneField(MemberProfile, on_delete=models.CASCADE)
-
-    # Snapshot of the data at the time of signing, exactly as HMRC requires
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
-    address_line_1 = models.CharField(max_length=200)
-    town_city = models.CharField(max_length=100)
-    postcode = models.CharField(max_length=20)
-
-    consent_given = models.BooleanField(default=False)
-    date_signed = models.DateTimeField(
-        auto_now_add=True
-    )  # Automatically records exact timestamp
-
-    def __str__(self):
-        return f"Gift Aid: {self.first_name} {self.last_name}"
-
-
 class SubscriptionPayment(models.Model):
     """
     Ledger for tracking who has paid what and when.

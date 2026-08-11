@@ -376,48 +376,6 @@ class ChoirCommunicationSendTests(TestCase):
         )
 
 
-class GiftAidPageTests(TestCase):
-    def setUp(self):
-        User.objects.create_user(username="member", password="pw")
-        self.client.login(username="member", password="pw")
-
-    def test_giftaid_page_loads_for_logged_in_member(self):
-        response = self.client.get(reverse("giftaid"))
-        self.assertEqual(response.status_code, 200)
-
-    def test_successful_submission_redirects_to_dashboard(self):
-        response = self.client.post(
-            reverse("giftaid"),
-            {
-                "first_name": "Jane",
-                "last_name": "Doe",
-                "address_line_1": "1 Church Lane",
-                "town_city": "Stourbridge",
-                "postcode": "DY9 1AA",
-                "consent_given": "on",
-            },
-        )
-        self.assertRedirects(response, reverse("members"))
-
-    def test_resubmission_does_not_crash(self):
-        # GiftAidDeclaration.member is a OneToOneField - a second submission
-        # used to hit that uniqueness constraint directly (IntegrityError,
-        # uncaught -> 500) instead of being handled gracefully. Covers the
-        # stale-tab/double-submit case the template's {% if existing_declaration
-        # %} guard doesn't protect against server-side.
-        payload = {
-            "first_name": "Jane",
-            "last_name": "Doe",
-            "address_line_1": "1 Church Lane",
-            "town_city": "Stourbridge",
-            "postcode": "DY9 1AA",
-            "consent_given": "on",
-        }
-        self.client.post(reverse("giftaid"), payload)
-        response = self.client.post(reverse("giftaid"), payload)
-        self.assertIn(response.status_code, (200, 302))
-
-
 class ContactFormTests(TestCase):
     """Guards against contact_view redirecting (losing the user's input and
     field-specific errors) instead of re-rendering the bound form on a

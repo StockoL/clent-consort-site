@@ -19,7 +19,6 @@
         <tr style="border-bottom: 1px solid rgba(255,255,255,0.2);">
           <th style="padding: 1rem; color: #c9a45e;">Singer</th>
           <th style="padding: 1rem; color: #c9a45e;">Voice Part</th>
-          <th style="padding: 1rem; color: #c9a45e;">Gift Aid</th> <!-- NEW HEADER -->
           <th style="padding: 1rem; color: #c9a45e;">Status</th>
           <th style="padding: 1rem; color: #c9a45e;">Admin Action</th>
         </tr>
@@ -34,15 +33,6 @@
           
           <td style="padding: 1rem;" class="text-small text-muted">
             {{ row.profile.get_voice_part_display }}
-          </td>
-
-          <!-- NEW GIFT AID COLUMN -->
-          <td style="padding: 1rem;">
-            {% if row.has_gift_aid %}
-              <span class="badge" data-status="success">✓ Signed</span>
-            {% else %}
-              <span class="text-muted" style="font-size: 0.85rem;">Missing</span>
-            {% endif %}
           </td>
 
           <td style="padding: 1rem;">
