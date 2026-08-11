@@ -10,20 +10,6 @@
     <h1>Members Area</h1>
     <p>Welcome back, {{ user.first_name|default:user.username }}.</p>
 
-    <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 1rem; margin-top: 1rem;">
-      <a href="{% url 'settings' %}" class="button btn-small" data-variant="primary">
-        Update Profile
-      </a>
-
-      <a href="{% url 'committee_hub' %}" class="button btn-small" data-variant="primary">
-        {% if user.is_staff %}
-          Committee Hub
-        {% else %}
-          Document Vault
-        {% endif %}
-      </a>
-    </div>
-
     <div style="margin-top: 1.5rem;">
       {% include 'choir/_member_subnav.html' %}
     </div>

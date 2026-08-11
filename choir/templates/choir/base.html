@@ -74,25 +74,41 @@
   </button>
 
   <ul id="nav-list" class="nav-list">
-    <li>
-      <a href="{% url 'home' %}" {% if request.resolver_match.url_name == 'home' %}aria-current="page"{% endif %}>Home</a>
-    </li>
-    <li>
-      <a href="{% url 'about' %}" {% if request.resolver_match.url_name == 'about' %}aria-current="page"{% endif %}>About</a>
-    </li>
-    <li>
-      <a href="{% url 'events' %}" {% if request.resolver_match.url_name == 'events' %}aria-current="page"{% endif %}>Events</a>
-    </li>
-    <li>
-      <a href="{% url 'contact' %}" {% if request.resolver_match.url_name == 'contact' %}aria-current="page"{% endif %}>Contact</a>
-    </li>
-
-    {% if user.is_authenticated %}
-      <li><a href="{% url 'members' %}" class="nav-link">Dashboard</a></li>
+    {% if '/members' in request.path %}
+      <li>
+        <a href="{% url 'home' %}" class="nav-link">&larr; Back to Public Site</a>
+      </li>
+      <li>
+        <a href="{% url 'members' %}" class="nav-link" {% if request.resolver_match.url_name == 'members' %}aria-current="page"{% endif %}>Dashboard</a>
+      </li>
+      <li>
+        <a href="{% url 'committee_hub' %}" class="nav-link" {% if request.resolver_match.url_name == 'committee_hub' %}aria-current="page"{% endif %}>
+          {% if user.is_staff %}Committee Hub{% else %}Document Vault{% endif %}
+        </a>
+      </li>
       <li><a href="{% url 'settings' %}" class="nav-link">Settings</a></li>
       <li><a href="{% url 'account_logout' %}" class="nav-link">Logout</a></li>
     {% else %}
-      <li><a href="{% url 'account_login' %}" class="nav-link">Member Login</a></li>
+      <li>
+        <a href="{% url 'home' %}" {% if request.resolver_match.url_name == 'home' %}aria-current="page"{% endif %}>Home</a>
+      </li>
+      <li>
+        <a href="{% url 'about' %}" {% if request.resolver_match.url_name == 'about' %}aria-current="page"{% endif %}>About</a>
+      </li>
+      <li>
+        <a href="{% url 'events' %}" {% if request.resolver_match.url_name == 'events' %}aria-current="page"{% endif %}>Events</a>
+      </li>
+      <li>
+        <a href="{% url 'contact' %}" {% if request.resolver_match.url_name == 'contact' %}aria-current="page"{% endif %}>Contact</a>
+      </li>
+
+      {% if user.is_authenticated %}
+        <li><a href="{% url 'members' %}" class="nav-link">Dashboard</a></li>
+        <li><a href="{% url 'settings' %}" class="nav-link">Settings</a></li>
+        <li><a href="{% url 'account_logout' %}" class="nav-link">Logout</a></li>
+      {% else %}
+        <li><a href="{% url 'account_login' %}" class="nav-link">Member Login</a></li>
+      {% endif %}
     {% endif %}
   </ul>
 </nav>
