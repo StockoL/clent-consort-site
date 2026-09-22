@@ -8,23 +8,18 @@
 {% block content %}
 <section class="featured-event wrapper" style="margin-block-start: var(--space-m)">
   <div class="card sidebar" data-variant="invert">
-    <div class="event-image">
-      <img
-        src="{% static 'images/clent_church_postcard.jpg' %}"
-        alt="St Leonard's Church in Clent"
-      />
-    </div>
+    
     <div class="event-details flow">
       <span class="label">Next Event</span>
-      <h1>Evensong at St. Leonard's</h1>
+      <h1>Evensong at St. Mary the Virgin, Ewelme</h1>
       <p>
-        A traditional evening service of choral music in the heart of Clent.
+        A traditional evening service of choral music for Passion Sunday in the beautiful setting of Ewelme church.
       </p>
       <ul class="flow flow--small">
         <li class="location">
-          <strong>Where:</strong> St. Leonard's Church, Clent
+          <strong>Where:</strong> St. Mary the Virgin, Ewelme
         </li>
-        <li><strong>When:</strong> 20th September, 2026 | 16:30</li>
+        <li><strong>When:</strong> 14th March, 2027 | time TBC</li>
       </ul>
       <a href="{% url 'contact' %}" class="button" data-variant="primary">Enquire for More Information</a>
     </div>
@@ -34,39 +29,40 @@
 <section class="recent-reel flow wrapper section-padding">
   <h2>Recent Performances</h2>
   <div class="reel">
+    
+    <div class="card event-card">
+      <h3>Choral Evensong</h3>
+      <p class="location">St Leonard's Church, Clent</p>
+      <time datetime="2026-09">September 2026</time>
+      <p>Ayleward Responses</p>
+      <p>Atkins: Magnificat and Nunc Dimittis <em>in G</em></p>
+      <p>Elgar: Light of the World</p>
+    </div>
+
+    <div class="card event-card">
+      <h3>Choral Eucharist and Evensong</h3>
+      <p class="location">St Lawrence's Church, Ludlow</p>
+      <time datetime="2024-11">March 2026</time>
+      <p>Stanford: Communion Service <em>in C</em></p>
+      <p>Elgar: O salutaris hostia <em>in F</em></p>
+      <hr/>
+      <p>John IV of Portugal: Crux fidelis</p>
+      <p>Radcliffe Responses</p>
+      <p>Aston: Magnificat and Nunc Dimittis <em>in F</em> (No.2)</p>
+      <p>Haydn: Insane et vanae curae</p>
+    </div>
+
     <div class="card event-card">
       <h3>Choral Eucharist and Evensong</h3>
       <p class="location">Carlisle Cathedral</p>
       <time datetime="2025-10">October 2025</time>
       <p>Stanford: Communion Service <em>in C</em></p>
       <p>Elgar: O salutaris hostia <em>in F</em></p>
-      <hr />
+      <hr/>
       <p>John IV of Portugal: Crux fidelis</p>
       <p>Radcliffe Responses</p>
       <p>Aston: Magnificat and Nunc Dimittis <em>in F</em></p>
       <p>Haydn: Insane et vanae curae</p>
-    </div>
-
-    <div class="card event-card">
-      <h3>Choral Eucharist and Evensong</h3>
-      <p class="location">Exeter Cathedral</p>
-      <time datetime="2025-04">April 2025</time>
-      <p>Howells: Communion <em>Collegium Regale</em></p>
-      <p>Palestrina: Sicut cervus</p>
-      <hr />
-      <p>Sumsion Responses</p>
-      <p>Moore: Third Service</p>
-      <p>Nardone: I give to you a new commandment</p>
-    </div>
-
-    <div class="card event-card">
-      <h3>Choral Evensong</h3>
-      <p class="location">Rochester Cathedral</p>
-      <time datetime="2024-11">November 2024</time>
-      <p>Parry: Crossing the bar</p>
-      <p>L'Estrange Responses</p>
-      <p>Wood: Magnificat and Nunc Dimittis <em>in E-flat</em> (No.2)</p>
-      <p>Sumsion: They that go down to the sea in ships</p>
     </div>
   </div>
 </section>
@@ -75,6 +71,14 @@
   <h2>Past Events Archive</h2>
   <div class="archive-list flow">
     <div class="archive-item">
+      <time datetime="2025-04">April 2025</time>
+      <span class="location">Choral Eucharist and Evensong, Exeter Cathedral</span>
+    </div>
+    <div class="archive-item">
+      <div class="archive-item">
+      <time datetime="2024-11">November 2024</time>
+      <span class="location">Evensong, Rochester Cathedral</span>
+    </div>
       <time datetime="2024-04">April 2024</time>
       <span class="location">Evensong, Hereford Cathedral</span>
     </div>
