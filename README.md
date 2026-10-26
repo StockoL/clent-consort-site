@@ -414,7 +414,7 @@ DEBUG=True
 
 I run the same commands for every piece of work through `scripts/dev.py`, using the virtual environment's Python from the project root:
 
-- `python scripts/dev.py test` runs the test suite.
+- `python scripts/dev.py test` collects static files (templates resolve `{% static %}` through WhiteNoise's manifest, so new files must be in it) and runs the test suite. `staticfiles/` itself is generated and not tracked; Render rebuilds it on every deploy.
 - `python scripts/dev.py check` confirms no model change is missing its migration, then runs Django's deploy checks against the production settings (with a throwaway key and database URL). The HSTS subdomain/preload warnings are expected while `SECURE_HSTS_SECONDS` is kept short.
 - `python scripts/dev.py run` starts the development server.
 - `python scripts/dev.py seed` fills the local database with sample data: a committee user (`committee@example.com`), three members across voice parts (`soprano@`, `alto@`, `tenor@example.com`), an active project with past and upcoming events and two pieces with learning assets, and a planning project with an open availability poll. Every seeded account uses the password `choir-dev-password`. The command refuses to run unless `DEBUG=True`, and must never be run in production.
