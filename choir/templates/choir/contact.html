@@ -21,6 +21,8 @@
         <h2 class="text-step-1">General Enquiry</h2>
         <form action="{% url 'contact' %}" method="POST" class="flow">
           {% csrf_token %}
+          {# Spam trap: hidden from people, filled in by bots (see clean_website). #}
+          {{ enquiry_form.website }}
 
           <div class="form-group flow flow--small">
             <label for="{{ enquiry_form.subject.id_for_label }}">Subject</label>
@@ -54,6 +56,8 @@
         <h2 class="text-step-1">Join the Consort</h2>
         <form action="{% url 'contact' %}" method="POST" class="flow">
           {% csrf_token %}
+          {# Spam trap: hidden from people, filled in by bots (see clean_website). #}
+          {{ audition_form.website }}
 
           <div class="form-group flow flow--small">
             <label for="{{ audition_form.name.id_for_label }}">Name</label>

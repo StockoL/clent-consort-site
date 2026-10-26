@@ -27,6 +27,7 @@ class EnquiryForm(forms.ModelForm):
                 # Hidden from everyone, screen readers included (see
                 # .honeypot in utilities/project-utilities.css)
                 "class": "honeypot",
+                "id": "enquiry-website",  # both contact forms share one page
                 "tabindex": "-1",  # Prevents humans from accidentally tabbing into it
                 "autocomplete": "off",
             }
@@ -62,7 +63,12 @@ class AuditionForm(forms.ModelForm):
         required=False,
         label="Leave this field empty",
         widget=forms.TextInput(
-            attrs={"class": "honeypot", "tabindex": "-1", "autocomplete": "off"}
+            attrs={
+                "class": "honeypot",
+                "id": "audition-website",  # both contact forms share one page
+                "tabindex": "-1",
+                "autocomplete": "off",
+            }
         ),
     )
 

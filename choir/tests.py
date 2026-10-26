@@ -414,6 +414,29 @@ class ContactFormTests(TestCase):
         self.assertTrue(Enquiry.objects.filter(email="jane@example.com").exists())
 
 
+class ContactHoneypotTests(TestCase):
+    """The spam-trap field is on the page (it never used to be rendered,
+    so it caught nothing) and a submission that fills it in is dropped."""
+
+    def test_both_forms_render_the_hidden_trap(self):
+        response = self.client.get(reverse("contact"))
+        self.assertContains(response, 'id="enquiry-website"', count=1)
+        self.assertContains(response, 'id="audition-website"', count=1)
+        self.assertContains(response, 'class="honeypot"', count=2)
+
+    def test_filled_trap_blocks_the_enquiry(self):
+        self.client.post(
+            reverse("contact"),
+            {
+                "name": "Spam Bot",
+                "email": "bot@example.com",
+                "subject": "general",
+                "message": "Buy now",
+                "website": "http://spam.example.com",
+            },
+        )
+        self.assertFalse(Enquiry.objects.exists())
+
 class CommitteeBroadcastTests(TestCase):
     """Guards against choir/views.py's committee_broadcast setting a
     nonexistent 'sent_by' attribute instead of the model's real 'author'
