@@ -957,3 +957,121 @@ class LoginErrorTests(TestCase):
         for error in errors:
             self.assertContains(response, error)
         self.assertNotContains(response, "Your email and password didn't match.")
+
+
+class MembersShellTests(TestCase):
+    """Every logged-in page renders inside _members_base.html with one
+    members navigation; the committee group only shows for committee."""
+
+    MEMBER_PAGES = ["members", "member_repertoire", "member_polling", "settings", "committee_hub", "committee_documents"]
+    COMMITTEE_PAGES = [
+        "committee_projects",
+        "committee_schedule",
+        "committee_rsvps",
+        "committee_polling",
+        "committee_financials",
+        "committee_broadcast",
+        "committee_emergency",
+    ]
+
+    def setUp(self):
+        User.objects.create_user(username="member", password="pw")
+        User.objects.create_user(username="committee", password="pw", is_staff=True)
+
+    def test_every_page_uses_the_shell_and_one_nav(self):
+        self.client.login(username="committee", password="pw")
+        for name in self.MEMBER_PAGES + self.COMMITTEE_PAGES:
+            with self.subTest(page=name):
+                response = self.client.get(reverse(name))
+                self.assertEqual(response.status_code, 200)
+                self.assertTemplateUsed(response, "choir/_members_base.html")
+                self.assertContains(response, 'aria-label="Members area"', count=1)
+
+    def test_committee_group_shows_for_committee_only(self):
+        self.client.login(username="committee", password="pw")
+        response = self.client.get(reverse("members"))
+        self.assertContains(response, reverse("committee_financials"))
+
+        self.client.login(username="member", password="pw")
+        response = self.client.get(reverse("members"))
+        self.assertNotContains(response, reverse("committee_financials"))
+        self.assertContains(response, "Document Vault")
+
+    def test_current_page_is_marked(self):
+        self.client.login(username="member", password="pw")
+        response = self.client.get(reverse("member_polling"))
+        self.assertContains(
+            response,
+            f'<a href="{reverse("member_polling")}" class="members-nav__link" aria-current="page">',
+            html=False,
+        )
+
+    def test_hub_shows_non_committee_only_the_vault(self):
+        self.client.login(username="member", password="pw")
+        response = self.client.get(reverse("committee_hub"))
+        self.assertContains(response, reverse("committee_documents"))
+        self.assertNotContains(response, reverse("committee_projects"))
+        self.assertNotContains(response, "🔒")
+
+    def test_vault_upload_form_is_committee_only(self):
+        self.client.login(username="member", password="pw")
+        response = self.client.get(reverse("committee_documents"))
+        self.assertNotContains(response, 'enctype="multipart/form-data"')
+
+        self.client.login(username="committee", password="pw")
+        response = self.client.get(reverse("committee_documents"))
+        self.assertContains(response, 'enctype="multipart/form-data"')
+
+    def test_members_header_nav_is_just_public_site_and_logout(self):
+        self.client.login(username="member", password="pw")
+        response = self.client.get(reverse("members"))
+        self.assertContains(response, "Back to Public Site")
+        self.assertNotContains(response, 'class="nav-link">Settings</a>')
+
+
+class PageScriptsTests(TestCase):
+    """Each page loads only the scripts it uses."""
+
+    PUBLIC_SCRIPTS = ["looseleaf-behaviors", "mobile-menu", "back-to-top"]
+    MEMBERS_SCRIPTS = ["rsvp-dashboard", "member-dashboard", "project-tabs", "confirm-forms"]
+
+    def test_public_pages_load_only_the_shared_scripts(self):
+        for name in ["home", "events", "contact"]:
+            with self.subTest(page=name):
+                response = self.client.get(reverse(name))
+                for script in self.PUBLIC_SCRIPTS:
+                    self.assertContains(response, f"js/{script}")
+                for script in self.MEMBERS_SCRIPTS + ["project-carousel"]:
+                    self.assertNotContains(response, f"js/{script}")
+
+    def test_about_page_also_loads_the_carousel(self):
+        response = self.client.get(reverse("about"))
+        self.assertContains(response, "js/project-carousel")
+
+    def test_rsvp_dashboard_loads_its_script(self):
+        User.objects.create_user(username="committee", password="pw", is_staff=True)
+        self.client.login(username="committee", password="pw")
+        response = self.client.get(reverse("committee_rsvps"))
+        self.assertContains(response, "js/rsvp-dashboard")
+        self.assertNotContains(response, "onclick=")
+        self.assertNotContains(response, "onchange=")
+
+
+class NoInlineStylesTests(TestCase):
+    """Templates carry no style="" attributes (Build Order Phase 2). The
+    exceptions: the Spotify embed on About, and the invitation email,
+    which needs inline styles because email clients ignore stylesheets."""
+
+    ALLOWED = {"choir/about.html", "invitations/email/email_invite_message.html"}
+
+    def test_no_inline_styles_in_templates(self):
+        from pathlib import Path
+
+        root = Path(__file__).resolve().parent / "templates"
+        offenders = [
+            path.relative_to(root).as_posix()
+            for path in root.rglob("*.html")
+            if 'style="' in path.read_text(encoding="utf-8")
+            and path.relative_to(root).as_posix() not in self.ALLOWED
+        ]
+        self.assertEqual(offenders, [])
