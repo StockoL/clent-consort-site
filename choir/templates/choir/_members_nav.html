@@ -21,6 +21,7 @@
         {% if user.is_staff %}
         <li class="members-nav__group" id="members-nav-committee">Committee</li>
         <li><a href="{% url 'committee_hub' %}" class="members-nav__link"{% if current == 'committee_hub' %} aria-current="page"{% endif %}>Hub</a></li>
+        <li><a href="{% url 'committee_inbox' %}" class="members-nav__link"{% if current == 'committee_inbox' %} aria-current="page"{% endif %}>Inbox{% if inbox_unhandled_count %}<span class="members-nav__count">{{ inbox_unhandled_count }}<span class="visually-hidden"> unhandled</span></span>{% endif %}</a></li>
         <li><a href="{% url 'committee_projects' %}" class="members-nav__link"{% if current == 'committee_projects' or current == 'committee_project_edit' %} aria-current="page"{% endif %}>Projects</a></li>
         <li><a href="{% url 'committee_schedule' %}" class="members-nav__link"{% if current == 'committee_schedule' or current == 'committee_event_edit' %} aria-current="page"{% endif %} aria-describedby="members-nav-committee">Schedule</a></li>
         <li><a href="{% url 'committee_rsvps' %}" class="members-nav__link"{% if current == 'committee_rsvps' %} aria-current="page"{% endif %}>RSVPs</a></li>
@@ -29,6 +30,7 @@
         <li><a href="{% url 'committee_documents' %}" class="members-nav__link"{% if current == 'committee_documents' %} aria-current="page"{% endif %}>Documents</a></li>
         <li><a href="{% url 'committee_broadcast' %}" class="members-nav__link"{% if current == 'committee_broadcast' %} aria-current="page"{% endif %}>Broadcast</a></li>
         <li><a href="{% url 'committee_emergency' %}" class="members-nav__link"{% if current == 'committee_emergency' %} aria-current="page"{% endif %}>Duty of Care</a></li>
+        <li><a href="{% url 'committee_settings' %}" class="members-nav__link"{% if current == 'committee_settings' %} aria-current="page"{% endif %}>Choir Settings</a></li>
         {% else %}
         <li><a href="{% url 'committee_documents' %}" class="members-nav__link"{% if current == 'committee_documents' or current == 'committee_hub' %} aria-current="page"{% endif %}>Document Vault</a></li>
         {% endif %}

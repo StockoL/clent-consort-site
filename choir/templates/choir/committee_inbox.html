@@ -1,0 +1,49 @@
+{% extends 'choir/_members_base.html' %}
+
+{% block title %}Inbox - Clent Consort{% endblock title %}
+
+{% block page_title %}Inbox{% endblock page_title %}
+{% block page_lede %}Enquiries and audition applications from the contact page. Unhandled ones come first.{% endblock page_lede %}
+
+{% block members_content %}
+  <section class="card flow" data-variant="invert">
+    {% if items %}
+    <ul class="list-unstyled flow" role="list">
+      {% for item in items %}
+      {% with obj=item.obj %}
+      <li class="item-row inbox-item"{% if obj.handled %} data-handled{% endif %}>
+        <div class="flow flow--small inbox-item__body">
+          <p>
+            <strong>{{ obj.name }}</strong>
+            <span class="badge"{% if item.kind == 'audition' %} data-status="success"{% elif obj.subject == 'booking' %} data-status="warning"{% endif %}>
+              {% if item.kind == 'audition' %}Audition: {{ obj.get_voice_part_display }}{% else %}{{ obj.get_subject_display }}{% endif %}
+            </span>
+            {% if obj.handled %}<span class="badge">Handled{% if obj.handled_by %} by {{ obj.handled_by.get_full_name|default:obj.handled_by.username }}{% endif %}</span>{% endif %}
+            <br>
+            <span class="text-small text-muted">
+              <a href="mailto:{{ obj.email }}" class="text-link">{{ obj.email }}</a>
+              · {{ obj.created_at|date:"j M Y, g:i A" }}
+            </span>
+          </p>
+          {% if item.kind == 'enquiry' %}
+            <p class="text-small">{{ obj.message|linebreaksbr }}</p>
+          {% elif obj.experience %}
+            <p class="text-small">{{ obj.experience|linebreaksbr }}</p>
+          {% endif %}
+        </div>
+
+        <form method="POST" action="{% url 'committee_inbox_toggle' item.kind obj.id %}" class="inline-form">
+          {% csrf_token %}
+          <button type="submit" class="button btn-small" data-variant="{% if obj.handled %}outline{% else %}primary{% endif %}">
+            {% if obj.handled %}Mark not handled{% else %}Mark handled{% endif %}<span class="visually-hidden"> ({{ obj.name }})</span>
+          </button>
+        </form>
+      </li>
+      {% endwith %}
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-muted text-small">Nothing has come in through the contact page yet.</p>
+    {% endif %}
+  </section>
+{% endblock members_content %}

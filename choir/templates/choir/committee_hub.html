@@ -15,6 +15,12 @@
     </a>
 
     {% if user.is_staff %}
+      <a href="{% url 'committee_inbox' %}" class="card flow flow--small text-center hub-grid__card" data-variant="invert">
+        <div class="hub-grid__icon" aria-hidden="true">📥</div>
+        <h2 class="text-primary text-step-0">Inbox{% if inbox_unhandled_count %} ({{ inbox_unhandled_count }} new){% endif %}</h2>
+        <p class="text-small text-muted">Enquiries and audition applications from the contact page.</p>
+      </a>
+
       <a href="{% url 'committee_projects' %}" class="card flow flow--small text-center hub-grid__card" data-variant="invert">
         <div class="hub-grid__icon" aria-hidden="true">🗂️</div>
         <h2 class="text-primary text-step-0">Projects</h2>
@@ -55,6 +61,12 @@
         <div class="hub-grid__icon" aria-hidden="true">🏥</div>
         <h2 class="text-primary text-step-0">Duty of Care</h2>
         <p class="text-small text-muted">Confidential medical and emergency contact roster.</p>
+      </a>
+
+      <a href="{% url 'committee_settings' %}" class="card flow flow--small text-center hub-grid__card" data-variant="invert">
+        <div class="hub-grid__icon" aria-hidden="true">⚙️</div>
+        <h2 class="text-primary text-step-0">Choir Settings</h2>
+        <p class="text-small text-muted">Term, subscription, bank details and social links.</p>
       </a>
     {% endif %}
   </div>
