@@ -1,11 +1,14 @@
+import importlib
 import json
 import tempfile
 from io import StringIO
 from datetime import timedelta
 
 from allauth.account.models import EmailAddress
+from django.apps import apps as django_apps
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Group, User
+from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import CommandError, call_command
 from django.db import IntegrityError, transaction
@@ -28,6 +31,7 @@ from .models import (
     Repertoire,
     SubscriptionPayment,
 )
+from .permissions import COMMITTEE_GROUP, is_committee
 
 
 class AttendanceAutoCreationTests(TestCase):
@@ -1616,3 +1620,150 @@ class CommitteeInboxBulkTests(TestCase):
         response = self.bulk("delete", [f"enquiry:{e.id}" for e in self.spam])
         self.assertEqual(response.status_code, 302)
         self.assertEqual(Enquiry.objects.count(), 4)
+
+
+COMMITTEE_VIEW_NAMES = [
+    "committee_projects",
+    "committee_polling",
+    "committee_rsvps",
+    "committee_broadcast",
+    "committee_emergency",
+    "committee_schedule",
+    "committee_financials",
+    "committee_settings",
+    "committee_inbox",
+]
+
+
+class CommitteeAccessModelTests(TestCase):
+    """Build Order Phase 5: committee access comes from the Committee group
+    (or superuser), not Django's is_staff flag - with is_staff still
+    honoured for this release so nobody is locked out mid-transition."""
+
+    def setUp(self):
+        self.group, _ = Group.objects.get_or_create(name=COMMITTEE_GROUP)
+
+    def assert_reaches_every_committee_view(self, username):
+        self.client.login(username=username, password="pw")
+        for name in COMMITTEE_VIEW_NAMES:
+            with self.subTest(view=name):
+                self.assertEqual(self.client.get(reverse(name)).status_code, 200)
+
+    def test_group_member_who_is_not_staff_reaches_every_committee_view(self):
+        user = User.objects.create_user(username="grouped", password="pw")
+        user.groups.add(self.group)
+        self.assertFalse(user.is_staff)
+        self.assert_reaches_every_committee_view("grouped")
+
+    def test_staff_user_outside_the_group_still_gets_in_during_the_transition(self):
+        User.objects.create_user(username="staffer", password="pw", is_staff=True)
+        self.assert_reaches_every_committee_view("staffer")
+
+    def test_superuser_gets_in(self):
+        User.objects.create_superuser(username="root", password="pw", email="root@example.com")
+        self.assert_reaches_every_committee_view("root")
+
+    def test_ordinary_member_and_inactive_group_member_are_refused(self):
+        member = User.objects.create_user(username="member", password="pw")
+        inactive = User.objects.create_user(username="gone", password="pw", is_active=False)
+        inactive.groups.add(self.group)
+
+        self.assertFalse(is_committee(member))
+        self.assertFalse(is_committee(inactive))
+
+        self.client.login(username="member", password="pw")
+        self.assertEqual(self.client.get(reverse("committee_financials")).status_code, 302)
+
+    @override_settings(MEDIA_ROOT=tempfile.mkdtemp())
+    def test_group_member_sees_the_committee_nav_and_can_manage_the_vault(self):
+        user = User.objects.create_user(username="grouped", password="pw")
+        user.groups.add(self.group)
+        self.client.login(username="grouped", password="pw")
+
+        response = self.client.get(reverse("committee_documents"))
+        self.assertContains(response, reverse("committee_financials"))
+        self.assertContains(response, 'enctype="multipart/form-data"')
+
+        document = CommitteeDocument.objects.create(
+            title="Minutes", file=SimpleUploadedFile("m.pdf", b"%PDF-1.4")
+        )
+        self.client.post(reverse("committee_document_delete", args=[document.id]))
+        self.assertFalse(CommitteeDocument.objects.filter(id=document.id).exists())
+
+    def test_migration_puts_every_staff_user_in_the_group(self):
+        migration = importlib.import_module("choir.migrations.0024_committee_group")
+        staff = User.objects.create_user(username="staffer", password="pw", is_staff=True)
+        member = User.objects.create_user(username="member", password="pw")
+        Group.objects.filter(name=COMMITTEE_GROUP).delete()
+
+        migration.create_group(django_apps, None)
+        migration.create_group(django_apps, None)  # idempotent
+
+        group = Group.objects.get(name=COMMITTEE_GROUP)
+        self.assertEqual(list(group.user_set.all()), [staff])
+        self.assertNotIn(member, group.user_set.all())
+
+
+class NonSingerTests(TestCase):
+    """Build Order Phase 5: a member with a login who doesn't sing gets no
+    RSVPs and is left out of the ledger, RSVP report, Duty of Care roster,
+    broadcasts and poll reminders - but can still log in and use the vault."""
+
+    def setUp(self):
+        self.committee = User.objects.create_user(username="committee", password="pw", is_staff=True)
+        self.singer = User.objects.create_user(username="singer", password="pw", email="singer@example.com")
+        self.organist = User.objects.create_user(username="organist", password="pw", email="organist@example.com")
+        self.organist.profile.is_singer = False
+        self.organist.profile.save()
+        self.project = Project.objects.create(name="Clent 2026", status="ACTIVE")
+
+    def test_new_profiles_are_singers_by_default(self):
+        self.assertTrue(User.objects.create_user(username="new", password="pw").profile.is_singer)
+
+    def test_non_singer_gets_no_attendance_for_a_new_event(self):
+        event = Event.objects.create(
+            project=self.project, date_time=timezone.now() + timedelta(days=7), location="Hall"
+        )
+        self.assertTrue(Attendance.objects.filter(event=event, user=self.singer).exists())
+        self.assertFalse(Attendance.objects.filter(event=event, user=self.organist).exists())
+
+    def test_non_singers_dashboard_neither_backfills_rsvps_nor_asks_for_subs(self):
+        Event.objects.create(project=self.project, date_time=timezone.now() + timedelta(days=7), location="Hall")
+        self.client.login(username="organist", password="pw")
+        response = self.client.get(reverse("members"))
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Attendance.objects.filter(user=self.organist).exists())
+        self.assertNotContains(response, "Subscriptions Due")
+
+    def test_non_singer_is_left_out_of_the_committee_lists(self):
+        Event.objects.create(project=self.project, date_time=timezone.now() + timedelta(days=7), location="Hall")
+        poll = AvailabilityPoll.objects.create(
+            project=Project.objects.create(name="Easter 2027", status="PLANNING"), question="March?"
+        )
+        self.client.login(username="committee", password="pw")
+
+        ledger = self.client.get(reverse("committee_financials"))
+        self.assertNotIn(self.organist, [row["user"] for row in ledger.context["roster"]])
+        self.assertIn(self.singer, [row["user"] for row in ledger.context["roster"]])
+
+        roster = self.client.get(reverse("committee_emergency"))
+        self.assertNotIn(self.organist, list(roster.context["roster"]))
+
+        report = self.client.get(reverse("committee_rsvps"))
+        self.assertNotIn(self.organist, [row["user"] for row in report.context["member_stats"]])
+        pending = [rsvp.user for row in report.context["report_data"] for rsvp in row["pending"]]
+        self.assertNotIn(self.organist, pending)
+
+        polling = self.client.get(reverse("committee_polling"))
+        row = next(r for r in polling.context["poll_data"] if r["poll"] == poll)
+        self.assertNotIn(self.organist, list(row["non_responders"]))
+
+    def test_broadcasts_go_to_singers_only(self):
+        ChoirCommunication.objects.create(audience="ALL", subject="Rehearsal moved", message="<p>Hi</p>")
+        recipients = [address for message in mail.outbox for address in message.to]
+        self.assertIn("singer@example.com", recipients)
+        self.assertNotIn("organist@example.com", recipients)
+
+    def test_non_singer_can_still_use_the_vault(self):
+        self.client.login(username="organist", password="pw")
+        self.assertEqual(self.client.get(reverse("committee_documents")).status_code, 200)
