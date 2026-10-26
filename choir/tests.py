@@ -856,3 +856,104 @@ class SeedDevDataCommandTests(TestCase):
         )
         self.assertEqual(response.status_code, 302)
         self.assertIn("_auth_user_id", self.client.session)
+
+
+class SiteMessagesTests(TestCase):
+    """base.html renders Django messages once, for every page - before Build
+    Order Phase 1 most committee pages queued success messages that were
+    never shown."""
+
+    def setUp(self):
+        User.objects.create_user(username="committee", password="pw", is_staff=True)
+        self.client.login(username="committee", password="pw")
+        self.singer = User.objects.create_user(
+            username="singer", password="pw", first_name="Sam", last_name="Singer"
+        )
+
+    def test_success_message_renders_after_redirect(self):
+        response = self.client.post(
+            reverse("committee_financials"),
+            {"member_id": self.singer.profile.id, "amount": "45.00", "payment_method": "BACS"},
+            follow=True,
+        )
+        self.assertContains(
+            response, "Payment successfully logged for Sam Singer.", count=1
+        )
+        self.assertContains(response, 'data-status="success"')
+
+    def test_error_message_maps_to_danger_status(self):
+        response = self.client.post(
+            reverse("committee_financials"),
+            {"member_id": self.singer.profile.id, "amount": "nope", "payment_method": "BACS"},
+            follow=True,
+        )
+        self.assertContains(response, 'data-status="danger"')
+
+    def test_settings_page_shows_its_message_only_once(self):
+        response = self.client.post(
+            reverse("settings"),
+            {"first_name": "Clara", "last_name": "Committee", "email": "c@example.com"},
+            follow=True,
+        )
+        self.assertContains(
+            response, "Your profile has been updated successfully.", count=1
+        )
+
+
+class DashboardPastEventsTests(TestCase):
+    """Past events of an active project move out of the upcoming list into
+    a collapsed "Earlier this project" section, without an RSVP select."""
+
+    def setUp(self):
+        User.objects.create_user(username="member", password="pw")
+        self.client.login(username="member", password="pw")
+        self.project = Project.objects.create(name="Clent 2026", status="ACTIVE")
+        self.past = Event.objects.create(
+            project=self.project,
+            date_time=timezone.now() - timedelta(days=7),
+            location="Past Hall",
+        )
+        self.future = Event.objects.create(
+            project=self.project,
+            date_time=timezone.now() + timedelta(days=7),
+            location="Future Hall",
+        )
+
+    def test_past_event_is_listed_as_earlier_not_upcoming(self):
+        response = self.client.get(reverse("members"))
+        data = response.context["projects_data"][0]
+
+        self.assertEqual([a.event_id for a in data["user_attendances"]], [self.future.id])
+        self.assertEqual([a.event_id for a in data["past_attendances"]], [self.past.id])
+        self.assertContains(response, "Earlier this project (1)")
+
+    def test_past_event_has_no_rsvp_select(self):
+        response = self.client.get(reverse("members"))
+        past_attendance = Attendance.objects.get(event=self.past)
+        future_attendance = Attendance.objects.get(event=self.future)
+
+        self.assertContains(response, f'data-attendance-id="{future_attendance.id}"')
+        self.assertNotContains(response, f'data-attendance-id="{past_attendance.id}"')
+
+    def test_no_earlier_section_without_past_events(self):
+        self.past.delete()
+        response = self.client.get(reverse("members"))
+        self.assertNotContains(response, "Earlier this project")
+
+
+class LoginErrorTests(TestCase):
+    """The login page shows allauth's own non-field error text rather than
+    only a generic fallback."""
+
+    def test_wrong_password_shows_allauths_message(self):
+        user = User.objects.create_user(username="m", email="m@example.com", password="pw")
+        EmailAddress.objects.create(user=user, email="m@example.com", verified=True, primary=True)
+
+        response = self.client.post(
+            reverse("account_login"), {"login": "m@example.com", "password": "wrong"}
+        )
+        errors = response.context["form"].non_field_errors()
+        self.assertTrue(errors)
+        for error in errors:
+            self.assertContains(response, error)
+        self.assertNotContains(response, "Your email and password didn't match.")
