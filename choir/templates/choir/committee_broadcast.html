@@ -3,7 +3,7 @@
 <div class="wrapper flow section-padding">
   <div class="text-center">
     <h1 class="text-primary">Committee Broadcast</h1>
-    <p>Send announcements to all committee members.</p>
+    <p>Send an email to all members or one voice part.</p>
 
     <a href="{% url 'committee_hub' %}" class="button btn-small" data-variant="outline" style="text-decoration: none; display: inline-block; margin-block-start: var(--space-2xs);">
       ← Back to Hub
@@ -16,19 +16,19 @@
       {% csrf_token %}
 
       <div>
-        <label class="form-label text-small">{{ form.audience.label }}</label>
+        <label for="{{ form.audience.id_for_label }}" class="form-label text-small">{{ form.audience.label }}</label>
         {{ form.audience }}
         <div class="form-error">{{ form.audience.errors }}</div>
       </div>
 
       <div>
-        <label class="form-label text-small">{{ form.subject.label }}</label>
+        <label for="{{ form.subject.id_for_label }}" class="form-label text-small">{{ form.subject.label }}</label>
         {{ form.subject }}
         <div class="form-error">{{ form.subject.errors }}</div>
       </div>
 
       <div>
-        <label class="form-label text-small">{{ form.message.label }}</label>
+        <label for="{{ form.message.id_for_label }}" class="form-label text-small">{{ form.message.label }}</label>
         {{ form.message }}
         <div class="form-error">{{ form.message.errors }}</div>
       </div>

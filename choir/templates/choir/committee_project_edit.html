@@ -19,13 +19,13 @@
         {% csrf_token %}
 
         <div class="form-group flow flow--small">
-          <label class="form-label text-small">{{ form.name.label }}</label>
+          <label for="{{ form.name.id_for_label }}" class="form-label text-small">{{ form.name.label }}</label>
           {{ form.name }}
           <div class="form-error">{{ form.name.errors }}</div>
         </div>
 
         <div class="form-group flow flow--small">
-          <label class="form-label text-small">{{ form.status.label }}</label>
+          <label for="{{ form.status.id_for_label }}" class="form-label text-small">{{ form.status.label }}</label>
           {{ form.status }}
           <p class="text-small text-muted">
             Moving this to Active makes it the one front-and-centre on the
@@ -36,24 +36,24 @@
 
         <div style="display: flex; gap: 1rem;">
           <div class="form-group flow flow--small" style="flex: 1;">
-            <label class="form-label text-small">{{ form.start_date.label }}</label>
+            <label for="{{ form.start_date.id_for_label }}" class="form-label text-small">{{ form.start_date.label }}</label>
             {{ form.start_date }}
           </div>
           <div class="form-group flow flow--small" style="flex: 1;">
-            <label class="form-label text-small">{{ form.end_date.label }}</label>
+            <label for="{{ form.end_date.id_for_label }}" class="form-label text-small">{{ form.end_date.label }}</label>
             {{ form.end_date }}
           </div>
         </div>
 
         <div class="form-group flow flow--small">
-          <label class="form-label text-small">{{ form.description.label }}</label>
+          <label for="{{ form.description.id_for_label }}" class="form-label text-small">{{ form.description.label }}</label>
           {{ form.description }}
         </div>
 
-        <div class="form-group flow flow--small">
-          <label class="form-label text-small">{{ form.repertoire.label }}</label>
+        <fieldset class="form-group form-fieldset flow flow--small">
+          <legend class="form-label text-small">{{ form.repertoire.label }}</legend>
           {{ form.repertoire }}
-        </div>
+        </fieldset>
 
         <button type="submit" class="button" data-variant="primary">Save Changes</button>
       </form>

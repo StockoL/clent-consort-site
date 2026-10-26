@@ -21,22 +21,22 @@
         {% csrf_token %}
         
         <div>
-          <label class="form-label text-small">{{ form.title.label }}</label>
+          <label for="{{ form.title.id_for_label }}" class="form-label text-small">{{ form.title.label }}</label>
           {{ form.title }}
         </div>
         
         <div style="display: flex; gap: 1rem;">
           <div style="flex: 1;">
-            <label class="form-label text-small">{{ form.doc_type.label }}</label>
+            <label for="{{ form.doc_type.id_for_label }}" class="form-label text-small">{{ form.doc_type.label }}</label>
             {{ form.doc_type }}
           </div>
           <div style="flex: 2;">
-            <label class="form-label text-small">{{ form.file.label }}</label>
+            <label for="{{ form.file.id_for_label }}" class="form-label text-small">{{ form.file.label }}</label>
             {{ form.file }}
           </div>
         </div>
 
-        <button type="submit" class="button w-100" data-variant="primary" style="--flow-space: var(--space-s)">📤 Upload to Vault</button>
+        <button type="submit" class="button w-100" data-variant="primary" style="--flow-space: var(--space-s)"><span aria-hidden="true">📤</span> Upload to Vault</button>
       </form>
     </section>
 
@@ -54,13 +54,13 @@
             
             <div style="display: flex; gap: 0.5rem; align-items: center;">
               <a href="{{ doc.file.url }}" target="_blank" class="button btn-small" data-variant="outline" style="padding: 0.25rem 0.75rem;">
-                📄 View
+                <span aria-hidden="true">📄</span> View
               </a>
               {% if user.is_staff %}
               <form method="POST" action="{% url 'committee_document_delete' doc.id %}" style="display: inline;" onsubmit="return confirm('Delete \'{{ doc.title|escapejs }}\' from the vault?');">
                 {% csrf_token %}
                 <button type="submit" class="button btn-small" data-variant="outline" style="padding: 0.25rem 0.75rem;">
-                  🗑️ Delete
+                  <span aria-hidden="true">🗑️</span> Delete
                 </button>
               </form>
               {% endif %}

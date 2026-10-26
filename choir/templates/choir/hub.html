@@ -44,8 +44,8 @@
                     <source src="{{ asset.file_upload.url }}" type="audio/mpeg">
                     Your browser does not support the audio element.
                   </audio>
-                  <a href="{{ asset.file_upload.url }}" download class="icon-action-btn" title="Download Audio">
-                    📥
+                  <a href="{{ asset.file_upload.url }}" download class="icon-action-btn" title="Download Audio" aria-label="Download audio">
+                    <span aria-hidden="true">📥</span>
                   </a>
                 </div>
 
@@ -53,7 +53,7 @@
               {% elif ".pdf" in asset.file_upload.name|lower %}
                 <div class="media-flex-row" style="margin-block-start: var(--space-3xs)">
                   <a href="{{ asset.file_upload.url }}" target="_blank" rel="noopener noreferrer" class="button btn-small w-100 text-center" data-variant="primary">
-                    📄 Open Score
+                    <span aria-hidden="true">📄</span> Open Score
                   </a>
                   </div>
 
@@ -69,7 +69,7 @@
             {% elif asset.external_url %}
               <div class="media-flex-row" style="margin-block-start: var(--space-3xs)">
                 <a href="{{ asset.external_url }}" target="_blank" rel="noopener noreferrer" class="button btn-small w-100 text-center" data-variant="primary">
-                  🌐 External Link
+                  <span aria-hidden="true">🌐</span> External Link
                 </a>
               </div>
             {% else %}

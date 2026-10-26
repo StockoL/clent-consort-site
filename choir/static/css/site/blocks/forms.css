@@ -1,5 +1,5 @@
 /* ==========================================================================
-   BLOCK: FORMS (decanted from style.css "v1", unchanged)
+   BLOCK: FORMS (decanted from style.css "v1", plus project additions at the end)
    ==========================================================================
    Scope-based input/button styling (targets bare <input>/<select>/
    <button> elements within a container, rather than requiring an
@@ -240,4 +240,34 @@
 /* 5. Suppress the 'Standard' browser red (Firefox especially) */
 [data-variant="invert"] input:invalid {
   box-shadow: none;
+}
+
+/* --------------------------------------------------------------------------
+   Project additions
+   -------------------------------------------------------------------------- */
+
+/* A group of checkboxes labelled by a <legend>, without the browser's
+   default fieldset frame. */
+.form-fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-inline-size: 0;
+}
+
+.form-fieldset > legend {
+  padding: 0;
+}
+
+/* Matches [data-variant="invert"] .form-group label above. */
+[data-variant="invert"] .form-group.form-fieldset > legend {
+  color: #c9a45e;
+}
+
+/* Small uppercase heading-style field label (committee scheduling form). */
+.form-label--heading {
+  color: #c9a45e;
+  font-family: var(--fonts-heading);
+  font-size: 0.8rem;
+  text-transform: uppercase;
 }

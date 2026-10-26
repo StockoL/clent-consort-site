@@ -25,7 +25,7 @@
 
           <div class="event-card-body">
             {% if poll.proposed_date %}
-            <p class="event-meta">📅 {{ poll.proposed_date|date:"l, j M Y" }}</p>
+            <p class="event-meta"><span aria-hidden="true">📅</span> {{ poll.proposed_date|date:"l, j M Y" }}</p>
             {% endif %}
             {% if poll.notes %}
             <p class="text-small text-muted">{{ poll.notes }}</p>
