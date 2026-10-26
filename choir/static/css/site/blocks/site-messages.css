@@ -1,0 +1,10 @@
+/* ==========================================================================
+   BLOCK: SITE MESSAGES (project-specific)
+   Django messages rendered once by base.html, using the vendored .alert
+   block. Laid out as a cluster with the dismiss button pushed to the end.
+   ========================================================================== */
+
+.site-messages .alert {
+  --cluster-justify: space-between;
+  --cluster-align: flex-start;
+}

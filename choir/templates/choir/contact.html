@@ -15,17 +15,6 @@
   </section>
 
   <div id="form-section" class="flow">
-    {% if messages %} 
-      {% for message in messages %}
-        <div class="card flow" data-variant="invert" style="border: 2px solid {% if message.tags == 'error' %}var(--colors-danger-text){% else %}var(--colors-success-text){% endif %}; text-align: center; margin-bottom: var(--space-m);" role="alert">
-          <h2 style="color: {% if message.tags == 'error' %}var(--colors-danger-text){% else %}var(--colors-success-text){% endif %}; margin-bottom: 0;">
-            {% if message.tags == 'error' %}Submission Error{% else %}Message Received!{% endif %}
-          </h2>
-          <p>{{ message }}</p>
-        </div>
-      {% endfor %} 
-    {% endif %}
-
     <div class="switcher contact-forms-layout">
       
       <section class="card contact-form-container flow" data-variant="invert">

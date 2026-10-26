@@ -67,6 +67,7 @@
 @import "blocks/rsvp-tabs.css" layer(blocks);
 @import "blocks/subnav.css" layer(blocks);
 @import "blocks/back-to-top.css" layer(blocks);
+@import "blocks/site-messages.css" layer(blocks);
 
 /* --------------------------------------------------------------------------
    LAYER 4: UTILITIES (Single-Purpose Overrides)
