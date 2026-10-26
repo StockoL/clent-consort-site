@@ -154,3 +154,20 @@ select.rsvp-toggle option {
   border: 1px solid rgba(201, 164, 94, 0.3);
   border-radius: 8px;
 }
+
+/* --- Looking Ahead: optional note beside a poll answer --- */
+.poll-notes {
+  flex: 1 1 100%;
+  display: grid;
+  gap: 0.35rem;
+}
+
+[data-variant="invert"] .poll-notes__input {
+  min-height: 2.75rem;
+  font-size: 1rem;
+}
+
+.poll-notes__status {
+  min-height: 1.2em;
+  color: var(--colors-success-text);
+}

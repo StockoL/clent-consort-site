@@ -1,0 +1,30 @@
+{% comment %}
+    The poll fields shared by the create form (committee_polling) and the
+    edit form (committee_poll_edit).
+{% endcomment %}
+<div>
+    <label for="{{ form.project.id_for_label }}" class="form-label text-small">{{ form.project.label }}</label>
+    {{ form.project }}
+    <div class="form-error">{{ form.project.errors }}</div>
+</div>
+
+<div>
+    <label for="{{ form.question.id_for_label }}" class="form-label text-small">{{ form.question.label }}</label>
+    {{ form.question }}
+    <div class="form-error">{{ form.question.errors }}</div>
+</div>
+
+<div>
+    <label for="{{ form.proposed_date.id_for_label }}" class="form-label text-small">{{ form.proposed_date.label }}</label>
+    {{ form.proposed_date }}
+</div>
+
+<div>
+    <label for="{{ form.notes.id_for_label }}" class="form-label text-small">{{ form.notes.label }}</label>
+    {{ form.notes }}
+</div>
+
+<div class="consent-row">
+    {{ form.is_open }}
+    <label for="{{ form.is_open.id_for_label }}" class="form-label text-small">{{ form.is_open.label }}</label>
+</div>

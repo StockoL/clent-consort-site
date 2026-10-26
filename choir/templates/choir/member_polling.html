@@ -34,6 +34,20 @@
               <option value="NO" {% if poll.user_response == 'NO' %}selected{% endif %}>Not Available</option>
               <option value="MAYBE" {% if poll.user_response == 'MAYBE' %}selected{% endif %}>Maybe</option>
             </select>
+
+            <div class="poll-notes">
+              <label for="poll-notes-{{ poll.id }}" class="text-small">Note for the committee (optional)</label>
+              <input
+                type="text"
+                id="poll-notes-{{ poll.id }}"
+                class="poll-notes__input"
+                data-poll-notes="{{ poll.id }}"
+                value="{{ poll.user_notes }}"
+                maxlength="200"
+                placeholder="e.g. Away until the 10th, fine after that"
+              >
+              <p class="poll-notes__status text-small" id="poll-notes-status-{{ poll.id }}" role="status"></p>
+            </div>
           </div>
         </article>
         {% endfor %}

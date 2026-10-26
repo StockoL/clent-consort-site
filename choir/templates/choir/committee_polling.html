@@ -18,29 +18,7 @@
       {% else %}
       <form method="POST" class="flow flow--small">
         {% csrf_token %}
-
-        <div>
-          <label for="{{ form.project.id_for_label }}" class="form-label text-small">{{ form.project.label }}</label>
-          {{ form.project }}
-          <div class="form-error">{{ form.project.errors }}</div>
-        </div>
-
-        <div>
-          <label for="{{ form.question.id_for_label }}" class="form-label text-small">{{ form.question.label }}</label>
-          {{ form.question }}
-          <div class="form-error">{{ form.question.errors }}</div>
-        </div>
-
-        <div>
-          <label for="{{ form.proposed_date.id_for_label }}" class="form-label text-small">{{ form.proposed_date.label }}</label>
-          {{ form.proposed_date }}
-        </div>
-
-        <div>
-          <label for="{{ form.notes.id_for_label }}" class="form-label text-small">{{ form.notes.label }}</label>
-          {{ form.notes }}
-        </div>
-
+        {% include 'choir/_poll_fields.html' %}
         <button type="submit" class="button w-100" data-variant="primary">Create Poll</button>
       </form>
       {% endif %}
@@ -67,6 +45,13 @@
               <span aria-hidden="true">❌</span> {{ row.no_count }} not available &nbsp;
               <span aria-hidden="true">❔</span> {{ row.maybe_count }} maybe
             </p>
+            {% if row.noted_responses %}
+            <ul class="list-unstyled flow flow--small text-small" role="list">
+              {% for response in row.noted_responses %}
+              <li><strong>{{ response.user.get_full_name|default:response.user.username }}</strong> ({{ response.get_response_display }}): {{ response.notes }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
             {% if row.non_responders %}
             <p class="text-small text-muted">
               {{ row.non_responders|length }} member{{ row.non_responders|length|pluralize }} yet to respond
@@ -75,6 +60,18 @@
               {% endif %}
             </p>
             {% endif %}
+          </div>
+
+          <div class="item-row__actions">
+            <a href="{% url 'committee_poll_edit' row.poll.id %}" class="button btn-small" data-variant="outline">
+              Edit<span class="visually-hidden"> poll: {{ row.poll.question }}</span>
+            </a>
+            <form method="POST" action="{% url 'committee_poll_toggle' row.poll.id %}" class="inline-form">
+              {% csrf_token %}
+              <button type="submit" class="button btn-small" data-variant="outline">
+                {% if row.poll.is_open %}Close{% else %}Reopen{% endif %}<span class="visually-hidden"> poll: {{ row.poll.question }}</span>
+              </button>
+            </form>
           </div>
         </li>
         {% endfor %}
