@@ -24,7 +24,9 @@ class EnquiryForm(forms.ModelForm):
         label="Leave this field empty",
         widget=forms.TextInput(
             attrs={
-                "style": "display:none;",  # Hides it from humans
+                # Hidden from everyone, screen readers included (see
+                # .honeypot in utilities/project-utilities.css)
+                "class": "honeypot",
                 "tabindex": "-1",  # Prevents humans from accidentally tabbing into it
                 "autocomplete": "off",
             }
@@ -60,7 +62,7 @@ class AuditionForm(forms.ModelForm):
         required=False,
         label="Leave this field empty",
         widget=forms.TextInput(
-            attrs={"style": "display:none;", "tabindex": "-1", "autocomplete": "off"}
+            attrs={"class": "honeypot", "tabindex": "-1", "autocomplete": "off"}
         ),
     )
 

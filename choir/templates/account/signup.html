@@ -20,14 +20,14 @@
           {{ field }}
           
           {% if field.errors %}
-            <div class="form-error" style="margin-top: 0.25rem;">
+            <div class="form-error">
               {{ field.errors }}
             </div>
           {% endif %}
         </div>
       {% endfor %}
 
-      <button type="submit" class="button btn-block" data-variant="primary" style="--flow-space: var(--space-2xs)">Complete Registration</button>
+      <button type="submit" class="button btn-block" data-variant="primary">Complete Registration</button>
     </form>
   </section>
 </div>

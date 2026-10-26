@@ -30,11 +30,11 @@
         <input type="hidden" name="next" value="{{ request.GET.next }}" />
       {% endif %}
 
-      <button type="submit" class="button btn-block" data-variant="primary" style="--flow-space: var(--space-2xs)">Sign In</button>
+      <button type="submit" class="button btn-block" data-variant="primary">Sign In</button>
     </form>
 
-    <div class="text-center" style="--flow-space: var(--space-3xs)">
-      <a href="{% url 'account_reset_password' %}" style="color: #c9a45e; text-decoration: none; font-size: 0.9rem;">
+    <div class="text-center">
+      <a href="{% url 'account_reset_password' %}" class="text-link text-link--plain text-small">
         Forgot your password?
       </a>
     </div>

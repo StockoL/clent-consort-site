@@ -32,7 +32,7 @@
         {% endfor %}
       </div>
 
-      <div class="cluster" style="--flow-space: var(--space-s)">
+      <div class="cluster">
         <button type="submit" name="action_primary" class="button btn-small" data-variant="outline">Make Primary</button>
         <button type="submit" name="action_send" class="button btn-small" data-variant="outline">Re-send Verification</button>
         <button type="submit" name="action_remove" class="button btn-small" data-variant="outline">Remove</button>
@@ -53,7 +53,7 @@
         <div class="form-error">{{ add_email_form.email.errors }}</div>
       </div>
 
-      <p class="text-small" style="color: #aaa;">
+      <p class="text-small text-subtle">
         We'll send a confirmation link to the new address. It won't become
         your sign-in address until you've verified it and made it primary.
       </p>
@@ -63,8 +63,8 @@
     {% endif %}
   </section>
 
-  <div class="text-center" style="--flow-space: var(--space-m)">
-    <a href="{% url 'settings' %}" style="color: #c9a45e; text-decoration: none">&larr; Back to Settings</a>
+  <div class="text-center">
+    <a href="{% url 'settings' %}" class="text-link text-link--plain">&larr; Back to Settings</a>
   </div>
 </div>
 {% endblock content %}
