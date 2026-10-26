@@ -51,6 +51,11 @@ else:
     # Tell Django that Render's proxy is handling the SSL certificates safely
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
+    # Redirect any plain-HTTP request to HTTPS, and tell browsers to stick to
+    # HTTPS. HSTS is kept to one hour until the redirect has proved itself.
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 3600
+
 
 # Application definition
 
@@ -155,7 +160,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "en-gb"
 
 TIME_ZONE = "Europe/London"
 
