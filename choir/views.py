@@ -36,6 +36,7 @@ from .models import (
     Project,
     SubscriptionPayment,  # <-- Added for the new financial logic
 )
+from .permissions import is_committee, is_singer
 
 # ==============================================================================
 # 1. PUBLIC VIEWS (No login required)
@@ -141,7 +142,8 @@ def dashboard_view(request):
     active_projects = list(Project.get_active_projects())
 
     current_term = ChoirSettings.load().current_term
-    has_paid_current_term = SubscriptionPayment.objects.filter(
+    # Non-singers aren't in the ledger, so they're never asked to pay.
+    has_paid_current_term = not is_singer(request.user) or SubscriptionPayment.objects.filter(
         member=request.user.profile, term_reference=current_term
     ).exists()
 
@@ -172,7 +174,8 @@ def dashboard_view(request):
 
     missing_events = project_events.exclude(id__in=existing_rsvp_event_ids)
 
-    if missing_events.exists():
+    # Non-singers get no RSVPs (Build Order Phase 5), so don't backfill any.
+    if is_singer(request.user) and missing_events.exists():
         new_attendances = [
             Attendance(user=request.user, event=event, status="PENDING")
             for event in missing_events
@@ -442,20 +445,6 @@ END:VCALENDAR"""
 # ==============================================================================
 
 
-def is_committee(user):
-    """
-    Helper gatekeeper: checks for committee/administrative privileges.
-
-    Single source of truth for "is this user committee staff" - this used
-    to also exist as a second, inconsistent predicate (is_committee_staff)
-    that a couple of views used instead. Gates the genuinely sensitive
-    committee views (financials, emergency roster, broadcast, scheduling,
-    RSVP overrides). committee_hub and committee_documents_view are
-    deliberately NOT gated by this - see the comment on those views.
-    """
-    return user.is_active and (user.is_staff or user.is_superuser)
-
-
 # =============================================================================
 # 4.0 COMMITTEE PROJECT MANAGEMENT
 # =============================================================================
@@ -527,7 +516,7 @@ def committee_poll_manage_view(request):
     else:
         form = AvailabilityPollForm()
 
-    active_users = User.objects.filter(is_active=True)
+    active_users = User.objects.filter(is_active=True, profile__is_singer=True)
     poll_data = []
     for poll in AvailabilityPoll.objects.select_related("project"):
         responses = poll.responses.select_related("user")
@@ -639,7 +628,9 @@ def committee_rsvp_report(request):
     default_event_id = default_event.id if default_event else None
 
     all_attendances = (
-        Attendance.objects.filter(event__in=all_events, user__is_active=True)
+        Attendance.objects.filter(
+            event__in=all_events, user__is_active=True, user__profile__is_singer=True
+        )
         .select_related("event", "user")
         .order_by("user__first_name")
     )
@@ -667,7 +658,9 @@ def committee_rsvp_report(request):
         )
 
     # --- DATASET 2: INDIVIDUAL MEMBER STATISTICS ---
-    active_users = User.objects.filter(is_active=True).prefetch_related("attendances")
+    active_users = User.objects.filter(
+        is_active=True, profile__is_singer=True
+    ).prefetch_related("attendances")
     member_stats = []
 
     for user in active_users:
@@ -755,13 +748,13 @@ def committee_hub(request):
 
 @login_required
 # Intentionally open to any active member for read access - see the comment
-# on committee_hub above. Uploading (POST) is still staff-only, enforced
+# on committee_hub above. Uploading (POST) is committee-only, enforced
 # in-body below.
 def committee_documents_view(request):
-    """Unified vault to view secure documents. Uploading restricted to staff."""
+    """Unified vault to view secure documents. Uploading restricted to committee."""
     if request.method == "POST":
-        # HARD STOP: If they aren't staff, block the upload attempt
-        if not request.user.is_staff:
+        # HARD STOP: If they aren't committee, block the upload attempt
+        if not is_committee(request.user):
             messages.error(request, "Only committee members have upload permissions.")
             return redirect("committee_documents")
 
@@ -787,11 +780,12 @@ def committee_documents_view(request):
 @login_required
 @require_POST
 def committee_document_delete_view(request, document_id):
-    """Deletes a document from the vault. Staff-gated in-body rather than
-    via @user_passes_test(is_committee) - matches committee_documents_view's
-    existing "open read, staff write" split just above: any active member
-    can view the vault, but only staff can change what's in it."""
-    if not request.user.is_staff:
+    """Deletes a document from the vault. Committee-gated in-body rather
+    than via @user_passes_test(is_committee) - matches
+    committee_documents_view's "open read, committee write" split just
+    above: any active member can view the vault, but only committee can
+    change what's in it."""
+    if not is_committee(request.user):
         messages.error(request, "Only committee members can delete documents.")
         return redirect("committee_documents")
 
@@ -813,7 +807,7 @@ def committee_emergency_roster(request):
     roster = (
         User.objects.filter(
             is_active=True,
-            profile__isnull=False,  # <-- THIS IS THE FIX
+            profile__is_singer=True,  # also guarantees a profile exists
         )
         .select_related("profile")
         .order_by("first_name")
@@ -878,7 +872,7 @@ def committee_financials_view(request):
     # --- 2. BUILD THE ROSTER DISPLAY (GET) ---
     # Fetch all active singers and pre-fetch their profiles to save database hits
     active_users = (
-        User.objects.filter(is_active=True)
+        User.objects.filter(is_active=True, profile__is_singer=True)
         .select_related("profile")
         .order_by("first_name")
     )

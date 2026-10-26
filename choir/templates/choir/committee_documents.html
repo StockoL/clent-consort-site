@@ -8,7 +8,7 @@
 
 {% block members_content %}
   <div class="switcher">
-    {% if user.is_staff %}
+    {% if is_committee %}
     <section class="card flow" data-variant="invert">
       <h2 class="text-primary text-step-1 card-heading">Upload Document</h2>
 
@@ -52,7 +52,7 @@
               <a href="{{ doc.file.url }}" target="_blank" rel="noopener noreferrer" class="button btn-small" data-variant="outline">
                 <span aria-hidden="true">📄</span> View<span class="visually-hidden"> {{ doc.title }}</span>
               </a>
-              {% if user.is_staff %}
+              {% if is_committee %}
               <form method="POST" action="{% url 'committee_document_delete' doc.id %}" class="inline-form" data-confirm="Delete '{{ doc.title }}' from the vault?">
                 {% csrf_token %}
                 <button type="submit" class="button btn-small" data-variant="outline">
@@ -72,5 +72,5 @@
 {% endblock members_content %}
 
 {% block scripts %}
-{% if user.is_staff %}<script src="{% static 'js/confirm-forms.js' %}" defer></script>{% endif %}
+{% if is_committee %}<script src="{% static 'js/confirm-forms.js' %}" defer></script>{% endif %}
 {% endblock scripts %}

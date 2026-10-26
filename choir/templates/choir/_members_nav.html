@@ -6,9 +6,9 @@
     Projects, an event under Schedule, a poll under Polling, a payment
     under Financials.
 
-    Committee items show for user.is_staff (Build Order Phase 5 moves this
-    to the Committee group). Everyone else gets a Document Vault link,
-    since the vault stays readable by all active members.
+    Committee items show when is_committee (from the context processor;
+    see choir.permissions.is_committee). Everyone else gets a Document
+    Vault link, since the vault stays readable by all active members.
 {% endcomment %}
 {% with current=request.resolver_match.url_name %}
 <nav class="members-nav" aria-label="Members area">
@@ -18,7 +18,7 @@
         <li><a href="{% url 'member_polling' %}" class="members-nav__link"{% if current == 'member_polling' %} aria-current="page"{% endif %}>Looking Ahead</a></li>
         <li><a href="{% url 'settings' %}" class="members-nav__link"{% if current == 'settings' %} aria-current="page"{% endif %}>Settings</a></li>
 
-        {% if user.is_staff %}
+        {% if is_committee %}
         <li class="members-nav__group" id="members-nav-committee">Committee</li>
         <li><a href="{% url 'committee_hub' %}" class="members-nav__link"{% if current == 'committee_hub' %} aria-current="page"{% endif %}>Hub</a></li>
         <li><a href="{% url 'committee_inbox' %}" class="members-nav__link"{% if current == 'committee_inbox' %} aria-current="page"{% endif %}>Inbox{% if inbox_unhandled_count %}<span class="members-nav__count">{{ inbox_unhandled_count }}<span class="visually-hidden"> unhandled</span></span>{% endif %}</a></li>

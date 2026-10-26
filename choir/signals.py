@@ -4,6 +4,7 @@ from django.dispatch import receiver
 from django.utils import timezone
 
 from .models import Attendance, Event
+from .permissions import is_singer
 
 
 # 1. THE NEW SINGER TRIGGER
@@ -11,9 +12,10 @@ from .models import Attendance, Event
 def auto_add_new_user_to_future_events(sender, instance, created, **kwargs):
     """
     When a brand new User is created, automatically generate a 'PENDING'
-    RSVP for every event that hasn't happened yet.
+    RSVP for every event that hasn't happened yet - singers only (a new
+    profile is a singer by default; see MemberProfile.is_singer).
     """
-    if created:
+    if created and is_singer(instance):
         # Fetch all events happening from this exact moment onward
         upcoming_events = Event.objects.filter(date_time__gte=timezone.now())
 
@@ -38,10 +40,11 @@ def auto_add_existing_users_to_new_event(sender, instance, created, **kwargs):
     receiver used to live in choir/models.py and both fired on every new
     Event, colliding on Attendance.unique_together=("user", "event")).
     A superuser can also be an active choir member, so membership is
-    determined purely by is_active, not by account-privilege flags.
+    determined by is_active and MemberProfile.is_singer, not by
+    account-privilege flags.
     """
     if created:
-        active_singers = User.objects.filter(is_active=True)
+        active_singers = User.objects.filter(is_active=True, profile__is_singer=True)
 
         attendances_to_create = [
             Attendance(user=singer, event=instance, status="PENDING")

@@ -1,9 +1,9 @@
 {% extends 'choir/_members_base.html' %}
 
-{% block title %}{% if user.is_staff %}Committee Hub{% else %}Document Vault{% endif %} - Clent Consort{% endblock title %}
+{% block title %}{% if is_committee %}Committee Hub{% else %}Document Vault{% endif %} - Clent Consort{% endblock title %}
 
-{% block page_title %}{% if user.is_staff %}Committee Hub{% else %}Document Vault{% endif %}{% endblock page_title %}
-{% block page_lede %}{% if user.is_staff %}Administrative tools and reporting.{% else %}Committee minutes, policies and reports, open to every member.{% endif %}{% endblock page_lede %}
+{% block page_title %}{% if is_committee %}Committee Hub{% else %}Document Vault{% endif %}{% endblock page_title %}
+{% block page_lede %}{% if is_committee %}Administrative tools and reporting.{% else %}Committee minutes, policies and reports, open to every member.{% endif %}{% endblock page_lede %}
 
 {% block members_content %}
   <div class="grid hub-grid">
@@ -14,7 +14,7 @@
       <p class="text-small text-muted">Secure storage for meeting minutes and committee policies.</p>
     </a>
 
-    {% if user.is_staff %}
+    {% if is_committee %}
       <a href="{% url 'committee_inbox' %}" class="card flow flow--small text-center hub-grid__card" data-variant="invert">
         <div class="hub-grid__icon" aria-hidden="true">📥</div>
         <h2 class="text-primary text-step-0">Inbox{% if inbox_unhandled_count %} ({{ inbox_unhandled_count }} new){% endif %}</h2>
@@ -71,7 +71,7 @@
     {% endif %}
   </div>
 
-  {% if not user.is_staff %}
+  {% if not is_committee %}
   <p class="text-small text-muted">The committee's other tools are only available to committee members.</p>
   {% endif %}
 {% endblock members_content %}

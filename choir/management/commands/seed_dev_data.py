@@ -15,12 +15,13 @@ from datetime import timedelta
 
 from allauth.account.models import EmailAddress
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Group, User
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils import timezone
 
 from choir.models import AvailabilityPoll, Event, LearningAsset, Project, Repertoire
+from choir.permissions import COMMITTEE_GROUP
 
 DEV_PASSWORD = "choir-dev-password"
 
@@ -76,6 +77,9 @@ class Command(BaseCommand):
             # The post_save signal creates the profile; fill in the voice part.
             user.profile.voice_part = voice
             user.profile.save()
+        if committee:
+            # Committee access comes from the group (choir.permissions)
+            user.groups.add(Group.objects.get_or_create(name=COMMITTEE_GROUP)[0])
         EmailAddress.objects.get_or_create(
             user=user, email=email, defaults={"verified": True, "primary": True}
         )
