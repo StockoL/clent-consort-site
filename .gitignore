@@ -26,3 +26,7 @@ static_root/
 
 # Node (design token compiler only - build-tokens.js has no other deps)
 node_modules/
+# Local working docs and Claude Code config (kept out of the repo)
+.claude/
+docs/BUILD_ORDER.md
+docs/LEARNING_HUB_PLAYER.md
