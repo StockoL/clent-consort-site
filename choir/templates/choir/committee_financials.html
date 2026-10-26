@@ -4,9 +4,22 @@
 {% block title %}Financial Ledger - Clent Consort{% endblock title %}
 
 {% block page_title %}Financial Ledger{% endblock page_title %}
-{% block page_lede %}Subscription tracking for <strong class="text-warning">{{ current_term }}</strong>.{% endblock page_lede %}
+{% block page_lede %}Subscription tracking for <strong class="text-warning">{{ selected_term }}</strong>{% if selected_term != current_term %} (an earlier term; the current term is {{ current_term }}){% endif %}.{% endblock page_lede %}
 
 {% block members_content %}
+  {% if earlier_terms %}
+  <form method="GET" class="cluster ledger-term">
+    <label for="ledger-term" class="text-small">Term</label>
+    <select id="ledger-term" name="term">
+      <option value="{{ current_term }}"{% if selected_term == current_term %} selected{% endif %}>{{ current_term }} (current)</option>
+      {% for term in earlier_terms %}
+      <option value="{{ term }}"{% if selected_term == term %} selected{% endif %}>{{ term }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="button btn-small" data-variant="outline">Show</button>
+  </form>
+  {% endif %}
+
   <div class="card" data-variant="invert">
     <table class="data-table">
       <thead>
@@ -51,9 +64,10 @@
             <form method="POST" class="cluster">
               {% csrf_token %}
               <input type="hidden" name="member_id" value="{{ row.profile.id }}">
+              <input type="hidden" name="term_reference" value="{{ selected_term }}">
 
               <label for="amount-{{ row.profile.id }}" class="visually-hidden">Amount paid by {{ row.user.get_full_name }}</label>
-              <input type="number" id="amount-{{ row.profile.id }}" name="amount" value="50.00" step="0.01" class="compact-field" required>
+              <input type="number" id="amount-{{ row.profile.id }}" name="amount" value="{{ subscription_amount }}" step="0.01" class="compact-field" required>
 
               <label for="method-{{ row.profile.id }}" class="visually-hidden">Payment method</label>
               <select id="method-{{ row.profile.id }}" name="payment_method" class="compact-field">

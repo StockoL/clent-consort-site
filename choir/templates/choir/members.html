@@ -12,15 +12,17 @@
     <h2 class="text-primary text-step-1">{{ current_term }} Subscriptions Due</h2>
     <div class="flow flow--small">
       <p class="text-small">Please settle your termly subscription via BACS transfer.</p>
-      <p class="text-small">£50 for {{ current_term }}, please.</p>
+      <p class="text-small">£{{ choir_settings.subscription_amount }} for {{ current_term }}{% if choir_settings.subscription_deadline %} by {{ choir_settings.subscription_deadline|date:"j F Y" }}{% endif %}, please.</p>
     </div>
 
+    {% if choir_settings.bank_account_number %}
     <div class="subs-card__bank flow flow--small">
-      <p class="text-small"><strong>Account Name:</strong> Clent Consort </p>
-      <p class="text-small"><strong>Sort Code:</strong> 23-05-80 </p>
-      <p class="text-small"><strong>Account No:</strong> 58234028 </p>
+      <p class="text-small"><strong>Account Name:</strong> {{ choir_settings.bank_account_name }}</p>
+      <p class="text-small"><strong>Sort Code:</strong> {{ choir_settings.bank_sort_code }}</p>
+      <p class="text-small"><strong>Account No:</strong> {{ choir_settings.bank_account_number }}</p>
       <p class="text-small text-muted"><em>Reference: {{ user.last_name|upper }} SUBS</em></p>
     </div>
+    {% endif %}
   </div>
 {% endif %}
 

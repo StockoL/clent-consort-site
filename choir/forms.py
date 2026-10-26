@@ -6,6 +6,7 @@ from .models import (
     AuditionApplication,
     AvailabilityPoll,
     ChoirCommunication,
+    ChoirSettings,
     CommitteeDocument,
     Enquiry,
     Event,
@@ -203,6 +204,41 @@ class AvailabilityPollForm(forms.ModelForm):
             self.fields["project"].queryset = Project.objects.filter(
                 models.Q(id=self.instance.project_id) | models.Q(status="PLANNING")
             )
+
+
+class ChoirSettingsForm(forms.ModelForm):
+    """The committee Settings page. events_page_from_db is left out until
+    Build Order Phase 9 builds the page it switches on."""
+
+    class Meta:
+        model = ChoirSettings
+        fields = [
+            "current_term",
+            "subscription_amount",
+            "subscription_deadline",
+            "bank_account_name",
+            "bank_sort_code",
+            "bank_account_number",
+            "youtube_url",
+            "instagram_url",
+            "facebook_url",
+        ]
+        labels = {
+            "youtube_url": "YouTube",
+            "instagram_url": "Instagram",
+            "facebook_url": "Facebook",
+        }
+        widgets = {
+            "current_term": forms.TextInput(attrs={"class": "form-control"}),
+            "subscription_amount": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
+            "subscription_deadline": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+            "bank_account_name": forms.TextInput(attrs={"class": "form-control"}),
+            "bank_sort_code": forms.TextInput(attrs={"class": "form-control", "placeholder": "00-00-00"}),
+            "bank_account_number": forms.TextInput(attrs={"class": "form-control", "inputmode": "numeric"}),
+            "youtube_url": forms.URLInput(attrs={"class": "form-control", "placeholder": "https://"}),
+            "instagram_url": forms.URLInput(attrs={"class": "form-control", "placeholder": "https://"}),
+            "facebook_url": forms.URLInput(attrs={"class": "form-control", "placeholder": "https://"}),
+        }
 
 
 class SubscriptionPaymentForm(forms.ModelForm):

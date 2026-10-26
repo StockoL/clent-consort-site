@@ -1,0 +1,77 @@
+{% extends 'choir/_members_base.html' %}
+
+{% block title %}Choir Settings - Clent Consort{% endblock title %}
+
+{% block page_title %}Choir Settings{% endblock page_title %}
+{% block page_lede %}The term, subscription and bank details members see, and the footer's social links.{% endblock page_lede %}
+
+{% block members_content %}
+  <section class="card flow" data-variant="invert">
+    <form method="POST" class="flow">
+      {% csrf_token %}
+
+      <fieldset class="form-fieldset flow flow--small">
+        <legend><h2 class="text-primary text-step-1 card-heading">Subscriptions</h2></legend>
+
+        <div class="form-group flow flow--small">
+          <label for="{{ form.current_term.id_for_label }}" class="form-label text-small">Current term</label>
+          {{ form.current_term }}
+          <p class="text-small settings-hint">Changing the term resets everyone to Unpaid for the new term; previous terms' payments are kept.</p>
+          <div class="form-error">{{ form.current_term.errors }}</div>
+        </div>
+
+        <div class="switcher field-row">
+          <div class="form-group flow flow--small">
+            <label for="{{ form.subscription_amount.id_for_label }}" class="form-label text-small">Amount per term (£)</label>
+            {{ form.subscription_amount }}
+            <div class="form-error">{{ form.subscription_amount.errors }}</div>
+          </div>
+          <div class="form-group flow flow--small">
+            <label for="{{ form.subscription_deadline.id_for_label }}" class="form-label text-small">Pay by (optional)</label>
+            {{ form.subscription_deadline }}
+            <div class="form-error">{{ form.subscription_deadline.errors }}</div>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="form-fieldset flow flow--small">
+        <legend><h2 class="text-primary text-step-1 card-heading">Bank details</h2></legend>
+        <p class="text-small settings-hint">Shown on the member dashboard's subscription card. Leave the account number empty to hide them.</p>
+
+        <div class="form-group flow flow--small">
+          <label for="{{ form.bank_account_name.id_for_label }}" class="form-label text-small">Account name</label>
+          {{ form.bank_account_name }}
+          <div class="form-error">{{ form.bank_account_name.errors }}</div>
+        </div>
+
+        <div class="switcher field-row">
+          <div class="form-group flow flow--small">
+            <label for="{{ form.bank_sort_code.id_for_label }}" class="form-label text-small">Sort code</label>
+            {{ form.bank_sort_code }}
+            <div class="form-error">{{ form.bank_sort_code.errors }}</div>
+          </div>
+          <div class="form-group flow flow--small">
+            <label for="{{ form.bank_account_number.id_for_label }}" class="form-label text-small">Account number</label>
+            {{ form.bank_account_number }}
+            <div class="form-error">{{ form.bank_account_number.errors }}</div>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="form-fieldset flow flow--small">
+        <legend><h2 class="text-primary text-step-1 card-heading">Social links</h2></legend>
+        <p class="text-small settings-hint">Each icon appears in the site footer once its link is filled in.</p>
+
+        {% for field in form %}{% if field.name in "youtube_url instagram_url facebook_url" %}
+        <div class="form-group flow flow--small">
+          <label for="{{ field.id_for_label }}" class="form-label text-small">{{ field.label }}</label>
+          {{ field }}
+          <div class="form-error">{{ field.errors }}</div>
+        </div>
+        {% endif %}{% endfor %}
+      </fieldset>
+
+      <button type="submit" class="button align-start" data-variant="primary">Save Settings</button>
+    </form>
+  </section>
+{% endblock members_content %}

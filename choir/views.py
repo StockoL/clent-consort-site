@@ -1,5 +1,6 @@
 import json
 from datetime import timedelta
+from urllib.parse import urlencode
 from datetime import timezone as py_timezone
 
 from django.conf import settings
@@ -8,8 +9,9 @@ from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
-from django.http import HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import strip_tags
 from django.views.decorators.http import require_POST
@@ -23,9 +25,12 @@ from .forms import (
 )
 from .models import (
     Attendance,
+    AuditionApplication,
     AvailabilityPoll,
     AvailabilityResponse,
+    ChoirSettings,
     CommitteeDocument,
+    Enquiry,
     Event,
     LearningAsset,
     Project,
@@ -135,7 +140,7 @@ def dashboard_view(request):
     """
     active_projects = list(Project.get_active_projects())
 
-    current_term = settings.CURRENT_TERM
+    current_term = ChoirSettings.load().current_term
     has_paid_current_term = SubscriptionPayment.objects.filter(
         member=request.user.profile, term_reference=current_term
     ).exists()
@@ -827,7 +832,14 @@ def committee_financials_view(request):
     from .forms import SubscriptionPaymentForm
     from .models import MemberProfile
 
-    current_term = settings.CURRENT_TERM
+    current_term = ChoirSettings.load().current_term
+    # ?term= shows an earlier term's ledger; payments logged from that view
+    # are logged against that term (the hidden term_reference field).
+    selected_term = request.GET.get("term") or current_term
+    terms = sorted(
+        set(SubscriptionPayment.objects.values_list("term_reference", flat=True))
+        - {current_term}
+    )
 
     # --- 1. HANDLE INCOMING PAYMENTS (POST) ---
     if request.method == "POST":
@@ -858,6 +870,9 @@ def committee_financials_view(request):
                 f"Could not log payment for {profile.user.get_full_name()}: "
                 f"{form.errors.as_text()}",
             )
+        logged_term = post_data["term_reference"]
+        if logged_term != current_term:
+            return redirect(f"{reverse('committee_financials')}?{urlencode({'term': logged_term})}")
         return redirect("committee_financials")
 
     # --- 2. BUILD THE ROSTER DISPLAY (GET) ---
@@ -877,7 +892,7 @@ def committee_financials_view(request):
             is_exempt = user.profile.is_exempt_from_subs
 
             payment = SubscriptionPayment.objects.filter(
-                member=user.profile, term_reference=current_term
+                member=user.profile, term_reference=selected_term
             ).first()
 
             roster.append(
@@ -892,8 +907,79 @@ def committee_financials_view(request):
     context = {
         "roster": roster,
         "current_term": current_term,
+        "selected_term": selected_term,
+        "earlier_terms": terms,
+        "subscription_amount": ChoirSettings.load().subscription_amount,
     }
     return render(request, "choir/committee_financials.html", context)
+
+
+# =============================================================================
+# 4.3 COMMITTEE SETTINGS & INBOX
+# =============================================================================
+@login_required
+@user_passes_test(is_committee)
+def committee_settings_view(request):
+    """Edit the ChoirSettings row: current term, subscription amount and
+    deadline, bank details, footer social links."""
+    from .forms import ChoirSettingsForm
+
+    choir_settings = ChoirSettings.load()
+
+    if request.method == "POST":
+        form = ChoirSettingsForm(request.POST, instance=choir_settings)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Choir settings saved.")
+            return redirect("committee_settings")
+    else:
+        form = ChoirSettingsForm(instance=choir_settings)
+
+    return render(request, "choir/committee_settings.html", {"form": form})
+
+
+INBOX_MODELS = {"enquiry": Enquiry, "audition": AuditionApplication}
+
+
+@login_required
+@user_passes_test(is_committee)
+def committee_inbox_view(request):
+    """Contact-form enquiries and audition applications in one list:
+    unhandled first, newest first within each group."""
+    items = [
+        {"kind": "enquiry", "obj": enquiry}
+        for enquiry in Enquiry.objects.select_related("handled_by")
+    ] + [
+        {"kind": "audition", "obj": application}
+        for application in AuditionApplication.objects.select_related("handled_by")
+    ]
+    items.sort(key=lambda item: item["obj"].created_at, reverse=True)
+    items.sort(key=lambda item: item["obj"].handled)  # stable: keeps newest first
+
+    return render(request, "choir/committee_inbox.html", {"items": items})
+
+
+@login_required
+@user_passes_test(is_committee)
+@require_POST
+def committee_inbox_toggle_view(request, kind, item_id):
+    """Marks an enquiry or audition application handled (recording who), or
+    back to unhandled if it was marked by mistake."""
+    model = INBOX_MODELS.get(kind)
+    if model is None:
+        raise Http404
+    item = get_object_or_404(model, id=item_id)
+
+    item.handled = not item.handled
+    item.handled_by = request.user if item.handled else None
+    item.save(update_fields=["handled", "handled_by"])
+
+    messages.success(
+        request,
+        f"{item.name}'s {'enquiry' if kind == 'enquiry' else 'application'} "
+        f"marked {'handled' if item.handled else 'not handled'}.",
+    )
+    return redirect("committee_inbox")
 
 
 @login_required

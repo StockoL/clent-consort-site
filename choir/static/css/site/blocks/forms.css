@@ -301,3 +301,8 @@
   color: inherit;
   font-weight: normal;
 }
+
+/* A section heading inside a legend spans the form like other card headings */
+.form-fieldset > legend:has(> h2) {
+  width: 100%;
+}

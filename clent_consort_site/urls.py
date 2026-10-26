@@ -19,6 +19,8 @@ from choir.views import (
     committee_financials_edit_view,
     committee_financials_view,
     committee_hub,
+    committee_inbox_toggle_view,
+    committee_inbox_view,
     committee_poll_edit_view,
     committee_poll_manage_view,
     committee_poll_toggle_view,
@@ -26,6 +28,7 @@ from choir.views import (
     committee_projects_view,
     committee_rsvp_report,
     committee_schedule_event,  # <-- ADD THIS IMPORT LINE HERE
+    committee_settings_view,
     committee_toggle_exempt_view,
     committee_update_rsvp_override,
     contact_view,
@@ -86,6 +89,13 @@ urlpatterns = [
         name="committee_poll_toggle",
     ),
     path("members/committee/rsvps/", committee_rsvp_report, name="committee_rsvps"),
+    path("members/committee/settings/", committee_settings_view, name="committee_settings"),
+    path("members/committee/inbox/", committee_inbox_view, name="committee_inbox"),
+    path(
+        "members/committee/inbox/<str:kind>/<int:item_id>/toggle/",
+        committee_inbox_toggle_view,
+        name="committee_inbox_toggle",
+    ),
     path(
         "members/committee/broadcast/", committee_broadcast, name="committee_broadcast"
     ),

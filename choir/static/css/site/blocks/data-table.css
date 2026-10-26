@@ -140,3 +140,13 @@
     max-width: none;
   }
 }
+
+/* Ledger: choose which term's payments to show */
+.ledger-term {
+  --gutter: 0.5rem;
+}
+
+.ledger-term select {
+  min-height: 2.5rem;
+  padding: 0.25rem 0.5rem;
+}
