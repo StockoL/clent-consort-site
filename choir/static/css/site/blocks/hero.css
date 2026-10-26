@@ -1,5 +1,5 @@
 /* ==========================================================================
-   BLOCK: HERO (decanted from style.css "v1", unchanged)
+   BLOCK: HERO (decanted from style.css "v1"; entrance animation removed)
    ========================================================================== */
 
 .hero-cover {
@@ -72,32 +72,4 @@
   font-size: clamp(1.5rem, 4vw, 2.5rem);
   max-width: 40ch;
   line-height: 1.2;
-}
-
-/* --- Entrance animation --- */
-@keyframes heroEntrance {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-    filter: blur(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-    filter: blur(0);
-  }
-}
-
-.hero-cover h1 {
-  animation: heroEntrance 1.2s ease-out forwards;
-}
-
-.hero-cover p {
-  opacity: 0;
-  animation: heroEntrance 1.2s ease-out 0.4s forwards;
-}
-
-.hero-cover .button {
-  opacity: 0;
-  animation: heroEntrance 1.2s ease-out 0.8s forwards;
 }

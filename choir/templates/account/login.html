@@ -39,8 +39,14 @@
       </a>
     </div>
 
-    {% if form.errors %}
-    <div class="text-error text-center" style="--flow-space: var(--space-2xs)">
+    {% if form.non_field_errors %}
+    <div class="text-error text-center" role="alert">
+      {% for error in form.non_field_errors %}
+      <p class="text-error">{{ error }}</p>
+      {% endfor %}
+    </div>
+    {% elif form.errors %}
+    <div class="text-error text-center" role="alert">
       <p class="text-error">Your email and password didn't match. Please try again.</p>
     </div>
     {% endif %}
