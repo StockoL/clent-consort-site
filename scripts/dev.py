@@ -27,6 +27,11 @@ def manage(*args, env=None):
 
 
 def test():
+    # Templates resolve {% static %} through the manifest storage, so the
+    # manifest must list every static file before the tests render pages.
+    status = manage("collectstatic", "--noinput", "--verbosity", "0")
+    if status:
+        return status
     return manage("test")
 
 
