@@ -1,9 +1,11 @@
 import tempfile
+from io import StringIO
 from datetime import timedelta
 
 from allauth.account.models import EmailAddress
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management import CommandError, call_command
 from django.db import IntegrityError, transaction
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -803,3 +805,54 @@ class CommitteeRsvpProjectScopingTests(TestCase):
 
         response = self.client.get(reverse("committee_rsvps"))
         self.assertEqual(response.context["default_event_id"], soon.id)
+
+
+class SeedDevDataCommandTests(TestCase):
+    """seed_dev_data must refuse to run outside DEBUG (it creates users with
+    a published password), and be safe to re-run locally."""
+
+    def test_refuses_to_run_without_debug(self):
+        with self.assertRaises(CommandError):
+            call_command("seed_dev_data", stdout=StringIO())
+        self.assertFalse(User.objects.filter(username="committee").exists())
+
+    @override_settings(DEBUG=True)
+    def test_creates_the_seed_data(self):
+        call_command("seed_dev_data", stdout=StringIO())
+
+        committee = User.objects.get(username="committee")
+        self.assertTrue(committee.is_staff)
+        self.assertEqual(User.objects.filter(is_staff=False).count(), 3)
+        self.assertTrue(
+            EmailAddress.objects.filter(email="soprano@example.com", verified=True).exists()
+        )
+
+        active = Project.objects.get(status="ACTIVE")
+        self.assertEqual(active.events.count(), 3)
+        self.assertEqual(active.events.filter(date_time__lt=timezone.now()).count(), 1)
+        self.assertEqual(active.repertoire.count(), 2)
+        self.assertEqual(LearningAsset.objects.count(), 2)
+        # Users were created before the events, so every user has an RSVP for each.
+        self.assertEqual(Attendance.objects.count(), 4 * 3)
+
+        planning = Project.objects.get(status="PLANNING")
+        self.assertTrue(planning.polls.filter(is_open=True).exists())
+
+    @override_settings(DEBUG=True)
+    def test_is_idempotent(self):
+        call_command("seed_dev_data", stdout=StringIO())
+        call_command("seed_dev_data", stdout=StringIO())
+
+        self.assertEqual(User.objects.count(), 4)
+        self.assertEqual(Event.objects.count(), 3)
+        self.assertEqual(AvailabilityPoll.objects.count(), 1)
+
+    @override_settings(DEBUG=True)
+    def test_seeded_member_can_log_in(self):
+        call_command("seed_dev_data", stdout=StringIO())
+        response = self.client.post(
+            reverse("account_login"),
+            {"login": "soprano@example.com", "password": "choir-dev-password"},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("_auth_user_id", self.client.session)
