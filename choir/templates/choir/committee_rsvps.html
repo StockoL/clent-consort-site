@@ -1,30 +1,25 @@
-{% extends 'choir/base.html' %}
+{% extends 'choir/_members_base.html' %}
+{% load static %}
 
 {% block title %}RSVP Dashboard - Clent Consort{% endblock title %}
 
-{% block content %}
-<div class="wrapper flow section-padding">
-  <div class="text-center">
-    <h1 class="text-primary">RSVP Dashboard</h1>
-    <p>Live event logistics and overall membership attendance tracking.</p>
-    
-    <a href="{% url 'committee_hub' %}" class="button btn-small" data-variant="outline" style="text-decoration: none; display: inline-block; margin-block-start: var(--space-2xs);">
-      ← Back to Hub
-    </a>
-    <div style="margin-top: 1rem; display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap;">
-      <button onclick="switchMasterView('events')" id="master-btn-events" class="button btn-small" data-variant="primary">Event Logistics</button>
-      <button onclick="switchMasterView('stats')" id="master-btn-stats" class="button btn-small" data-variant="outline">Member Overview</button>
-    </div>
+{% block page_title %}RSVP Dashboard{% endblock page_title %}
+{% block page_lede %}Live event logistics and overall membership attendance tracking.{% endblock page_lede %}
+
+{% block members_content %}
+  <div class="cluster">
+    <button type="button" data-master-view="events" aria-pressed="true" class="button btn-small" data-variant="primary">Event Logistics</button>
+    <button type="button" data-master-view="stats" aria-pressed="false" class="button btn-small" data-variant="outline">Member Overview</button>
   </div>
 
-  <div id="panel-events" class="flow" style="--flow-space: var(--space-m)">
-    <section class="card" data-variant="invert" style="padding: 1.5rem; max-width: 60rem; margin-inline: auto; width: 100%;">
-      
+  <div id="panel-events">
+    <section class="card flow rsvp-dashboard__card" data-variant="invert">
+
       {% csrf_token %}
 
-      <div style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1.5rem; margin-bottom: 1rem;">
-        <label for="project-selector" class="text-small text-muted" style="display: block; margin-bottom: 0.5rem;">Select Project:</label>
-        <select id="project-selector" onchange="window.location.href = '?project=' + this.value" style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.3); border: 1px solid #c9a45e; color: white; border-radius: 4px; font-size: 1rem; cursor: pointer;">
+      <div class="rsvp-dashboard__picker flow flow--small">
+        <label for="project-selector" class="text-small text-muted">Select Project:</label>
+        <select id="project-selector" data-project-select>
           <option value="" {% if not selected_project_id %}selected{% endif %}>All Projects</option>
           {% for project in projects %}
             <option value="{{ project.id }}" {% if selected_project_id == project.id|stringformat:"s" %}selected{% endif %}>{{ project.name }} ({{ project.get_status_display }})</option>
@@ -32,9 +27,9 @@
         </select>
       </div>
 
-      <div style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1.5rem; margin-bottom: 1rem;">
-        <label for="event-selector" class="text-small text-muted" style="display: block; margin-bottom: 0.5rem;">Select Event:</label>
-        <select id="event-selector" onchange="switchEvent(this.value)" style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.3); border: 1px solid #c9a45e; color: white; border-radius: 4px; font-size: 1rem; cursor: pointer;">
+      <div class="rsvp-dashboard__picker flow flow--small">
+        <label for="event-selector" class="text-small text-muted">Select Event:</label>
+        <select id="event-selector" data-event-select>
           {% for data in report_data %}
             <option value="{{ data.event.id }}" {% if data.event.id == default_event_id %}selected{% endif %}>{{ data.event.date_time|date:"d M Y" }} - {{ data.event.get_event_type_display }} ({{ data.event.location }})</option>
           {% empty %}
@@ -44,37 +39,25 @@
       </div>
 
       {% for data in report_data %}
-      <div id="event-wrapper-{{ data.event.id }}" class="event-wrapper" {% if data.event.id != default_event_id %}style="display: none;"{% endif %}>
-        
-        <div class="rsvp-tab-container" style="margin-bottom: 1.5rem;">
-          <button id="btn-{{ data.event.id }}-attending" onclick="switchTab('{{ data.event.id }}', 'attending')" class="rsvp-tab rsvp-btn-{{ data.event.id }} active">
+      <div id="event-wrapper-{{ data.event.id }}" class="event-wrapper flow"{% if data.event.id != default_event_id %} hidden{% endif %}>
+
+        <div class="rsvp-tab-container">
+          <button type="button" id="btn-{{ data.event.id }}-attending" data-rsvp-tab="attending" data-event-id="{{ data.event.id }}" aria-pressed="true" class="rsvp-tab active">
             Attend ({{ data.attending.count }})
           </button>
-          <button id="btn-{{ data.event.id }}-absent" onclick="switchTab('{{ data.event.id }}', 'absent')" class="rsvp-tab rsvp-btn-{{ data.event.id }}">
+          <button type="button" id="btn-{{ data.event.id }}-absent" data-rsvp-tab="absent" data-event-id="{{ data.event.id }}" aria-pressed="false" class="rsvp-tab">
             Absent ({{ data.absent.count }})
           </button>
-          <button id="btn-{{ data.event.id }}-pending" onclick="switchTab('{{ data.event.id }}', 'pending')" class="rsvp-tab rsvp-btn-{{ data.event.id }}">
+          <button type="button" id="btn-{{ data.event.id }}-pending" data-rsvp-tab="pending" data-event-id="{{ data.event.id }}" aria-pressed="false" class="rsvp-tab">
             Pending ({{ data.pending.count }})
           </button>
         </div>
 
-        <div id="list-{{ data.event.id }}-attending" class="rsvp-list-{{ data.event.id }}">
+        <div id="list-{{ data.event.id }}-attending">
           {% if data.attending %}
-            <ul style="column-count: 2; column-gap: 2rem; list-style-type: none; padding-left: 0;" class="text-small">
+            <ul class="rsvp-list text-small" role="list">
               {% for rsvp in data.attending %}
-                <li style="padding: 0.5rem 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0.5rem; break-inside: avoid;">
-                  
-                  <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ rsvp.user.get_full_name }}">
-                    ✅ {{ rsvp.user.first_name }} {{ rsvp.user.last_name }}
-                  </span>
-                  
-                  <select onchange="overrideRSVP({{ data.event.id }}, {{ rsvp.id }}, this)" style="width: auto; min-width: 110px; padding: 0.3rem 0.5rem; background: rgba(0,0,0,0.5); color: white; border: 1px solid #c9a45e; border-radius: 4px; font-size: 0.85rem; cursor: pointer;">
-                    <option value="ATTENDING" selected>Attending</option>
-                    <option value="ABSENT">Absent</option>
-                    <option value="PENDING">Pending</option>
-                  </select>
-                  
-                </li>
+                {% include 'choir/_rsvp_list_item.html' with status='attending' icon='✅' %}
               {% endfor %}
             </ul>
           {% else %}
@@ -82,23 +65,11 @@
           {% endif %}
         </div>
 
-        <div id="list-{{ data.event.id }}-absent" class="rsvp-list-{{ data.event.id }}" style="display: none;">
+        <div id="list-{{ data.event.id }}-absent" hidden>
           {% if data.absent %}
-            <ul style="column-count: 2; column-gap: 2rem; list-style-type: none; padding-left: 0;" class="text-small">
+            <ul class="rsvp-list text-small" role="list">
               {% for rsvp in data.absent %}
-                <li style="padding: 0.5rem 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0.5rem; break-inside: avoid; color: var(--colors-danger-text);">
-                  
-                  <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ rsvp.user.get_full_name }}">
-                    ❌ {{ rsvp.user.first_name }} {{ rsvp.user.last_name }}
-                  </span>
-                  
-                  <select onchange="overrideRSVP({{ data.event.id }}, {{ rsvp.id }}, this)" style="width: auto; min-width: 110px; padding: 0.3rem 0.5rem; background: rgba(0,0,0,0.5); color: white; border: 1px solid #c9a45e; border-radius: 4px; font-size: 0.85rem; cursor: pointer;">
-                    <option value="ATTENDING">Attending</option>
-                    <option value="ABSENT" selected>Absent</option>
-                    <option value="PENDING">Pending</option>
-                  </select>
-                  
-                </li>
+                {% include 'choir/_rsvp_list_item.html' with status='absent' icon='❌' %}
               {% endfor %}
             </ul>
           {% else %}
@@ -106,28 +77,16 @@
           {% endif %}
         </div>
 
-        <div id="list-{{ data.event.id }}-pending" class="rsvp-list-{{ data.event.id }}" style="display: none;">
+        <div id="list-{{ data.event.id }}-pending" hidden>
           {% if data.pending %}
-            <div style="margin-bottom: 1rem; text-align: center;">
-               <a href="mailto:?bcc={{ data.pending_emails }}&subject=RSVP Reminder: {{ data.event.get_event_type_display }}&body=Hi everyone,%0A%0APlease could you log into the Clent Consort portal and update your RSVP for the upcoming {{ data.event.get_event_type_display }}.%0A%0AThank you!" class="button btn-small" data-variant="outline" style="font-size: 0.8rem; padding: 0.25rem 0.5rem; display: inline-block; text-decoration: none;">
+            <div class="rsvp-list__reminder">
+               <a href="mailto:?bcc={{ data.pending_emails }}&subject=RSVP Reminder: {{ data.event.get_event_type_display }}&body=Hi everyone,%0A%0APlease could you log into the Clent Consort portal and update your RSVP for the upcoming {{ data.event.get_event_type_display }}.%0A%0AThank you!" class="button btn-small" data-variant="outline">
                  <span aria-hidden="true">✉️</span> Email Reminder to {{ data.pending.count }} Members
                </a>
             </div>
-            <ul style="column-count: 2; column-gap: 2rem; list-style-type: none; padding-left: 0;" class="text-small">
+            <ul class="rsvp-list text-small" role="list">
               {% for rsvp in data.pending %}
-                <li style="padding: 0.5rem 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0.5rem; break-inside: avoid; color: var(--colors-warning-text);">
-                  
-                  <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ rsvp.user.get_full_name }}">
-                    ⏳ {{ rsvp.user.first_name }} {{ rsvp.user.last_name }}
-                  </span>
-                  
-                  <select onchange="overrideRSVP({{ data.event.id }}, {{ rsvp.id }}, this)" style="width: auto; min-width: 110px; padding: 0.3rem 0.5rem; background: rgba(0,0,0,0.5); color: white; border: 1px solid #c9a45e; border-radius: 4px; font-size: 0.85rem; cursor: pointer;">
-                    <option value="ATTENDING">Attending</option>
-                    <option value="ABSENT">Absent</option>
-                    <option value="PENDING" selected>Pending</option>
-                  </select>
-                  
-                </li>
+                {% include 'choir/_rsvp_list_item.html' with status='pending' icon='⏳' %}
               {% endfor %}
             </ul>
           {% else %}
@@ -140,154 +99,44 @@
     </section>
   </div>
 
-  <div id="panel-stats" class="flow" style="display: none; --flow-space: var(--space-m)">
-    <div class="card" data-variant="invert" style="overflow-x: auto; max-width: 60rem; margin-inline: auto; width: 100%;">
-      <h3 class="text-primary text-center" style="margin-bottom: 1.5rem;">All-Time Attendance Overview</h3>
-      <table style="width: 100%; border-collapse: collapse; text-align: left;">
+  <div id="panel-stats" hidden>
+    <div class="card flow rsvp-dashboard__card" data-variant="invert">
+      <h2 class="text-primary text-step-1 text-center">All-Time Attendance Overview</h2>
+      <table class="data-table">
         <thead>
-          <tr style="border-bottom: 1px solid rgba(255,255,255,0.2);">
-            <th style="padding: 1rem; color: #c9a45e;">Singer</th>
-            <th style="padding: 1rem; color: #c9a45e; text-align: center;">Rate</th>
-            <th style="padding: 1rem; color: #c9a45e; text-align: center;">Attended</th>
-            <th style="padding: 1rem; color: #c9a45e; text-align: center;">Absent</th>
-            <th style="padding: 1rem; color: #c9a45e; text-align: center;">Pending</th>
+          <tr>
+            <th>Singer</th>
+            <th data-align="center">Rate</th>
+            <th data-align="center">Attended</th>
+            <th data-align="center">Absent</th>
+            <th data-align="center">Pending</th>
           </tr>
         </thead>
         <tbody>
           {% for stat in member_stats %}
-          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-            <td style="padding: 1rem;">
-              <strong>{{ stat.user.first_name }} {{ stat.user.last_name }}</strong><br>
-              <span class="text-small text-muted">{{ stat.profile.get_voice_part_display }}</span>
+          <tr>
+            <td data-label="Singer">
+              <div>
+                <strong>{{ stat.user.first_name }} {{ stat.user.last_name }}</strong><br>
+                <span class="text-small text-muted">{{ stat.profile.get_voice_part_display }}</span>
+              </div>
             </td>
-            
-            <td style="padding: 1rem; text-align: center;">
-              {% if stat.rate >= 80 %}
-                <span style="color: var(--colors-success-text); font-weight: bold;">{{ stat.rate }}%</span>
-              {% elif stat.rate >= 50 %}
-                <span style="color: var(--colors-warning-text); font-weight: bold;">{{ stat.rate }}%</span>
-              {% else %}
-                <span style="color: var(--colors-danger-text); font-weight: bold;">{{ stat.rate }}%</span>
-              {% endif %}
+
+            <td data-label="Rate" data-align="center">
+              <strong data-tone="{% if stat.rate >= 80 %}success{% elif stat.rate >= 50 %}warning{% else %}danger{% endif %}">{{ stat.rate }}%</strong>
             </td>
-            
-            <td style="padding: 1rem; text-align: center;">{{ stat.attending }}</td>
-            <td style="padding: 1rem; text-align: center; color: var(--colors-danger-text);">{{ stat.absent }}</td>
-            <td style="padding: 1rem; text-align: center; color: var(--colors-warning-text);">{{ stat.pending }}</td>
+
+            <td data-label="Attended" data-align="center">{{ stat.attending }}</td>
+            <td data-label="Absent" data-align="center" data-tone="danger">{{ stat.absent }}</td>
+            <td data-label="Pending" data-align="center" data-tone="warning">{{ stat.pending }}</td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
   </div>
+{% endblock members_content %}
 
-</div>
-
-<!-- AJAX script to handle silent database updates and live DOM manipulation -->
-<script>
-function overrideRSVP(eventId, attendanceId, selectElement) {
-    const newStatus = selectElement.value.toLowerCase(); // 'attending', 'absent', or 'pending'
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-    const listItem = selectElement.closest('li'); // Grab the entire row for this singer
-
-    // Visual feedback: dim the dropdown slightly while saving
-    selectElement.style.opacity = '0.5';
-
-    fetch(`/members/committee/rsvps/${attendanceId}/override/`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
-        },
-        body: JSON.stringify({ status: selectElement.value })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // 1. Success Flash
-            selectElement.style.opacity = '1';
-            selectElement.style.backgroundColor = 'var(--colors-success)';
-            selectElement.style.color = '#fff';
-            setTimeout(() => {
-                selectElement.style.backgroundColor = 'rgba(0,0,0,0.5)';
-                selectElement.style.color = 'white';
-            }, 1000);
-
-            // 2. DOM Movement Logic
-            const targetContainer = document.getElementById(`list-${eventId}-${newStatus}`);
-            let targetUl = targetContainer.querySelector('ul');
-
-            // If the target list is currently displaying an "empty" message, remove it and create a fresh <ul>
-            if (!targetUl) {
-                const emptyMessage = targetContainer.querySelector('p');
-                if (emptyMessage) emptyMessage.remove();
-                
-                targetUl = document.createElement('ul');
-                targetUl.style.cssText = "column-count: 2; column-gap: 2rem; list-style-type: none; padding-left: 0;";
-                targetUl.className = "text-small";
-                targetContainer.appendChild(targetUl);
-            }
-
-            // appendChild natively removes the element from its old list and snaps it to the bottom of the new one
-            targetUl.appendChild(listItem);
-
-            // 3. Visual Polish: Update colors and emojis dynamically
-            const nameSpan = listItem.querySelector('span');
-            if (newStatus === 'attending') {
-                listItem.style.color = ''; // Reset to default white
-                nameSpan.innerHTML = nameSpan.innerHTML.replace(/^[❌⏳✅]\s*/, '✅ ');
-            } else if (newStatus === 'absent') {
-                listItem.style.color = 'var(--colors-danger-text)';
-                nameSpan.innerHTML = nameSpan.innerHTML.replace(/^[❌⏳✅]\s*/, '❌ ');
-            } else if (newStatus === 'pending') {
-                listItem.style.color = 'var(--colors-warning-text)';
-                nameSpan.innerHTML = nameSpan.innerHTML.replace(/^[❌⏳✅]\s*/, '⏳ ');
-            }
-
-            // 4. Recalculate button counts and clean up empty lists
-            updateLiveCounts(eventId);
-
-        } else {
-            alert('Failed to update RSVP. Please refresh and try again.');
-            selectElement.style.opacity = '1';
-        }
-    })
-    .catch(error => {
-        console.error("Error updating RSVP:", error);
-        alert("A network error occurred. Please try again.");
-        selectElement.style.opacity = '1';
-    });
-}
-
-function updateLiveCounts(eventId) {
-    const statuses = ['attending', 'absent', 'pending'];
-    const labels = { 'attending': 'Attend', 'absent': 'Absent', 'pending': 'Pending' };
-    const emptyMessages = {
-        'attending': 'No attendees confirmed yet.',
-        'absent': 'No members have marked absent.',
-        'pending': 'Everyone has responded. Great job!'
-    };
-
-    statuses.forEach(status => {
-        const container = document.getElementById(`list-${eventId}-${status}`);
-        const ul = container.querySelector('ul');
-        const count = ul ? ul.querySelectorAll('li').length : 0;
-
-        // Update the numbers inside the tabs
-        const btn = document.getElementById(`btn-${eventId}-${status}`);
-        if (btn) {
-            btn.innerText = `${labels[status]} (${count})`;
-        }
-
-        // If a list just dropped to 0, destroy the <ul> and show the empty message
-        if (count === 0 && ul) {
-            ul.remove();
-            const p = document.createElement('p');
-            p.className = "text-muted text-small text-center";
-            p.innerText = emptyMessages[status];
-            container.appendChild(p);
-        }
-    });
-}
-</script>
-{% endblock content %}
+{% block scripts %}
+<script src="{% static 'js/rsvp-dashboard.js' %}" defer></script>
+{% endblock scripts %}

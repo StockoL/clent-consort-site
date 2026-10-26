@@ -1,0 +1,156 @@
+/* ==========================================================================
+   BLOCK: MEMBERS SHELL (project-specific)
+   ==========================================================================
+   The one layout every logged-in page renders in (_members_base.html):
+   a page header, the members navigation, and the page's own content.
+   From 60rem the navigation is a left sidebar (vendored .sidebar
+   composition); below that it is a horizontally scrolling .reel of pill
+   links under the header.
+   ========================================================================== */
+
+.members-shell {
+  --sidebar-target-width: 13rem;
+  --sidebar-content-min-width: 60%;
+  --sidebar-space: var(--space-m);
+}
+
+.members-shell__header h1 {
+  margin: 0;
+}
+
+.members-shell__lede {
+  color: var(--colors-text-muted);
+  max-width: 65ch;
+}
+
+.members-shell__content {
+  min-width: 0; /* lets wide tables scroll inside instead of stretching the page */
+}
+
+@media (max-width: 59.99rem) {
+  .members-shell__body {
+    display: block;
+  }
+
+  /* The reel's pills are wider than a phone in total. Without containment
+     their combined width becomes the page's minimum width (main is a flex
+     item), pushing every page past the viewport instead of scrolling the
+     reel. */
+  .members-nav {
+    contain: inline-size;
+  }
+
+  .members-shell__body > * + * {
+    margin-block-start: var(--space-m);
+  }
+}
+
+/* --- Navigation --- */
+
+.members-nav__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: var(--space-2xs);
+  align-items: center;
+}
+
+/* reel-modifiers.css sizes every .reel child at 85% for the events page;
+   nav pills size to their content instead. */
+.members-nav__list.reel > * {
+  flex: 0 0 auto;
+}
+
+.members-nav__link {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--colors-action-primary);
+  border-radius: 999px;
+  color: var(--colors-action-primary);
+  font-size: 0.85rem;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background-color var(--transitions-dur-fast) ease,
+    color var(--transitions-dur-fast) ease;
+}
+
+.members-nav__link:hover,
+.members-nav__link:focus-visible {
+  background-color: rgba(201, 164, 94, 0.15);
+}
+
+.members-nav__link[aria-current="page"] {
+  background-color: var(--colors-action-primary);
+  color: var(--colors-text-on-action);
+  font-weight: 600;
+}
+
+.members-nav__group {
+  padding-inline-start: var(--space-2xs);
+  border-inline-start: 1px solid var(--colors-border-subtle);
+  color: var(--colors-text-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1ch;
+  white-space: nowrap;
+}
+
+@media (min-width: 60rem) {
+  .members-nav__list.reel {
+    flex-direction: column;
+    align-items: stretch;
+    overflow: visible;
+    scroll-snap-type: none;
+    padding-block-end: 0;
+  }
+
+  .members-nav__link {
+    display: block;
+    border-radius: 6px;
+  }
+
+  .members-nav__group {
+    margin-block-start: var(--space-s);
+    padding-inline-start: 0;
+    border-inline-start: 0;
+  }
+}
+
+/* --- Shared pieces of members-area pages --- */
+
+/* Card section heading with a hairline underneath */
+.card-heading {
+  padding-bottom: var(--space-3xs);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* A list row: content on the left, actions on the right, wrapping on
+   narrow screens */
+.item-row {
+  max-width: none; /* global-styles.css caps every li at a reading measure */
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2xs) var(--space-xs);
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.item-row__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* Side-by-side form fields that stack below ~30rem */
+.field-row {
+  --switcher-threshold: 30rem;
+}
+
+/* Inline form that only wraps its button (delete/toggle buttons in rows) */
+.inline-form {
+  display: inline;
+}

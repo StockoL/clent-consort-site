@@ -1,19 +1,12 @@
-{% extends 'choir/base.html' %}
+{% extends 'choir/_members_base.html' %}
+{% load static %}
 
 {% block title %}Looking Ahead - Clent Consort{% endblock title %}
 
-{% block content %}
-<div class="wrapper flow section-padding">
-  <div class="text-center">
-    <h1>Looking Ahead</h1>
-    <p>Help the committee plan future projects by sharing your availability below.</p>
+{% block page_title %}Looking Ahead{% endblock page_title %}
+{% block page_lede %}Help the committee plan future projects by sharing your availability below.{% endblock page_lede %}
 
-    <div style="margin-top: 1.5rem;">
-      {% include 'choir/_member_subnav.html' %}
-    </div>
-  </div>
-
-  <div class="wrapper wrapper--narrow section-padding">
+{% block members_content %}
     <section class="card flow" data-variant="invert">
       {% if open_polls %}
       <div class="flow flow--small">
@@ -34,7 +27,7 @@
             <select
               class="poll-response-toggle"
               data-poll-id="{{ poll.id }}"
-              style="margin-top: 0.75rem;"
+              aria-label="Your availability: {{ poll.question }}"
             >
               <option value="" {% if not poll.user_response %}selected{% endif %}>No Response</option>
               <option value="YES" {% if poll.user_response == 'YES' %}selected{% endif %}>Available</option>
@@ -49,41 +42,10 @@
       <p>There's nothing to weigh in on right now - check back once the committee has a project in the planning stage.</p>
       {% endif %}
     </section>
-  </div>
-</div>
 
 <input type="hidden" id="csrf_token_input" value="{{ csrf_token }}">
+{% endblock members_content %}
 
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    const csrfToken = document.getElementById('csrf_token_input').value;
-
-    document.querySelectorAll('.poll-response-toggle').forEach(select => {
-        select.addEventListener('change', async function() {
-            const pollId = this.getAttribute('data-poll-id');
-            const newResponse = this.value;
-            if (!newResponse) return;
-
-            try {
-                const response = await fetch(`/members/polling/${pollId}/respond/`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken
-                    },
-                    body: JSON.stringify({ response: newResponse })
-                });
-
-                const result = await response.json();
-                if (!result.success) {
-                    alert('Error saving your response. Please try again.');
-                }
-            } catch (error) {
-                console.error("Fetch error:", error);
-                alert('Network error. Could not connect to the server.');
-            }
-        });
-    });
-});
-</script>
-{% endblock content %}
+{% block scripts %}
+<script src="{% static 'js/member-dashboard.js' %}" defer></script>
+{% endblock scripts %}

@@ -1,18 +1,14 @@
-{% extends 'choir/base.html' %}
-{% block content %}
-<div class="wrapper flow section-padding">
-  <div class="text-center">
-    <h1 class="text-primary">Committee Broadcast</h1>
-    <p>Send an email to all members or one voice part.</p>
+{% extends 'choir/_members_base.html' %}
 
-    <a href="{% url 'committee_hub' %}" class="button btn-small" data-variant="outline" style="text-decoration: none; display: inline-block; margin-block-start: var(--space-2xs);">
-      ← Back to Hub
-    </a>
-  </div>
+{% block title %}Broadcast - Clent Consort{% endblock title %}
 
+{% block page_title %}Committee Broadcast{% endblock page_title %}
+{% block page_lede %}Send an email to all members or one voice part.{% endblock page_lede %}
+
+{% block members_content %}
   <section class="card flow" data-variant="invert">
-    <h2 class="text-primary text-step-1" style="padding-bottom: var(--space-3xs); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">Send Choir Broadcast</h2>
-    <form method="POST" class="flow flow--small" style="margin-block-start: var(--space-s)">
+    <h2 class="text-primary text-step-1 card-heading">Send Choir Broadcast</h2>
+    <form method="POST" class="flow flow--small">
       {% csrf_token %}
 
       <div>
@@ -33,8 +29,7 @@
         <div class="form-error">{{ form.message.errors }}</div>
       </div>
 
-      <button type="submit" class="button w-100" data-variant="primary" style="--flow-space: var(--space-s)">Send Email</button>
+      <button type="submit" class="button w-100" data-variant="primary">Send Email</button>
     </form>
   </section>
-</div>
-{% endblock %}
+{% endblock members_content %}

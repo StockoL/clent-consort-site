@@ -1,0 +1,36 @@
+{% comment %}
+    The members-area navigation, rendered once by _members_base.html.
+    A left sidebar from 60rem; below that, a horizontally scrolling reel of
+    pills (see blocks/members-shell.css). Sub-pages mark their parent as
+    current: a voice-part hub is under Repertoire, editing a project under
+    Projects, editing a payment under Financials.
+
+    Committee items show for user.is_staff (Build Order Phase 5 moves this
+    to the Committee group). Everyone else gets a Document Vault link,
+    since the vault stays readable by all active members.
+{% endcomment %}
+{% with current=request.resolver_match.url_name %}
+<nav class="members-nav" aria-label="Members area">
+    <ul class="members-nav__list reel" role="list">
+        <li><a href="{% url 'members' %}" class="members-nav__link"{% if current == 'members' %} aria-current="page"{% endif %}>Schedule</a></li>
+        <li><a href="{% url 'member_repertoire' %}" class="members-nav__link"{% if current == 'member_repertoire' or current == 'hub' %} aria-current="page"{% endif %}>Repertoire</a></li>
+        <li><a href="{% url 'member_polling' %}" class="members-nav__link"{% if current == 'member_polling' %} aria-current="page"{% endif %}>Looking Ahead</a></li>
+        <li><a href="{% url 'settings' %}" class="members-nav__link"{% if current == 'settings' %} aria-current="page"{% endif %}>Settings</a></li>
+
+        {% if user.is_staff %}
+        <li class="members-nav__group" id="members-nav-committee">Committee</li>
+        <li><a href="{% url 'committee_hub' %}" class="members-nav__link"{% if current == 'committee_hub' %} aria-current="page"{% endif %}>Hub</a></li>
+        <li><a href="{% url 'committee_projects' %}" class="members-nav__link"{% if current == 'committee_projects' or current == 'committee_project_edit' %} aria-current="page"{% endif %}>Projects</a></li>
+        <li><a href="{% url 'committee_schedule' %}" class="members-nav__link"{% if current == 'committee_schedule' %} aria-current="page"{% endif %} aria-describedby="members-nav-committee">Schedule</a></li>
+        <li><a href="{% url 'committee_rsvps' %}" class="members-nav__link"{% if current == 'committee_rsvps' %} aria-current="page"{% endif %}>RSVPs</a></li>
+        <li><a href="{% url 'committee_polling' %}" class="members-nav__link"{% if current == 'committee_polling' %} aria-current="page"{% endif %}>Polling</a></li>
+        <li><a href="{% url 'committee_financials' %}" class="members-nav__link"{% if current == 'committee_financials' or current == 'committee_financials_edit' %} aria-current="page"{% endif %}>Financials</a></li>
+        <li><a href="{% url 'committee_documents' %}" class="members-nav__link"{% if current == 'committee_documents' %} aria-current="page"{% endif %}>Documents</a></li>
+        <li><a href="{% url 'committee_broadcast' %}" class="members-nav__link"{% if current == 'committee_broadcast' %} aria-current="page"{% endif %}>Broadcast</a></li>
+        <li><a href="{% url 'committee_emergency' %}" class="members-nav__link"{% if current == 'committee_emergency' %} aria-current="page"{% endif %}>Duty of Care</a></li>
+        {% else %}
+        <li><a href="{% url 'committee_documents' %}" class="members-nav__link"{% if current == 'committee_documents' or current == 'committee_hub' %} aria-current="page"{% endif %}>Document Vault</a></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endwith %}

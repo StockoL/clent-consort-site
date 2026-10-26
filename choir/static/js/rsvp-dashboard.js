@@ -1,73 +1,150 @@
 /* ==========================================================================
-    RSVP DASHBOARD TAB SWITCHER
+    COMMITTEE RSVP DASHBOARD
    ========================================================================== */
 /**
- * Toggles the visibility of attendance lists and updates the active state styling of the buttons.
- *
- * @param {string|number} eventId - The unique database ID of the event section.
- * @param {string} targetTab - The target tab to display ('attending', 'absent', 'pending').
+ * Everything on committee_rsvps.html, wired by data attributes and event
+ * delegation (no inline handlers):
+ *   - [data-master-view="events|stats"]  switches between the two panels
+ *   - select[data-project-select]        reloads the page for that project
+ *   - select[data-event-select]          shows that event's lists
+ *   - [data-rsvp-tab="<status>"]         switches lists within one event
+ *   - select[data-rsvp-override]         saves an RSVP override and moves
+ *                                        the singer to their new list
+ * Panels and lists are shown and hidden with the hidden attribute.
  */
-function switchTab(eventId, targetTab) {
-  // 1. Hide all lists for this specific event
-  const lists = document.querySelectorAll(".rsvp-list-" + eventId);
-  lists.forEach((list) => (list.style.display = "none"));
 
-  // 2. Remove the 'active' class from all buttons for this event
-  const buttons = document.querySelectorAll(".rsvp-btn-" + eventId);
-  buttons.forEach((btn) => btn.classList.remove("active"));
+const RSVP_STATUSES = ["attending", "absent", "pending"];
+const RSVP_TAB_LABELS = { attending: "Attend", absent: "Absent", pending: "Pending" };
+const RSVP_ICONS = { attending: "✅", absent: "❌", pending: "⏳" };
+const RSVP_EMPTY_MESSAGES = {
+  attending: "No attendees confirmed yet.",
+  absent: "No members have marked absent.",
+  pending: "Everyone has responded. Great job!",
+};
 
-  // 3. Show the target list
-  const targetList = document.getElementById(
-    "list-" + eventId + "-" + targetTab,
-  );
-  if (targetList) {
-    targetList.style.display = "block";
-  }
-
-  // 4. Add the 'active' class to the clicked button
-  const activeBtn = document.getElementById("btn-" + eventId + "-" + targetTab);
-  if (activeBtn) {
-    activeBtn.classList.add("active");
-  }
-}
-
-/**
- * RSVP Dashboard: Master View Switcher
- * Toggles between the Event Logistics card and the Member Overview table.
- * * @param {string} view - The requested view ('events' or 'stats')
- */
 function switchMasterView(view) {
-  // Toggle Panels
-  document.getElementById("panel-events").style.display =
-    view === "events" ? "block" : "none";
-  document.getElementById("panel-stats").style.display =
-    view === "stats" ? "block" : "none";
+  document.getElementById("panel-events").hidden = view !== "events";
+  document.getElementById("panel-stats").hidden = view !== "stats";
 
-  // Toggle Button Styles
-  const btnEvents = document.getElementById("master-btn-events");
-  const btnStats = document.getElementById("master-btn-stats");
-
-  btnEvents.className = "button btn-small";
-  btnStats.className = "button btn-small";
-  btnEvents.setAttribute("data-variant", view === "events" ? "primary" : "outline");
-  btnStats.setAttribute("data-variant", view === "stats" ? "primary" : "outline");
+  document.querySelectorAll("[data-master-view]").forEach((button) => {
+    const isActive = button.dataset.masterView === view;
+    button.setAttribute("data-variant", isActive ? "primary" : "outline");
+    button.setAttribute("aria-pressed", isActive);
+  });
 }
 
-/**
- * RSVP Dashboard: Event Switcher
- * Swaps the visible event data within the single card structure based on the dropdown selection.
- * * @param {string} eventId - The database ID of the selected event
- */
 function switchEvent(eventId) {
-  // Hide all event wrappers
-  const wrappers = document.querySelectorAll(".event-wrapper");
-  wrappers.forEach((wrapper) => (wrapper.style.display = "none"));
+  document.querySelectorAll(".event-wrapper").forEach((wrapper) => {
+    wrapper.hidden = wrapper.id !== "event-wrapper-" + eventId;
+  });
+}
 
-  // Show the selected event wrapper (if one is selected)
-  if (eventId) {
-    const targetWrapper = document.getElementById("event-wrapper-" + eventId);
-    if (targetWrapper) {
-      targetWrapper.style.display = "block";
+function switchTab(eventId, targetStatus) {
+  RSVP_STATUSES.forEach((status) => {
+    const list = document.getElementById(`list-${eventId}-${status}`);
+    const tab = document.getElementById(`btn-${eventId}-${status}`);
+    if (list) list.hidden = status !== targetStatus;
+    if (tab) {
+      tab.classList.toggle("active", status === targetStatus);
+      tab.setAttribute("aria-pressed", status === targetStatus);
     }
+  });
+}
+
+function updateLiveCounts(eventId) {
+  RSVP_STATUSES.forEach((status) => {
+    const container = document.getElementById(`list-${eventId}-${status}`);
+    const ul = container.querySelector("ul");
+    const count = ul ? ul.querySelectorAll("li").length : 0;
+
+    const tab = document.getElementById(`btn-${eventId}-${status}`);
+    if (tab) {
+      tab.textContent = `${RSVP_TAB_LABELS[status]} (${count})`;
+    }
+
+    // A list that just emptied shows its empty message instead
+    if (count === 0 && ul) {
+      ul.remove();
+      const p = document.createElement("p");
+      p.className = "text-muted text-small text-center";
+      p.textContent = RSVP_EMPTY_MESSAGES[status];
+      container.appendChild(p);
+    }
+  });
+}
+
+async function overrideRsvp(select) {
+  const eventId = select.dataset.eventId;
+  const newStatus = select.value.toLowerCase();
+  const listItem = select.closest("li");
+  const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+
+  select.dataset.state = "saving";
+
+  try {
+    const response = await fetch(`/members/committee/rsvps/${select.dataset.attendanceId}/override/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrfToken,
+      },
+      body: JSON.stringify({ status: select.value }),
+    });
+    const data = await response.json();
+
+    if (!data.success) {
+      delete select.dataset.state;
+      alert("Failed to update RSVP. Please refresh and try again.");
+      return;
+    }
+
+    // Brief "saved" flash
+    select.dataset.state = "saved";
+    setTimeout(() => delete select.dataset.state, 1000);
+
+    // Move the singer into the target list, creating it if it was empty
+    const targetContainer = document.getElementById(`list-${eventId}-${newStatus}`);
+    let targetUl = targetContainer.querySelector("ul");
+    if (!targetUl) {
+      const emptyMessage = targetContainer.querySelector("p");
+      if (emptyMessage) emptyMessage.remove();
+      targetUl = document.createElement("ul");
+      targetUl.className = "rsvp-list text-small";
+      targetContainer.appendChild(targetUl);
+    }
+    targetUl.appendChild(listItem);
+
+    listItem.dataset.rsvp = newStatus;
+    listItem.querySelector(".rsvp-list__icon").textContent = RSVP_ICONS[newStatus];
+
+    updateLiveCounts(eventId);
+  } catch (error) {
+    console.error("Error updating RSVP:", error);
+    delete select.dataset.state;
+    alert("A network error occurred. Please try again.");
   }
 }
+
+document.addEventListener("click", (event) => {
+  const masterButton = event.target.closest("[data-master-view]");
+  if (masterButton) {
+    switchMasterView(masterButton.dataset.masterView);
+    return;
+  }
+
+  const tab = event.target.closest("[data-rsvp-tab]");
+  if (tab) {
+    switchTab(tab.dataset.eventId, tab.dataset.rsvpTab);
+  }
+});
+
+document.addEventListener("change", (event) => {
+  const select = event.target;
+  if (select.matches("[data-project-select]")) {
+    window.location.href = "?project=" + select.value;
+  } else if (select.matches("[data-event-select]")) {
+    switchEvent(select.value);
+  } else if (select.matches("[data-rsvp-override]")) {
+    overrideRsvp(select);
+  }
+});

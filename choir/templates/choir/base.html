@@ -77,15 +77,7 @@
       <li>
         <a href="{% url 'home' %}" class="nav-link">&larr; Back to Public Site</a>
       </li>
-      <li>
-        <a href="{% url 'members' %}" class="nav-link" {% if request.resolver_match.url_name == 'members' %}aria-current="page"{% endif %}>Dashboard</a>
-      </li>
-      <li>
-        <a href="{% url 'committee_hub' %}" class="nav-link" {% if request.resolver_match.url_name == 'committee_hub' %}aria-current="page"{% endif %}>
-          {% if user.is_staff %}Committee Hub{% else %}Document Vault{% endif %}
-        </a>
-      </li>
-      <li><a href="{% url 'settings' %}" class="nav-link">Settings</a></li>
+      {# Everything else lives in the members navigation (_members_nav.html). #}
       <li><a href="{% url 'account_logout' %}" class="nav-link">Logout</a></li>
     {% else %}
       <li>
@@ -192,8 +184,7 @@
     <script src="{% static 'js/looseleaf-behaviors.js' %}" defer></script>
     <script src="{% static 'js/back-to-top.js' %}" defer></script>
     <script src="{% static 'js/mobile-menu.js' %}" defer></script>
-    <script src="{% static 'js/project-carousel.js' %}" defer></script>
-    <script src="{% static 'js/rsvp-dashboard.js' %}" defer></script>
-    <script src="{% static 'js/project-tabs.js' %}" defer></script>
+    {# Page-specific scripts: each page loads only what it uses. #}
+    {% block scripts %}{% endblock scripts %}
   </body>
 </html>

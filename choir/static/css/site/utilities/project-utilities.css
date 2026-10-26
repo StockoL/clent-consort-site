@@ -80,16 +80,17 @@
 
 /* --- Spacing (keyed to this project's own fluid --space-* scale in
    global/variables.css) ---
-   One-off margin utilities (mt-s2, mb-s-min, etc.) used to live here.
-   Removed in favour of the mechanism .flow itself already provides:
-   --flow-space is read per-child, so a single element can override
-   just its own gap inline (style="--flow-space: var(--space-m)") without
-   a dedicated utility class or affecting its siblings. Elements
-   outside any .flow, or that are themselves a flow/flow-modifier
-   (so already consume --flow-space for their own children), use a
-   direct margin-block-start/-end override instead - both keyed to
-   the same --s-* scale, just expressed inline at the one place that
-   needs a non-default value instead of a class meant to be reused. */
+   Templates carry no inline style attributes (Build Order Phase 2), so
+   spacing comes from .flow / .flow--small / .flow--large on the parent.
+   The two classes below cover the few places where an element needs
+   space before it and has no .flow parent to give it. */
+.mt-2xs {
+  margin-block-start: var(--space-2xs);
+}
+
+.mt-m {
+  margin-block-start: var(--space-m);
+}
 .section-padding {
   padding-top: var(--space-l);
   padding-bottom: var(--space-xl);
@@ -176,4 +177,37 @@
 .icon-action-btn:hover {
   opacity: 0.7;
   transform: translateY(-2px);
+}
+
+/* --- State --- */
+/* The hidden attribute always wins, even over a class that sets display
+   (tab panels and RSVP lists are shown and hidden with it). */
+[hidden] {
+  display: none !important;
+}
+
+/* Used across the members area; never had a definition before. */
+.list-unstyled {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* --- Links --- */
+.text-link {
+  color: #c9a45e;
+}
+
+.text-link--plain {
+  text-decoration: none;
+}
+
+.text-subtle {
+  color: #aaa;
+}
+
+/* Spam-trap form field: hidden from everyone, including screen readers,
+   so no real person can fill it in. */
+.honeypot {
+  display: none !important;
 }

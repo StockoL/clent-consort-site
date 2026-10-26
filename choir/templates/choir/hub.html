@@ -1,29 +1,21 @@
-{% extends 'choir/base.html' %}
+{% extends 'choir/_members_base.html' %}
 
 {% block title %}Learning Hub - Clent Consort{% endblock title %}
 
-{% block extra_head %}{% endblock extra_head %}
+{% block page_title %}{{ voice_part_name }} Learning Hub{% endblock page_title %}
+{% block page_lede %}Access your rehearsal tracks and sheet music for {{ project.name }} below.{% endblock page_lede %}
 
-{% block content %}
-<div class="wrapper flow section-padding">
-  <div class="text-center">
-    <h1>{{ voice_part_name }} Learning Hub</h1>
-    <p>Access your rehearsal tracks and sheet music for {{ project.name }} below.</p>
-    <a href="{% url 'member_repertoire' %}?project={{ project.id }}" class="button btn-small" data-variant="outline" style="text-decoration: none; display: inline-block; margin-top: 0.5rem;">
-      ← Back to Repertoire
-    </a>
-  </div>
-
-  <div class="flow flow--large" style="margin-block-start: var(--space-m)">
+{% block members_content %}
+  <div class="flow flow--large">
     {% regroup assets by repertoire as grouped_assets %}
 
     {% for group in grouped_assets %}
     <article class="card flow card-flex" data-variant="invert">
-      
-      <div class="repertoire-header">
-        <h3 class="text-primary">{{ group.grouper.title }}</h3>
+
+      <div class="repertoire-header flow flow--small">
+        <h2 class="text-primary text-step-1">{{ group.grouper.title }}</h2>
         {% if group.grouper.composer %}
-          <p class="text-muted text-small" style="margin-block-start: var(--space-3xs)"><em>{{ group.grouper.composer }}</em></p>
+          <p class="text-muted text-small"><em>{{ group.grouper.composer }}</em></p>
         {% endif %}
       </div>
 
@@ -31,14 +23,14 @@
 
       <div class="flow flow--small">
         {% for asset in group.list %}
-          <div class="asset-item">
-            <p style="margin-block-end: var(--space-3xs)"><strong>{{ asset.asset_name }}</strong></p>
+          <div class="asset-item flow flow--small">
+            <p><strong>{{ asset.asset_name }}</strong></p>
 
             {% if asset.file_upload %}
-              
+
               {# Audio Track Integration #}
               {% if ".mp3" in asset.file_upload.name|lower or ".wav" in asset.file_upload.name|lower or ".m4a" in asset.file_upload.name|lower %}
-                <div class="media-flex-row" style="margin-block-start: var(--space-3xs)">
+                <div class="media-flex-row">
                   <label class="visually-hidden" for="audio-{{ asset.id }}">Listen to {{ asset.asset_name }}</label>
                   <audio id="audio-{{ asset.id }}" controls preload="none" class="w-100">
                     <source src="{{ asset.file_upload.url }}" type="audio/mpeg">
@@ -51,34 +43,34 @@
 
               {# Document / Sheet Music Integration #}
               {% elif ".pdf" in asset.file_upload.name|lower %}
-                <div class="media-flex-row" style="margin-block-start: var(--space-3xs)">
+                <div class="media-flex-row">
                   <a href="{{ asset.file_upload.url }}" target="_blank" rel="noopener noreferrer" class="button btn-small w-100 text-center" data-variant="primary">
                     <span aria-hidden="true">📄</span> Open Score
                   </a>
-                  </div>
+                </div>
 
               {# Generic File Backup #}
               {% else %}
-                <div class="media-flex-row" style="margin-block-start: var(--space-3xs)">
-                  <a href="{{ asset.file_upload.url }}" target="_blank" class="button btn-small w-100 text-center" data-variant="primary">
+                <div class="media-flex-row">
+                  <a href="{{ asset.file_upload.url }}" target="_blank" rel="noopener noreferrer" class="button btn-small w-100 text-center" data-variant="primary">
                     Open Resource
                   </a>
                 </div>
               {% endif %}
 
             {% elif asset.external_url %}
-              <div class="media-flex-row" style="margin-block-start: var(--space-3xs)">
+              <div class="media-flex-row">
                 <a href="{{ asset.external_url }}" target="_blank" rel="noopener noreferrer" class="button btn-small w-100 text-center" data-variant="primary">
                   <span aria-hidden="true">🌐</span> External Link
                 </a>
               </div>
             {% else %}
-              <p class="text-error" style="margin-block-start: var(--space-3xs)"><em>Resource currently unavailable</em></p>
+              <p class="text-error"><em>Resource currently unavailable</em></p>
             {% endif %}
           </div>
         {% endfor %}
       </div>
-      
+
     </article>
 
     {% empty %}
@@ -87,5 +79,4 @@
     </div>
     {% endfor %}
   </div>
-</div>
-{% endblock content %}
+{% endblock members_content %}

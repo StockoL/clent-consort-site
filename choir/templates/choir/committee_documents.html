@@ -1,66 +1,62 @@
-{% extends 'choir/base.html' %}
+{% extends 'choir/_members_base.html' %}
+{% load static %}
 
 {% block title %}Document Vault - Clent Consort{% endblock title %}
 
-{% block content %}
-<div class="wrapper flow section-padding">
-  <div class="text-center">
-    <h1 class="text-primary">Committee Document Vault</h1>
-    <p>Secure storage for minutes, policies, and reports.</p>
-    
-    <a href="{% url 'committee_hub' %}" class="button btn-small" data-variant="outline" style="text-decoration: none; display: inline-block; margin-block-start: var(--space-2xs);">
-      ← Back to Hub
-    </a>
-  </div>
+{% block page_title %}Committee Document Vault{% endblock page_title %}
+{% block page_lede %}Secure storage for minutes, policies, and reports.{% endblock page_lede %}
 
-  <div class="switcher" style="--flow-space: var(--space-m)">
+{% block members_content %}
+  <div class="switcher">
+    {% if user.is_staff %}
     <section class="card flow" data-variant="invert">
-      <h2 class="text-primary text-step-1" style="padding-bottom: var(--space-3xs); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">Upload Document</h2>
+      <h2 class="text-primary text-step-1 card-heading">Upload Document</h2>
 
-      <form method="POST" enctype="multipart/form-data" class="flow flow--small" style="margin-block-start: var(--space-s)">
+      <form method="POST" enctype="multipart/form-data" class="flow flow--small">
         {% csrf_token %}
-        
+
         <div>
           <label for="{{ form.title.id_for_label }}" class="form-label text-small">{{ form.title.label }}</label>
           {{ form.title }}
         </div>
-        
-        <div style="display: flex; gap: 1rem;">
-          <div style="flex: 1;">
+
+        <div class="switcher field-row">
+          <div>
             <label for="{{ form.doc_type.id_for_label }}" class="form-label text-small">{{ form.doc_type.label }}</label>
             {{ form.doc_type }}
           </div>
-          <div style="flex: 2;">
+          <div>
             <label for="{{ form.file.id_for_label }}" class="form-label text-small">{{ form.file.label }}</label>
             {{ form.file }}
           </div>
         </div>
 
-        <button type="submit" class="button w-100" data-variant="primary" style="--flow-space: var(--space-s)"><span aria-hidden="true">📤</span> Upload to Vault</button>
+        <button type="submit" class="button w-100" data-variant="primary"><span aria-hidden="true">📤</span> Upload to Vault</button>
       </form>
     </section>
+    {% endif %}
 
     <section class="card flow" data-variant="invert">
-      <h2 class="text-primary text-step-1" style="padding-bottom: var(--space-3xs); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">Archive</h2>
+      <h2 class="text-primary text-step-1 card-heading">Archive</h2>
 
       {% if documents %}
-        <ul class="list-unstyled flow flow--small" style="margin-block-start: var(--space-s)">
+        <ul class="list-unstyled flow flow--small" role="list">
           {% for doc in documents %}
-          <li style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+          <li class="item-row">
             <div>
               <strong>{{ doc.title }}</strong><br>
               <span class="text-small text-muted">{{ doc.get_doc_type_display }} | Uploaded {{ doc.uploaded_at|date:"j M Y" }}</span>
             </div>
-            
-            <div style="display: flex; gap: 0.5rem; align-items: center;">
-              <a href="{{ doc.file.url }}" target="_blank" class="button btn-small" data-variant="outline" style="padding: 0.25rem 0.75rem;">
-                <span aria-hidden="true">📄</span> View
+
+            <div class="item-row__actions">
+              <a href="{{ doc.file.url }}" target="_blank" rel="noopener noreferrer" class="button btn-small" data-variant="outline">
+                <span aria-hidden="true">📄</span> View<span class="visually-hidden"> {{ doc.title }}</span>
               </a>
               {% if user.is_staff %}
-              <form method="POST" action="{% url 'committee_document_delete' doc.id %}" style="display: inline;" onsubmit="return confirm('Delete \'{{ doc.title|escapejs }}\' from the vault?');">
+              <form method="POST" action="{% url 'committee_document_delete' doc.id %}" class="inline-form" data-confirm="Delete '{{ doc.title }}' from the vault?">
                 {% csrf_token %}
-                <button type="submit" class="button btn-small" data-variant="outline" style="padding: 0.25rem 0.75rem;">
-                  <span aria-hidden="true">🗑️</span> Delete
+                <button type="submit" class="button btn-small" data-variant="outline">
+                  <span aria-hidden="true">🗑️</span> Delete<span class="visually-hidden"> {{ doc.title }}</span>
                 </button>
               </form>
               {% endif %}
@@ -69,10 +65,12 @@
           {% endfor %}
         </ul>
       {% else %}
-        <p class="text-muted text-small" style="margin-block-start: var(--space-s)">The vault is currently empty.</p>
+        <p class="text-muted text-small">The vault is currently empty.</p>
       {% endif %}
     </section>
   </div>
+{% endblock members_content %}
 
-</div>
-{% endblock content %}
+{% block scripts %}
+{% if user.is_staff %}<script src="{% static 'js/confirm-forms.js' %}" defer></script>{% endif %}
+{% endblock scripts %}

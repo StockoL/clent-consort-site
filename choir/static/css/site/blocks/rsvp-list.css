@@ -1,0 +1,104 @@
+/* ==========================================================================
+   BLOCK: RSVP LIST (project-specific)
+   ==========================================================================
+   The committee RSVP dashboard's per-event lists of singers, each with an
+   override select. One column; below 30rem the select drops onto its own
+   line. data-rsvp on each row sets its colour, and rsvp-dashboard.js
+   updates it when a singer moves between lists.
+   ========================================================================== */
+
+.rsvp-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rsvp-list__item {
+  max-width: none; /* global-styles.css caps every li at a reading measure */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.rsvp-list__item[data-rsvp="absent"] {
+  color: var(--colors-danger-text);
+}
+
+.rsvp-list__item[data-rsvp="pending"] {
+  color: var(--colors-warning-text);
+}
+
+.rsvp-list__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-variant="invert"] .rsvp-list__select {
+  width: auto;
+  min-width: 110px;
+  min-height: 0;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid #c9a45e;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition:
+    opacity 0.2s ease,
+    background-color 0.3s ease;
+}
+
+[data-variant="invert"] .rsvp-list__select[data-state="saving"] {
+  opacity: 0.5;
+}
+
+[data-variant="invert"] .rsvp-list__select[data-state="saved"] {
+  background: var(--colors-success);
+}
+
+.rsvp-list__reminder {
+  text-align: center;
+  margin-block-end: var(--space-xs);
+}
+
+@media (max-width: 29.99rem) {
+  .rsvp-list__item {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rsvp-list__select {
+    justify-self: start;
+  }
+}
+
+/* --- Dashboard chrome: selectors --- */
+
+.rsvp-dashboard__card {
+  max-width: 60rem;
+  width: 100%;
+}
+
+.rsvp-dashboard__picker {
+  padding-bottom: var(--space-s);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rsvp-dashboard__picker label {
+  display: block;
+}
+
+[data-variant="invert"] .rsvp-dashboard__picker select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #c9a45e;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.3);
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+}

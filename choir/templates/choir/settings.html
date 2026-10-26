@@ -1,72 +1,49 @@
-{% extends 'choir/base.html' %} 
+{% extends 'choir/_members_base.html' %}
 
-{% block title %}Account Settings - Clent Consort{% endblock %} 
+{% block title %}Account Settings - Clent Consort{% endblock title %}
 
-{% block extra_head %}
-<style>
-    /* Overrides global input styles so checkboxes don't force line breaks */
-    .protected-checkboxes input[type="checkbox"] {
-        width: auto !important;
-        display: inline-block !important;
-        margin: 0 !important;
-        cursor: pointer;
-    }
+{% block page_title %}Account Settings{% endblock page_title %}
+{% block page_lede %}Update your personal details, contact information, and choir preferences below.{% endblock page_lede %}
 
-    /* Forces the textarea to strictly behave as a full-width block below the label */
-    .protected-textarea textarea {
-        display: block !important;
-        width: 100% !important;
-        box-sizing: border-box;
-        margin-top: 0.5rem;
-    }
-</style>
-{% endblock extra_head %}
-
-{% block content %}
-<div class="wrapper flow flow--large section-padding">
-  <section class="settings-hero flow flow--small text-center">
-    <h1>Account Settings</h1>
-    <p>Update your personal details, contact information, and choir preferences below.</p>
-  </section>
-
+{% block members_content %}
   <div class="card flow" data-variant="invert">
 
     <form action="{% url 'settings' %}" method="POST" class="flow">
       {% csrf_token %}
 
       <div class="switcher">
-        
+
         <div class="flow">
-            <h3 class="section-heading">Core Details</h3>
-            
+            <h2 class="section-heading text-step-1">Core Details</h2>
+
             <div class="form-group flow flow--small">
                 <label for="{{ user_form.first_name.id_for_label }}">First Name</label>
                 {{ user_form.first_name }}
                 <div class="form-error">{{ user_form.first_name.errors }}</div>
             </div>
-            
+
             <div class="form-group flow flow--small">
                 <label for="{{ user_form.last_name.id_for_label }}">Last Name</label>
                 {{ user_form.last_name }}
                 <div class="form-error">{{ user_form.last_name.errors }}</div>
             </div>
-            
+
             <div class="form-group flow flow--small">
-                <label>Email Address</label>
-                <p style="margin: 0;">{{ user.email }}</p>
-                <a href="{% url 'account_email' %}" class="text-small" style="color: #c9a45e;">Manage email addresses &rarr;</a>
+                <p class="form-label">Email Address</p>
+                <p>{{ user.email }}</p>
+                <a href="{% url 'account_email' %}" class="text-small text-link">Manage email addresses &rarr;</a>
             </div>
         </div>
 
         <div class="flow">
-            <h3 class="section-heading">Choir Profile</h3>
-            
+            <h2 class="section-heading text-step-1">Choir Profile</h2>
+
             <div class="form-group flow flow--small">
                 <label for="{{ profile_form.phone_number.id_for_label }}">Phone Number</label>
                 {{ profile_form.phone_number }}
                 <div class="form-error">{{ profile_form.phone_number.errors }}</div>
             </div>
-            
+
             <div class="form-group flow flow--small">
                 <label for="{{ profile_form.voice_part.id_for_label }}">Voice Part</label>
                 {{ profile_form.voice_part }}
@@ -75,14 +52,14 @@
         </div>
       </div>
 
-      <hr class="divider" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
+      <hr class="divider">
 
       <div class="switcher">
-        
+
         <div class="flow">
-            <h3 class="section-heading">Emergency Contact</h3>
-            <p class="text-small" style="color: #aaa; margin-bottom: 1rem;">For duty of care during rehearsals and events.</p>
-            
+            <h2 class="section-heading text-step-1">Emergency Contact</h2>
+            <p class="text-small settings-hint">For duty of care during rehearsals and events.</p>
+
             <div class="form-group flow flow--small">
                 <label for="{{ profile_form.emergency_contact_name.id_for_label }}">Contact Name</label>
                 {{ profile_form.emergency_contact_name }}
@@ -103,39 +80,35 @@
         </div>
 
         <div class="flow">
-            <h3 class="section-heading">Media & Publicity</h3>
-            <p class="text-small" style="color: #aaa; margin-bottom: 1rem;">Legal opt-ins for promotional material.</p>
-            
-            <div class="protected-checkboxes">
-                <div class="form-group" style="display: flex; align-items: flex-start; gap: 0.75rem;">
-                    <div style="padding-top: 4px;">
-                        {{ profile_form.consent_audio_video }}
-                    </div>
-                    <label for="{{ profile_form.consent_audio_video.id_for_label }}" style="font-weight: normal; cursor: pointer; display: block; margin: 0; line-height: 1.4;">
+            <h2 class="section-heading text-step-1">Media & Publicity</h2>
+            <p class="text-small settings-hint">Legal opt-ins for promotional material.</p>
+
+            <div class="flow">
+                <div class="form-group consent-row">
+                    {{ profile_form.consent_audio_video }}
+                    <label for="{{ profile_form.consent_audio_video.id_for_label }}">
                         {{ profile_form.consent_audio_video.help_text }}
                     </label>
                 </div>
-                <div class="form-error" style="margin-left: 2rem;">{{ profile_form.consent_audio_video.errors }}</div>
+                <div class="form-error">{{ profile_form.consent_audio_video.errors }}</div>
 
-                <div class="form-group" style="display: flex; align-items: flex-start; gap: 0.75rem; margin-top: 1rem;">
-                    <div style="padding-top: 4px;">
-                        {{ profile_form.consent_photography }}
-                    </div>
-                    <label for="{{ profile_form.consent_photography.id_for_label }}" style="font-weight: normal; cursor: pointer; display: block; margin: 0; line-height: 1.4;">
+                <div class="form-group consent-row">
+                    {{ profile_form.consent_photography }}
+                    <label for="{{ profile_form.consent_photography.id_for_label }}">
                         {{ profile_form.consent_photography.help_text }}
                     </label>
                 </div>
-                <div class="form-error" style="margin-left: 2rem;">{{ profile_form.consent_photography.errors }}</div>
+                <div class="form-error">{{ profile_form.consent_photography.errors }}</div>
             </div>
         </div>
       </div>
 
-      <hr class="divider" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
+      <hr class="divider">
 
       <div class="flow">
-          <h3 class="section-heading">Medical & Accessibility Support</h3>
-          <div class="form-group protected-textarea">
-              <label for="{{ profile_form.medical_accessibility_notes.id_for_label }}" style="display: block; font-weight: normal; color: #aaa; margin-bottom: 0.5rem; line-height: 1.5;">
+          <h2 class="section-heading text-step-1">Medical & Accessibility Support</h2>
+          <div class="form-group settings-textarea flow flow--small">
+              <label for="{{ profile_form.medical_accessibility_notes.id_for_label }}">
                   {{ profile_form.medical_accessibility_notes.help_text }}
               </label>
               {{ profile_form.medical_accessibility_notes }}
@@ -143,10 +116,9 @@
           </div>
       </div>
 
-      <hr class="divider" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
+      <hr class="divider">
 
       <button type="submit" class="button align-start" data-variant="primary">Save Changes</button>
     </form>
   </div>
-</div>
-{% endblock content %}
+{% endblock members_content %}

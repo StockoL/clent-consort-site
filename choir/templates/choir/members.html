@@ -1,37 +1,29 @@
-{% extends 'choir/base.html' %}
+{% extends 'choir/_members_base.html' %}
+{% load static %}
 
 {% block title %}Members Area - Clent Consort{% endblock title %}
 
-{% block extra_head %}{% endblock extra_head %}
+{% block page_title %}Members Area{% endblock page_title %}
+{% block page_lede %}Welcome back, {{ user.first_name|default:user.username }}.{% endblock page_lede %}
 
-{% block content %}
-<div class="wrapper flow section-padding">
-  <div class="text-center">
-    <h1>Members Area</h1>
-    <p>Welcome back, {{ user.first_name|default:user.username }}.</p>
-
-    <div style="margin-top: 1.5rem;">
-      {% include 'choir/_member_subnav.html' %}
-    </div>
-  </div>
-
+{% block members_content %}
 {% if not has_paid_current_term %}
-  <div class="card flow text-center" data-variant="invert" style="border: 2px solid #c9a45e; max-width: 40rem; margin-inline: auto; margin-block-start: var(--space-m)">
-    <h3 class="text-primary">{{ current_term }} Subscriptions Due</h3>
-    <p class="text-small" style="--flow-space: var(--space-3xs)">Please settle your termly subscription via BACS transfer.</p>
-    <p class="text-small" style="--flow-space: var(--space-3xs)">£50 for {{ current_term }}, please.</p>
+  <div class="card flow subs-card" data-variant="invert">
+    <h2 class="text-primary text-step-1">{{ current_term }} Subscriptions Due</h2>
+    <div class="flow flow--small">
+      <p class="text-small">Please settle your termly subscription via BACS transfer.</p>
+      <p class="text-small">£50 for {{ current_term }}, please.</p>
+    </div>
 
-    <!-- Removed the gray background, replaced with a subtle gold border -->
-    <div style="margin-top: 1rem; padding: 1rem; border: 1px solid rgba(201, 164, 94, 0.3); border-radius: 8px; text-align: left; display: inline-block;">
+    <div class="subs-card__bank flow flow--small">
       <p class="text-small"><strong>Account Name:</strong> Clent Consort </p>
       <p class="text-small"><strong>Sort Code:</strong> 23-05-80 </p>
       <p class="text-small"><strong>Account No:</strong> 58234028 </p>
-      <p class="text-small text-muted" style="margin-block-start: var(--space-3xs)"><em>Reference: {{ user.last_name|upper }} SUBS</em></p>
+      <p class="text-small text-muted"><em>Reference: {{ user.last_name|upper }} SUBS</em></p>
     </div>
   </div>
 {% endif %}
 
-  <div class="wrapper wrapper--medium section-padding">
     <section class="card flow" data-variant="invert">
       <h2 class="text-primary text-step-1">Upcoming Schedule</h2>
 
@@ -49,14 +41,15 @@
           type="button"
           id="project-tab-{{ item.project.id }}"
           class="rsvp-tab project-tab{% if forloop.first %} active{% endif %}"
-          onclick="switchProjectTab('{{ item.project.id }}')"
+          data-project-tab="{{ item.project.id }}"
+          aria-pressed="{% if forloop.first %}true{% else %}false{% endif %}"
         >{{ item.project.name }}</button>
         {% endfor %}
       </div>
       {% endif %}
 
       {% for item in projects_data %}
-      <div id="project-panel-{{ item.project.id }}" class="project-panel" {% if not forloop.first %}style="display: none;"{% endif %}>
+      <div id="project-panel-{{ item.project.id }}" class="project-panel"{% if not forloop.first %} hidden{% endif %}>
         {% if item.user_attendances %}
         <div class="flow flow--small">
           {% for attendance in item.user_attendances %}
@@ -89,52 +82,12 @@
 
       {% endif %}
     </section>
-  </div>
-</div>
 
 <input type="hidden" id="csrf_token_input" value="{{ csrf_token }}">
 
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    const csrfToken = document.getElementById('csrf_token_input').value;
-    const rsvpSelects = document.querySelectorAll('.rsvp-toggle');
+{% endblock members_content %}
 
-    rsvpSelects.forEach(select => {
-        select.addEventListener('change', async function() {
-            const attendanceId = this.getAttribute('data-attendance-id');
-            const newStatus = this.value;
-
-            // Send the silent request to Django
-            try {
-                const response = await fetch(`/rsvp/${attendanceId}/`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken
-                    },
-                    body: JSON.stringify({ status: newStatus })
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    // Update the color immediately on success without page reload
-                    if (newStatus === 'ATTENDING') {
-                        this.style.backgroundColor = 'var(--colors-success)';
-                    } else if (newStatus === 'ABSENT') {
-                        this.style.backgroundColor = 'var(--colors-danger)';
-                    } else {
-                        this.style.backgroundColor = 'var(--colors-warning)';
-                    }
-                } else {
-                    alert('Error updating RSVP. Please try again.');
-                }
-            } catch (error) {
-                console.error("Fetch error:", error);
-                alert('Network error. Could not connect to the server.');
-            }
-        });
-    });
-});
-</script>
-{% endblock content %}
+{% block scripts %}
+<script src="{% static 'js/project-tabs.js' %}" defer></script>
+<script src="{% static 'js/member-dashboard.js' %}" defer></script>
+{% endblock scripts %}

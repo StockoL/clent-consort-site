@@ -1,87 +1,86 @@
-{% extends 'choir/base.html' %}
+{% extends 'choir/_members_base.html' %}
+{% load static %}
 
 {% block title %}Financial Ledger - Clent Consort{% endblock title %}
 
-{% block content %}
-<div class="wrapper flow section-padding">
-  <div class="text-center">
-    <h1 class="text-primary">Financial Ledger</h1>
-    <p>Subscription tracking for <strong class="text-warning">{{ current_term }}</strong>.</p>
-    
-    <a href="{% url 'committee_hub' %}" class="button btn-small" data-variant="outline" style="text-decoration: none; display: inline-block; margin-block-start: var(--space-2xs);">
-      ← Back to Hub
-    </a>
-  </div>
+{% block page_title %}Financial Ledger{% endblock page_title %}
+{% block page_lede %}Subscription tracking for <strong class="text-warning">{{ current_term }}</strong>.{% endblock page_lede %}
 
-  <div class="card" data-variant="invert" style="overflow-x: auto; --flow-space: var(--space-m)">
-    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+{% block members_content %}
+  <div class="card" data-variant="invert">
+    <table class="data-table">
       <thead>
-        <tr style="border-bottom: 1px solid rgba(255,255,255,0.2);">
-          <th style="padding: 1rem; color: #c9a45e;">Singer</th>
-          <th style="padding: 1rem; color: #c9a45e;">Voice Part</th>
-          <th style="padding: 1rem; color: #c9a45e;">Status</th>
-          <th style="padding: 1rem; color: #c9a45e;">Admin Action</th>
+        <tr>
+          <th>Singer</th>
+          <th>Voice Part</th>
+          <th>Status</th>
+          <th>Admin Action</th>
         </tr>
       </thead>
       <tbody>
         {% for row in roster %}
-        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-          
-          <td style="padding: 1rem;">
+        <tr>
+          <td data-label="Singer">
             <strong>{{ row.user.first_name }} {{ row.user.last_name }}</strong>
           </td>
-          
-          <td style="padding: 1rem;" class="text-small text-muted">
+
+          <td data-label="Voice Part" class="text-small text-muted">
             {{ row.profile.get_voice_part_display }}
           </td>
 
-          <td style="padding: 1rem;">
-            {% if row.is_exempt %}
-              <span class="badge">Exempt</span>
-            {% elif row.payment %}
-              <span class="badge" data-status="success">Paid (£{{ row.payment.amount }})</span>
-            {% else %}
-              <span class="badge" data-status="warning">Unpaid</span>
-            {% endif %}
-            <form method="POST" action="{% url 'committee_toggle_exempt' row.profile.id %}" style="display: inline;">
-              {% csrf_token %}
-              <button type="submit" class="button btn-small" data-variant="outline" style="padding: 0.1rem 0.5rem; font-size: 0.7rem; margin-top: 0.35rem;">
-                {% if row.is_exempt %}Un-exempt{% else %}Mark Exempt{% endif %}
-              </button>
-            </form>
+          <td data-label="Status">
+            <div class="cluster">
+              {% if row.is_exempt %}
+                <span class="badge">Exempt</span>
+              {% elif row.payment %}
+                <span class="badge" data-status="success">Paid (£{{ row.payment.amount }})</span>
+              {% else %}
+                <span class="badge" data-status="warning">Unpaid</span>
+              {% endif %}
+              <form method="POST" action="{% url 'committee_toggle_exempt' row.profile.id %}" class="inline-form">
+                {% csrf_token %}
+                <button type="submit" class="button btn-small" data-variant="outline">
+                  {% if row.is_exempt %}Un-exempt{% else %}Mark Exempt{% endif %}<span class="visually-hidden"> {{ row.user.get_full_name }}</span>
+                </button>
+              </form>
+            </div>
           </td>
 
-          <td style="padding: 1rem;">
+          <td data-label="Admin Action">
             {% if not row.payment %}
-            <form method="POST" style="display: flex; gap: 0.5rem; align-items: center;">
+            <form method="POST" class="cluster">
               {% csrf_token %}
               <input type="hidden" name="member_id" value="{{ row.profile.id }}">
 
-              <input type="number" name="amount" value="50.00" step="0.01" style="width: 80px; padding: 0.25rem; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.2); color: white;" required>
+              <label for="amount-{{ row.profile.id }}" class="visually-hidden">Amount paid by {{ row.user.get_full_name }}</label>
+              <input type="number" id="amount-{{ row.profile.id }}" name="amount" value="50.00" step="0.01" class="compact-field" required>
 
-              <select name="payment_method" style="padding: 0.25rem; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.2); color: white;">
+              <label for="method-{{ row.profile.id }}" class="visually-hidden">Payment method</label>
+              <select id="method-{{ row.profile.id }}" name="payment_method" class="compact-field">
                 <option value="BACS">BACS</option>
                 <option value="CASH">Cash</option>
               </select>
 
-              <button type="submit" class="button btn-small" data-variant="primary" style="padding: 0.25rem 0.75rem;">Log</button>
+              <button type="submit" class="button btn-small" data-variant="primary">Log</button>
             </form>
             {% else %}
-              <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <div class="cluster">
                 <span class="text-small text-muted">Recorded: {{ row.payment.date_paid|date:"j M Y" }}</span>
-                <a href="{% url 'committee_financials_edit' row.payment.id %}" class="button btn-small" data-variant="outline" style="padding: 0.1rem 0.5rem; font-size: 0.7rem; text-decoration: none;">Edit</a>
-                <form method="POST" action="{% url 'committee_financials_delete' row.payment.id %}" style="display: inline;" onsubmit="return confirm('Delete this payment record?');">
+                <a href="{% url 'committee_financials_edit' row.payment.id %}" class="button btn-small" data-variant="outline">Edit</a>
+                <form method="POST" action="{% url 'committee_financials_delete' row.payment.id %}" class="inline-form" data-confirm="Delete this payment record?">
                   {% csrf_token %}
-                  <button type="submit" class="button btn-small" data-variant="outline" style="padding: 0.1rem 0.5rem; font-size: 0.7rem;">Delete</button>
+                  <button type="submit" class="button btn-small" data-variant="outline">Delete</button>
                 </form>
               </div>
             {% endif %}
           </td>
-
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-</div>
-{% endblock content %}
+{% endblock members_content %}
+
+{% block scripts %}
+<script src="{% static 'js/confirm-forms.js' %}" defer></script>
+{% endblock scripts %}

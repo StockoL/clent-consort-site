@@ -1,0 +1,26 @@
+/* ==========================================================================
+   BLOCK: HUB GRID (project-specific)
+   ==========================================================================
+   The Committee Hub's grid of card links, laid out by the vendored .grid
+   composition.
+   ========================================================================== */
+
+.hub-grid {
+  --grid-min-item-size: 15rem;
+  --gutter: var(--space-s);
+}
+
+.hub-grid__card {
+  text-decoration: none;
+  transition: transform 0.2s ease;
+}
+
+.hub-grid__card:hover,
+.hub-grid__card:focus-visible {
+  transform: translateY(-2px);
+}
+
+.hub-grid__icon {
+  font-size: 2.5rem;
+  line-height: 1;
+}

@@ -1,0 +1,142 @@
+/* ==========================================================================
+   BLOCK: DATA TABLE (project-specific)
+   ==========================================================================
+   Committee tables (Financial Ledger, Duty of Care roster, RSVP Member
+   Overview). A real <table> on wide screens; below 45rem each row becomes
+   a stacked card, with each cell's data-label shown as its own heading
+   via ::before. No JavaScript.
+   ========================================================================== */
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.data-table th {
+  padding: var(--space-xs);
+  color: #c9a45e;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.data-table td {
+  padding: var(--space-xs);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  vertical-align: top;
+}
+
+.data-table [data-align="center"] {
+  text-align: center;
+}
+
+.data-table__empty {
+  text-align: center;
+  color: #aaa;
+}
+
+/* Status colours for numbers and notes in cells */
+.data-table [data-tone="success"] {
+  color: var(--colors-success-text);
+}
+
+.data-table [data-tone="warning"] {
+  color: var(--colors-warning-text);
+}
+
+.data-table [data-tone="danger"] {
+  color: var(--colors-danger-text);
+}
+
+/* Small "Under 18" flag next to a name */
+.data-table__flag {
+  display: inline-block;
+  margin-inline-start: 0.5rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--colors-danger);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.data-table__notes {
+  max-width: 300px;
+}
+
+/* Compact inputs inside a row (the ledger's "Log payment" form). Beats
+   forms.css's large touch-target inputs for invert cards. */
+.data-table .compact-field {
+  width: auto;
+  min-height: 2.5rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: white;
+}
+
+.data-table .compact-field[type="number"] {
+  width: 6rem;
+}
+
+.data-table .cluster {
+  --gutter: 0.5rem;
+}
+
+@media (max-width: 44.99rem) {
+  /* Block layout all the way down, so the table can't size itself to its
+     widest content and push the page past the phone's width. */
+  .data-table,
+  .data-table tbody {
+    display: block;
+  }
+
+  .data-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .data-table tr {
+    display: block;
+    padding-block: var(--space-xs);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .data-table td {
+    display: grid;
+    grid-template-columns: 7rem minmax(0, 1fr);
+    gap: var(--space-2xs);
+    padding: 0.25rem 0;
+    border: 0;
+  }
+
+  .data-table [data-align="center"] {
+    text-align: left;
+  }
+
+  .data-table td::before {
+    content: attr(data-label);
+    color: #c9a45e;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1ch;
+  }
+
+  .data-table td.data-table__empty {
+    display: block;
+  }
+
+  .data-table td.data-table__empty::before {
+    content: none;
+  }
+
+  .data-table__notes {
+    max-width: none;
+  }
+}

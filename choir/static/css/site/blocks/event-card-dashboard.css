@@ -142,3 +142,15 @@ select.rsvp-toggle option {
 .event-earlier > .accordion__panel > .accordion__content {
   padding-inline: 0;
 }
+
+/* --- Subscription due card (top of the dashboard) --- */
+.subs-card {
+  border: 2px solid #c9a45e;
+  max-width: 40rem;
+}
+
+.subs-card__bank {
+  padding: var(--space-xs);
+  border: 1px solid rgba(201, 164, 94, 0.3);
+  border-radius: 8px;
+}

@@ -1,0 +1,17 @@
+{% comment %}
+    One singer in a committee RSVP list, with an override select.
+    status: attending | absent | pending (also sets the row colour)
+    icon: the decorative marker for that status; rsvp-dashboard.js swaps
+    it when the singer is moved to another list.
+{% endcomment %}
+<li class="rsvp-list__item" data-rsvp="{{ status }}">
+    <span class="rsvp-list__name" title="{{ rsvp.user.get_full_name }}">
+        <span class="rsvp-list__icon" aria-hidden="true">{{ icon }}</span> {{ rsvp.user.first_name }} {{ rsvp.user.last_name }}
+    </span>
+
+    <select class="rsvp-list__select" data-rsvp-override data-event-id="{{ data.event.id }}" data-attendance-id="{{ rsvp.id }}" aria-label="RSVP for {{ rsvp.user.get_full_name }}">
+        <option value="ATTENDING"{% if status == 'attending' %} selected{% endif %}>Attending</option>
+        <option value="ABSENT"{% if status == 'absent' %} selected{% endif %}>Absent</option>
+        <option value="PENDING"{% if status == 'pending' %} selected{% endif %}>Pending</option>
+    </select>
+</li>

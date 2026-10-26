@@ -1,0 +1,26 @@
+{% extends 'choir/base.html' %}
+{% load static %}
+
+{% comment %}
+    The one layout for every logged-in page: page header, the members
+    navigation (_members_nav.html) and the page's own content. Pages fill
+    page_title, page_lede (optional, plain text) and members_content.
+{% endcomment %}
+
+{% block content %}
+<div class="wrapper section-padding members-shell flow">
+    <header class="members-shell__header flow flow--small">
+        <h1 class="text-primary">{% block page_title %}{% endblock page_title %}</h1>
+        {% block page_lede_wrapper %}<p class="members-shell__lede">{% block page_lede %}{% endblock page_lede %}</p>{% endblock page_lede_wrapper %}
+    </header>
+
+    <div class="members-shell__body sidebar">
+        {% include 'choir/_members_nav.html' %}
+
+        <div class="members-shell__content flow">
+            {% block members_content %}{% endblock members_content %}
+        </div>
+    </div>
+</div>
+<script src="{% static 'js/members-nav.js' %}" defer></script>
+{% endblock content %}

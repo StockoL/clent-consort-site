@@ -1,25 +1,18 @@
-{% extends 'choir/base.html' %}
+{% extends 'choir/_members_base.html' %}
+{% load static %}
 
 {% block title %}Repertoire & Learning - Clent Consort{% endblock title %}
 
-{% block content %}
-<div class="wrapper flow section-padding">
-  <div class="text-center">
-    <h1>Repertoire &amp; Learning</h1>
-    <p>
-      {% if active_project %}
-        The digital library for {{ active_project.name }}.
-      {% else %}
-        Sheet music and audio tracks for the current project.
-      {% endif %}
-    </p>
+{% block page_title %}Repertoire &amp; Learning{% endblock page_title %}
+{% block page_lede %}
+  {% if active_project %}
+    The digital library for {{ active_project.name }}.
+  {% else %}
+    Sheet music and audio tracks for the current project.
+  {% endif %}
+{% endblock page_lede %}
 
-    <div style="margin-top: 1.5rem;">
-      {% include 'choir/_member_subnav.html' %}
-    </div>
-  </div>
-
-  <div class="wrapper wrapper--narrow section-padding">
+{% block members_content %}
     <section class="card flow" data-variant="invert">
       {% if not active_projects %}
       <p>
@@ -35,27 +28,24 @@
           type="button"
           id="project-tab-{{ item.project.id }}"
           class="rsvp-tab project-tab{% if forloop.first %} active{% endif %}"
-          onclick="switchProjectTab('{{ item.project.id }}')"
+          data-project-tab="{{ item.project.id }}"
+          aria-pressed="{% if forloop.first %}true{% else %}false{% endif %}"
         >{{ item.project.name }}</button>
         {% endfor %}
       </div>
       {% endif %}
 
       {% for item in projects_data %}
-      <div id="project-panel-{{ item.project.id }}" class="project-panel" {% if not forloop.first %}style="display: none;"{% endif %}>
+      <div id="project-panel-{{ item.project.id }}" class="project-panel flow"{% if not forloop.first %} hidden{% endif %}>
         <h2 class="text-primary text-step-1">Current Repertoire</h2>
         <p class="text-small text-muted">Pieces scheduled for {{ item.project.name }}.</p>
 
         {% if item.repertoire %}
-        <ul class="flow flow--small list-unstyled">
+        <ul class="flow flow--small list-unstyled" role="list">
           {% for piece in item.repertoire %}
-          <li class="repertoire-item" style="display: flex; justify-content: space-between; align-items: center;">
-
-            <div>
-              <strong>{{ piece.title }}</strong><br />
-              <span class="text-muted text-small">{{ piece.composer }}</span>
-            </div>
-
+          <li class="repertoire-item">
+            <strong>{{ piece.title }}</strong><br />
+            <span class="text-muted text-small">{{ piece.composer }}</span>
           </li>
           {% endfor %}
         </ul>
@@ -65,9 +55,9 @@
 
         <hr class="divider" />
 
-        <div class="text-center">
+        <div class="text-center flow flow--small">
           <h2 class="text-primary text-step-1">Access Scores &amp; Learning Tracks</h2>
-          <div class="flex-center-wrap" style="margin-top: 0.75rem;">
+          <div class="flex-center-wrap">
             <a href="{% url 'hub' 'soprano' item.project.id %}" class="button btn-small" data-variant="primary">Sop</a>
             <a href="{% url 'hub' 'alto' item.project.id %}" class="button btn-small" data-variant="primary">Alto</a>
             <a href="{% url 'hub' 'tenor' item.project.id %}" class="button btn-small" data-variant="primary">Ten</a>
@@ -79,6 +69,8 @@
 
       {% endif %}
     </section>
-  </div>
-</div>
-{% endblock content %}
+{% endblock members_content %}
+
+{% block scripts %}
+<script src="{% static 'js/project-tabs.js' %}" defer></script>
+{% endblock scripts %}
