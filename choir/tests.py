@@ -1,3 +1,4 @@
+import json
 import tempfile
 from io import StringIO
 from datetime import timedelta
@@ -320,7 +321,7 @@ class CommitteeScheduleEventTests(TestCase):
                 "location": "St Leonard's Church",
             },
         )
-        self.assertRedirects(response, reverse("committee_hub"))
+        self.assertRedirects(response, reverse("committee_schedule"))
         event = Event.objects.latest("date_time")
         self.assertEqual(event.project, self.project)
 
@@ -1098,3 +1099,272 @@ class NoInlineStylesTests(TestCase):
             and path.relative_to(root).as_posix() not in self.ALLOWED
         ]
         self.assertEqual(offenders, [])
+
+
+class CommitteeEventManagementTests(TestCase):
+    """Build Order Phase 3: the committee lists, edits and deletes events
+    from the schedule page instead of Django admin."""
+
+    def setUp(self):
+        User.objects.create_user(username="committee", password="pw", is_staff=True)
+        self.singer = User.objects.create_user(username="singer", password="pw")
+        self.client.login(username="committee", password="pw")
+
+        self.active = Project.objects.create(name="Clent 2026", status="ACTIVE")
+        self.archived = Project.objects.create(name="Old Project", status="ARCHIVED")
+        self.event = Event.objects.create(
+            project=self.active,
+            date_time=timezone.now() + timedelta(days=7),
+            location="St Leonard's Church",
+        )
+
+    def edit_payload(self, **overrides):
+        payload = {
+            "project": self.active.id,
+            "event_type": "REH",
+            "date_time": "2026-12-03T19:30",
+            "location": "St Leonard's Church",
+            "additional_notes": "<p>Bars 1-40 of the Byrd</p>",
+        }
+        payload.update(overrides)
+        return payload
+
+    def test_schedule_lists_upcoming_events_of_live_projects_only(self):
+        past = Event.objects.create(
+            project=self.active, date_time=timezone.now() - timedelta(days=7), location="Past Hall"
+        )
+        archived = Event.objects.create(
+            project=self.archived,
+            date_time=timezone.now() + timedelta(days=3),
+            location="Archived Hall",
+        )
+
+        response = self.client.get(reverse("committee_schedule"))
+        listed = [e for _, events in response.context["events_by_project"] for e in events]
+        self.assertEqual(listed, [self.event])
+        self.assertNotIn(past, listed)
+        self.assertNotIn(archived, listed)
+        self.assertContains(response, reverse("committee_event_edit", args=[self.event.id]))
+
+    def test_edit_changes_date_and_rehearsal_plan(self):
+        response = self.client.post(
+            reverse("committee_event_edit", args=[self.event.id]), self.edit_payload()
+        )
+        self.assertRedirects(response, reverse("committee_schedule"))
+
+        self.event.refresh_from_db()
+        self.assertEqual(timezone.localtime(self.event.date_time).strftime("%Y-%m-%d %H:%M"), "2026-12-03 19:30")
+        self.assertIn("Bars 1-40", self.event.additional_notes)
+
+    def test_edit_page_loads_the_rich_text_editor(self):
+        response = self.client.get(reverse("committee_event_edit", args=[self.event.id]))
+        self.assertContains(response, "tinymce")
+
+    def test_invalid_edit_rerenders_without_saving(self):
+        response = self.client.post(
+            reverse("committee_event_edit", args=[self.event.id]),
+            self.edit_payload(date_time="not a date"),
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["form"].errors)
+        self.event.refresh_from_db()
+        self.assertEqual(self.event.additional_notes, "")
+
+    def test_an_archived_projects_event_can_still_be_edited(self):
+        old = Event.objects.create(
+            project=self.archived, date_time=timezone.now() - timedelta(days=60), location="Old Hall"
+        )
+        response = self.client.post(
+            reverse("committee_event_edit", args=[old.id]),
+            self.edit_payload(project=self.archived.id, location="Corrected Hall"),
+        )
+        self.assertRedirects(response, reverse("committee_schedule"))
+        old.refresh_from_db()
+        self.assertEqual(old.location, "Corrected Hall")
+
+    def test_delete_removes_the_event_and_its_rsvps(self):
+        self.assertTrue(Attendance.objects.filter(event=self.event).exists())
+
+        response = self.client.post(reverse("committee_event_delete", args=[self.event.id]))
+        self.assertRedirects(response, reverse("committee_schedule"))
+        self.assertFalse(Event.objects.filter(id=self.event.id).exists())
+        self.assertFalse(Attendance.objects.filter(event_id=self.event.id).exists())
+
+    def test_delete_refuses_an_archived_projects_event(self):
+        old = Event.objects.create(
+            project=self.archived, date_time=timezone.now() - timedelta(days=60), location="Old Hall"
+        )
+        response = self.client.post(reverse("committee_event_delete", args=[old.id]), follow=True)
+        self.assertTrue(Event.objects.filter(id=old.id).exists())
+        self.assertContains(response, "archived project")
+
+    def test_delete_is_post_only(self):
+        response = self.client.get(reverse("committee_event_delete", args=[self.event.id]))
+        self.assertEqual(response.status_code, 405)
+        self.assertTrue(Event.objects.filter(id=self.event.id).exists())
+
+
+class CommitteeNewUrlPermissionTests(TestCase):
+    """Every URL Phase 3 adds is committee-only: anonymous visitors and
+    non-committee members are redirected and nothing changes."""
+
+    def setUp(self):
+        User.objects.create_user(username="member", password="pw")
+        planning = Project.objects.create(name="Easter 2027", status="PLANNING")
+        active = Project.objects.create(name="Clent 2026", status="ACTIVE")
+        self.event = Event.objects.create(
+            project=active, date_time=timezone.now() + timedelta(days=7), location="Hall"
+        )
+        self.poll = AvailabilityPoll.objects.create(project=planning, question="March?")
+
+    def urls(self):
+        return [
+            ("get", reverse("committee_schedule")),
+            ("get", reverse("committee_event_edit", args=[self.event.id])),
+            ("post", reverse("committee_event_delete", args=[self.event.id])),
+            ("get", reverse("committee_poll_edit", args=[self.poll.id])),
+            ("post", reverse("committee_poll_toggle", args=[self.poll.id])),
+        ]
+
+    def assert_all_blocked(self):
+        for method, url in self.urls():
+            with self.subTest(url=url):
+                response = getattr(self.client, method)(url)
+                self.assertEqual(response.status_code, 302)
+                self.assertIn(reverse("account_login"), response["Location"])
+        self.assertTrue(Event.objects.filter(id=self.event.id).exists())
+        self.poll.refresh_from_db()
+        self.assertTrue(self.poll.is_open)
+
+    def test_anonymous_is_redirected_to_login(self):
+        self.assert_all_blocked()
+
+    def test_non_committee_member_is_redirected(self):
+        self.client.login(username="member", password="pw")
+        self.assert_all_blocked()
+
+
+class CommitteePollEditingTests(TestCase):
+    """Polls can be edited, closed and reopened; a closed poll disappears
+    from members' Looking Ahead."""
+
+    def setUp(self):
+        User.objects.create_user(username="committee", password="pw", is_staff=True)
+        self.member = User.objects.create_user(username="member", password="pw")
+        self.planning = Project.objects.create(name="Easter 2027", status="PLANNING")
+        self.poll = AvailabilityPoll.objects.create(
+            project=self.planning, question="Available for a March residency?"
+        )
+
+    def test_close_hides_the_poll_from_members_and_reopen_restores_it(self):
+        self.client.login(username="committee", password="pw")
+        self.client.post(reverse("committee_poll_toggle", args=[self.poll.id]))
+        self.poll.refresh_from_db()
+        self.assertFalse(self.poll.is_open)
+
+        self.client.login(username="member", password="pw")
+        response = self.client.get(reverse("member_polling"))
+        self.assertNotContains(response, self.poll.question)
+
+        self.client.login(username="committee", password="pw")
+        self.client.post(reverse("committee_poll_toggle", args=[self.poll.id]))
+        self.client.login(username="member", password="pw")
+        response = self.client.get(reverse("member_polling"))
+        self.assertContains(response, self.poll.question)
+
+    def test_results_row_offers_edit_and_close(self):
+        self.client.login(username="committee", password="pw")
+        response = self.client.get(reverse("committee_polling"))
+        self.assertContains(response, reverse("committee_poll_edit", args=[self.poll.id]))
+        self.assertContains(response, reverse("committee_poll_toggle", args=[self.poll.id]))
+        self.assertContains(response, "Close<span")
+
+    def test_edit_updates_the_question_and_can_close(self):
+        self.client.login(username="committee", password="pw")
+        response = self.client.post(
+            reverse("committee_poll_edit", args=[self.poll.id]),
+            {"project": self.planning.id, "question": "Available 14-15 March?"},
+        )
+        self.assertRedirects(response, reverse("committee_polling"))
+        self.poll.refresh_from_db()
+        self.assertEqual(self.poll.question, "Available 14-15 March?")
+        # An unticked checkbox isn't submitted, so leaving it off closes the poll
+        self.assertFalse(self.poll.is_open)
+
+    def test_poll_stays_editable_after_its_project_goes_active(self):
+        self.planning.status = "ACTIVE"
+        self.planning.save()
+        self.client.login(username="committee", password="pw")
+        response = self.client.post(
+            reverse("committee_poll_edit", args=[self.poll.id]),
+            {"project": self.planning.id, "question": "Still editable?", "is_open": "on"},
+        )
+        self.assertRedirects(response, reverse("committee_polling"))
+
+    def test_create_form_defaults_to_open(self):
+        self.client.login(username="committee", password="pw")
+        response = self.client.get(reverse("committee_polling"))
+        self.assertTrue(response.context["form"]["is_open"].value())
+
+
+class MemberPollNotesTests(TestCase):
+    """Members can add a note to their availability answer; the committee
+    sees it on the Results list."""
+
+    def setUp(self):
+        User.objects.create_user(username="committee", password="pw", is_staff=True)
+        self.member = User.objects.create_user(
+            username="member", password="pw", first_name="Sam", last_name="Singer"
+        )
+        planning = Project.objects.create(name="Easter 2027", status="PLANNING")
+        self.poll = AvailabilityPoll.objects.create(project=planning, question="March?")
+        self.client.login(username="member", password="pw")
+
+    def respond(self, payload):
+        return self.client.post(
+            reverse("member_poll_respond", args=[self.poll.id]),
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+    def test_notes_round_trip(self):
+        response = self.respond({"response": "MAYBE", "notes": "  Away until the 10th  "})
+        self.assertEqual(response.status_code, 200)
+
+        saved = AvailabilityResponse.objects.get(poll=self.poll, user=self.member)
+        self.assertEqual(saved.notes, "Away until the 10th")
+
+        page = self.client.get(reverse("member_polling"))
+        self.assertContains(page, 'value="Away until the 10th"')
+
+        self.client.login(username="committee", password="pw")
+        results = self.client.get(reverse("committee_polling"))
+        self.assertContains(results, "Away until the 10th")
+        self.assertContains(results, "Sam Singer")
+
+    def test_answer_without_notes_keeps_the_existing_note(self):
+        self.respond({"response": "MAYBE", "notes": "Away until the 10th"})
+        self.respond({"response": "YES"})
+        saved = AvailabilityResponse.objects.get(poll=self.poll, user=self.member)
+        self.assertEqual(saved.response, "YES")
+        self.assertEqual(saved.notes, "Away until the 10th")
+
+    def test_empty_note_clears_it(self):
+        self.respond({"response": "MAYBE", "notes": "Away until the 10th"})
+        self.respond({"response": "MAYBE", "notes": ""})
+        self.assertEqual(AvailabilityResponse.objects.get(poll=self.poll).notes, "")
+
+    def test_overlong_note_is_trimmed_and_non_text_rejected(self):
+        self.respond({"response": "YES", "notes": "x" * 500})
+        self.assertEqual(len(AvailabilityResponse.objects.get(poll=self.poll).notes), 200)
+
+        response = self.respond({"response": "YES", "notes": ["not", "text"]})
+        self.assertEqual(response.status_code, 400)
+
+    def test_non_object_payload_is_rejected(self):
+        response = self.client.post(
+            reverse("member_poll_respond", args=[self.poll.id]),
+            data="[1, 2]",
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
