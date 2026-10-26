@@ -248,7 +248,7 @@ def member_polling_view(request):
     )
 
     existing_responses = {
-        response.poll_id: response.response
+        response.poll_id: response
         for response in AvailabilityResponse.objects.filter(
             user=request.user, poll__in=open_polls
         )
@@ -258,7 +258,9 @@ def member_polling_view(request):
     # poll's response directly as an attribute instead, so the template
     # can just read {{ poll.user_response }}.
     for poll in open_polls:
-        poll.user_response = existing_responses.get(poll.id)
+        existing = existing_responses.get(poll.id)
+        poll.user_response = existing.response if existing else None
+        poll.user_notes = existing.notes if existing else ""
 
     context = {"open_polls": open_polls}
     return render(request, "choir/member_polling.html", context)
@@ -275,17 +277,27 @@ def member_poll_respond_view(request, poll_id):
     try:
         data = json.loads(request.body)
         response_value = data.get("response")
-    except json.JSONDecodeError:
+        notes = data.get("notes")
+    except (json.JSONDecodeError, AttributeError):
         return JsonResponse({"success": False, "error": "Invalid payload"}, status=400)
 
     valid_choices = [choice[0] for choice in AvailabilityResponse.RESPONSE_CHOICES]
     if response_value not in valid_choices:
         return JsonResponse({"success": False, "error": "Invalid response"}, status=400)
 
+    defaults = {"response": response_value}
+    # Notes are optional in the payload; when present they replace the old
+    # ones (an empty string clears them).
+    if notes is not None:
+        if not isinstance(notes, str):
+            return JsonResponse({"success": False, "error": "Invalid notes"}, status=400)
+        max_length = AvailabilityResponse._meta.get_field("notes").max_length
+        defaults["notes"] = notes.strip()[:max_length]
+
     AvailabilityResponse.objects.update_or_create(
         poll=poll,
         user=request.user,
-        defaults={"response": response_value},
+        defaults=defaults,
     )
     return JsonResponse({"success": True, "response": response_value})
 
@@ -523,6 +535,7 @@ def committee_poll_manage_view(request):
         poll_data.append(
             {
                 "poll": poll,
+                "noted_responses": [r for r in responses if r.notes],
                 "yes_count": responses.filter(response="YES").count(),
                 "no_count": responses.filter(response="NO").count(),
                 "maybe_count": responses.filter(response="MAYBE").count(),
@@ -536,6 +549,41 @@ def committee_poll_manage_view(request):
         "poll_data": poll_data,
     }
     return render(request, "choir/committee_polling.html", context)
+
+
+@login_required
+@user_passes_test(is_committee)
+def committee_poll_edit_view(request, poll_id):
+    """Edit a poll's question, date, notes or open state."""
+    from .forms import AvailabilityPollForm
+
+    poll = get_object_or_404(AvailabilityPoll, id=poll_id)
+
+    if request.method == "POST":
+        form = AvailabilityPollForm(request.POST, instance=poll)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Poll updated.")
+            return redirect("committee_polling")
+    else:
+        form = AvailabilityPollForm(instance=poll)
+
+    return render(
+        request, "choir/committee_poll_edit.html", {"form": form, "poll": poll}
+    )
+
+
+@login_required
+@user_passes_test(is_committee)
+@require_POST
+def committee_poll_toggle_view(request, poll_id):
+    """Closes an open poll or reopens a closed one. A closed poll drops off
+    members' Looking Ahead page (member_polling_view only shows open ones)."""
+    poll = get_object_or_404(AvailabilityPoll, id=poll_id)
+    poll.is_open = not poll.is_open
+    poll.save(update_fields=["is_open"])
+    messages.success(request, f"Poll {'reopened' if poll.is_open else 'closed'}.")
+    return redirect("committee_polling")
 
 
 @login_required
@@ -914,7 +962,10 @@ def committee_toggle_exempt_view(request, profile_id):
 @login_required
 @user_passes_test(is_committee)
 def committee_schedule_event(request):
-    """Processes frontend form submissions to schedule new rehearsals or residencies."""
+    """The committee's calendar: upcoming events for every non-archived
+    project (grouped by project, the project with the soonest event
+    first), each with Edit and Delete, plus the form to schedule a new
+    rehearsal or residency."""
     from .forms import QuickEventScheduleForm  # Local import to prevent circular traps
 
     if request.method == "POST":
@@ -925,14 +976,72 @@ def committee_schedule_event(request):
                 request,
                 f"Successfully scheduled {new_event.get_event_type_display()} for {new_event.date_time.strftime('%A, %d %B')}.",
             )
-            return redirect("committee_hub")
+            return redirect("committee_schedule")
     else:
         form = QuickEventScheduleForm()
 
+    upcoming = (
+        Event.objects.filter(date_time__gte=timezone.now())
+        .exclude(project__status="ARCHIVED")
+        .select_related("project")
+        .order_by("date_time")
+    )
+    # Dicts keep insertion order, so projects come out ordered by their
+    # soonest upcoming event.
+    events_by_project = {}
+    for event in upcoming:
+        events_by_project.setdefault(event.project, []).append(event)
+
     context = {
         "form": form,
+        "events_by_project": events_by_project.items(),
     }
     return render(request, "choir/committee_schedule.html", context)
+
+
+@login_required
+@user_passes_test(is_committee)
+def committee_event_edit_view(request, event_id):
+    """Edit an event's date, place and type, and write its rehearsal plan
+    (additional_notes), which members see on their dashboard."""
+    from .forms import EventEditForm
+
+    event = get_object_or_404(Event, id=event_id)
+
+    if request.method == "POST":
+        form = EventEditForm(request.POST, instance=event)
+        if form.is_valid():
+            event = form.save()
+            messages.success(
+                request,
+                f"{event.get_event_type_display()} on {event.date_time.strftime('%A, %d %B')} updated.",
+            )
+            return redirect("committee_schedule")
+    else:
+        form = EventEditForm(instance=event)
+
+    return render(
+        request, "choir/committee_event_edit.html", {"form": form, "event": event}
+    )
+
+
+@login_required
+@user_passes_test(is_committee)
+@require_POST
+def committee_event_delete_view(request, event_id):
+    """Deletes an event and, by cascade, its members' RSVPs. Events in an
+    archived project are kept: they're the attendance history."""
+    event = get_object_or_404(Event, id=event_id)
+    label = f"{event.get_event_type_display()} on {event.date_time.strftime('%A, %d %B %Y')}"
+
+    if event.project.status == "ARCHIVED":
+        messages.error(
+            request, f"{label} belongs to an archived project, so it can't be deleted."
+        )
+    else:
+        event.delete()
+        messages.success(request, f"{label} deleted.")
+    return redirect("committee_schedule")
 
 
 @login_required

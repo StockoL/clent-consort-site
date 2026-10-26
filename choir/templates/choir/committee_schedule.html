@@ -1,11 +1,48 @@
 {% extends 'choir/_members_base.html' %}
+{% load static %}
 
-{% block title %}Schedule Event - Clent Consort{% endblock title %}
+{% block title %}Schedule - Clent Consort{% endblock title %}
 
 {% block page_title %}Committee Event Scheduler{% endblock page_title %}
-{% block page_lede %}Plan and schedule events for the choir.{% endblock page_lede %}
+{% block page_lede %}Plan and schedule events for the choir, and write each one's rehearsal plan.{% endblock page_lede %}
 
 {% block members_content %}
+  <section class="card flow" data-variant="invert">
+    <h2 class="text-primary text-step-1 card-heading">Upcoming Events</h2>
+
+    {% for project, events in events_by_project %}
+      <div class="flow flow--small">
+        <h3 class="text-step-0">{{ project.name }}</h3>
+        <ul class="list-unstyled flow flow--small" role="list">
+          {% for event in events %}
+          <li class="item-row">
+            <div>
+              <strong>{{ event.date_time|date:"l j M Y, g:i A" }}</strong>
+              <span class="badge"{% if event.event_type == 'RES' %} data-status="success"{% endif %}>{{ event.get_event_type_display }}</span>
+              <br>
+              <span class="text-small text-muted">{{ event.location }}{% if event.additional_notes %} · has a rehearsal plan{% endif %}</span>
+            </div>
+
+            <div class="item-row__actions">
+              <a href="{% url 'committee_event_edit' event.id %}" class="button btn-small" data-variant="outline">
+                Edit<span class="visually-hidden"> {{ event.date_time|date:"j M Y" }}</span>
+              </a>
+              <form method="POST" action="{% url 'committee_event_delete' event.id %}" class="inline-form" data-confirm="Delete the {{ event.get_event_type_display }} on {{ event.date_time|date:'j M Y' }}? Members' RSVPs for it will be deleted too.">
+                {% csrf_token %}
+                <button type="submit" class="button btn-small" data-variant="outline">
+                  Delete<span class="visually-hidden"> {{ event.date_time|date:"j M Y" }}</span>
+                </button>
+              </form>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% empty %}
+      <p class="text-muted text-small">No upcoming events. Schedule one below.</p>
+    {% endfor %}
+  </section>
+
   <div class="wrapper wrapper--narrow">
     <section class="card flow" data-variant="invert">
       <div class="login-header flow flow--small">
@@ -15,33 +52,13 @@
 
       <form method="POST" class="flow">
         {% csrf_token %}
-
-        <div class="form-group flow flow--small">
-          <label for="{{ form.project.id_for_label }}" class="form-label form-label--heading">Project</label>
-          {{ form.project }}
-          {{ form.project.errors }}
-        </div>
-
-        <div class="form-group flow flow--small">
-          <label for="{{ form.event_type.id_for_label }}" class="form-label form-label--heading">Event Type</label>
-          {{ form.event_type }}
-          {{ form.event_type.errors }}
-        </div>
-
-        <div class="form-group flow flow--small">
-          <label for="{{ form.date_time.id_for_label }}" class="form-label form-label--heading">Date & Time</label>
-          {{ form.date_time }}
-          {{ form.date_time.errors }}
-        </div>
-
-        <div class="form-group flow flow--small">
-          <label for="{{ form.location.id_for_label }}" class="form-label form-label--heading">Location</label>
-          {{ form.location }}
-          {{ form.location.errors }}
-        </div>
-
+        {% include 'choir/_event_fields.html' %}
         <button type="submit" class="button" data-variant="primary">Publish Event</button>
       </form>
     </section>
   </div>
 {% endblock members_content %}
+
+{% block scripts %}
+<script src="{% static 'js/confirm-forms.js' %}" defer></script>
+{% endblock scripts %}

@@ -13,11 +13,15 @@ from choir.views import (
     committee_document_delete_view,
     committee_documents_view,
     committee_emergency_roster,
+    committee_event_delete_view,
+    committee_event_edit_view,
     committee_financials_delete_view,
     committee_financials_edit_view,
     committee_financials_view,
     committee_hub,
+    committee_poll_edit_view,
     committee_poll_manage_view,
+    committee_poll_toggle_view,
     committee_project_edit_view,
     committee_projects_view,
     committee_rsvp_report,
@@ -71,6 +75,16 @@ urlpatterns = [
         name="committee_project_edit",
     ),
     path("members/committee/polling/", committee_poll_manage_view, name="committee_polling"),
+    path(
+        "members/committee/polling/<int:poll_id>/edit/",
+        committee_poll_edit_view,
+        name="committee_poll_edit",
+    ),
+    path(
+        "members/committee/polling/<int:poll_id>/toggle/",
+        committee_poll_toggle_view,
+        name="committee_poll_toggle",
+    ),
     path("members/committee/rsvps/", committee_rsvp_report, name="committee_rsvps"),
     path(
         "members/committee/broadcast/", committee_broadcast, name="committee_broadcast"
@@ -91,6 +105,16 @@ urlpatterns = [
         "members/committee/schedule/",
         committee_schedule_event,
         name="committee_schedule",
+    ),
+    path(
+        "members/committee/schedule/<int:event_id>/edit/",
+        committee_event_edit_view,
+        name="committee_event_edit",
+    ),
+    path(
+        "members/committee/schedule/<int:event_id>/delete/",
+        committee_event_delete_view,
+        name="committee_event_delete",
     ),
     path(
         "members/committee/documents/",

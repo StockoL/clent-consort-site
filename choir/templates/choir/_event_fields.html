@@ -1,0 +1,27 @@
+{% comment %}
+    The scheduling fields shared by the create form (committee_schedule)
+    and the edit form (committee_event_edit).
+{% endcomment %}
+<div class="form-group flow flow--small">
+    <label for="{{ form.project.id_for_label }}" class="form-label form-label--heading">Project</label>
+    {{ form.project }}
+    {{ form.project.errors }}
+</div>
+
+<div class="form-group flow flow--small">
+    <label for="{{ form.event_type.id_for_label }}" class="form-label form-label--heading">Event Type</label>
+    {{ form.event_type }}
+    {{ form.event_type.errors }}
+</div>
+
+<div class="form-group flow flow--small">
+    <label for="{{ form.date_time.id_for_label }}" class="form-label form-label--heading">Date & Time</label>
+    {{ form.date_time }}
+    {{ form.date_time.errors }}
+</div>
+
+<div class="form-group flow flow--small">
+    <label for="{{ form.location.id_for_label }}" class="form-label form-label--heading">Location</label>
+    {{ form.location }}
+    {{ form.location.errors }}
+</div>

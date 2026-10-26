@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
+from django.db import models
 
 from .models import (
     AuditionApplication,
@@ -179,7 +180,7 @@ class AvailabilityPollForm(forms.ModelForm):
 
     class Meta:
         model = AvailabilityPoll
-        fields = ["project", "question", "proposed_date", "notes"]
+        fields = ["project", "question", "proposed_date", "notes", "is_open"]
         widgets = {
             "question": forms.TextInput(
                 attrs={
@@ -192,6 +193,16 @@ class AvailabilityPollForm(forms.ModelForm):
             ),
             "notes": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
         }
+        labels = {"is_open": "Open for responses"}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Keep an existing poll's own project selectable after the project
+        # leaves PLANNING, so the poll can still be edited or closed.
+        if self.instance.pk:
+            self.fields["project"].queryset = Project.objects.filter(
+                models.Q(id=self.instance.project_id) | models.Q(status="PLANNING")
+            )
 
 
 class SubscriptionPaymentForm(forms.ModelForm):
@@ -261,6 +272,24 @@ class QuickEventScheduleForm(forms.ModelForm):
                 attrs={"placeholder": "e.g., St Leonard's Church"}
             ),
         }
+
+
+class EventEditForm(QuickEventScheduleForm):
+    """Editing an existing event: the scheduling fields plus the rehearsal
+    plan (additional_notes, a TinyMCE HTMLField, so it renders with the
+    TinyMCE widget - the template must include {{ form.media }})."""
+
+    class Meta(QuickEventScheduleForm.Meta):
+        fields = QuickEventScheduleForm.Meta.fields + ["additional_notes"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Keep the event's own project selectable even once it's archived,
+        # so editing an older event doesn't fail validation.
+        if self.instance.pk:
+            self.fields["project"].queryset = Project.objects.filter(
+                models.Q(id=self.instance.project_id) | ~models.Q(status="ARCHIVED")
+            )
 
 
 class BroadcastForm(forms.ModelForm):
