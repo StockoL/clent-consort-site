@@ -128,7 +128,7 @@ urlpatterns = [
     # --- Utilities ---
     path(
         "favicon.ico",
-        RedirectView.as_view(url="/static/images/favicon.ico", permanent=True),
+        RedirectView.as_view(url="/static/images/favicon-clent.png", permanent=True),
     ),
     path(
         "robots.txt",
