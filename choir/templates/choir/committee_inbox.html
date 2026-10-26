@@ -1,4 +1,5 @@
 {% extends 'choir/_members_base.html' %}
+{% load static %}
 
 {% block title %}Inbox - Clent Consort{% endblock title %}
 
@@ -8,10 +9,23 @@
 {% block members_content %}
   <section class="card flow" data-variant="invert">
     {% if items %}
+    {# Row checkboxes join this form through their form="inbox-bulk" attribute, #}
+    {# since each row also holds its own Mark handled form and forms can't nest. #}
+    <form method="POST" action="{% url 'committee_inbox_bulk' %}" id="inbox-bulk" class="cluster inbox-toolbar">
+      {% csrf_token %}
+      <label class="inbox-select-all">
+        <input type="checkbox" data-select-all="inbox-bulk">
+        <span class="text-small">Select all</span>
+      </label>
+      <button type="submit" name="action" value="handled" class="button btn-small" data-variant="outline">Mark handled</button>
+      <button type="submit" name="action" value="delete" class="button btn-small" data-variant="outline" data-confirm="Delete the selected items for good? This can't be undone.">Delete as spam</button>
+    </form>
+
     <ul class="list-unstyled flow" role="list">
       {% for item in items %}
       {% with obj=item.obj %}
       <li class="item-row inbox-item"{% if obj.handled %} data-handled{% endif %}>
+        <input type="checkbox" name="items" value="{{ item.kind }}:{{ obj.id }}" form="inbox-bulk" class="inbox-item__select" aria-label="Select {{ obj.name }}'s {% if item.kind == 'audition' %}application{% else %}enquiry{% endif %}">
         <div class="flow flow--small inbox-item__body">
           <p>
             <strong>{{ obj.name }}</strong>
@@ -47,3 +61,8 @@
     {% endif %}
   </section>
 {% endblock members_content %}
+
+{% block scripts %}
+<script src="{% static 'js/confirm-forms.js' %}" defer></script>
+<script src="{% static 'js/select-all.js' %}" defer></script>
+{% endblock scripts %}

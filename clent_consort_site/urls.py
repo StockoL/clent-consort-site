@@ -19,6 +19,7 @@ from choir.views import (
     committee_financials_edit_view,
     committee_financials_view,
     committee_hub,
+    committee_inbox_bulk_view,
     committee_inbox_toggle_view,
     committee_inbox_view,
     committee_poll_edit_view,
@@ -91,6 +92,7 @@ urlpatterns = [
     path("members/committee/rsvps/", committee_rsvp_report, name="committee_rsvps"),
     path("members/committee/settings/", committee_settings_view, name="committee_settings"),
     path("members/committee/inbox/", committee_inbox_view, name="committee_inbox"),
+    path("members/committee/inbox/bulk/", committee_inbox_bulk_view, name="committee_inbox_bulk"),
     path(
         "members/committee/inbox/<str:kind>/<int:item_id>/toggle/",
         committee_inbox_toggle_view,

@@ -1552,3 +1552,67 @@ class CommitteeInboxTests(TestCase):
 
         response = self.client.get(reverse("members"))
         self.assertNotContains(response, "members-nav__count")
+
+
+class CommitteeInboxBulkTests(TestCase):
+    """The inbox's bulk actions: tick several items, then Mark handled or
+    Delete as spam (added after the first deploy showed 143 spam enquiries)."""
+
+    def setUp(self):
+        self.committee = User.objects.create_user(username="committee", password="pw", is_staff=True)
+        User.objects.create_user(username="member", password="pw")
+        self.spam = [
+            Enquiry.objects.create(name=f"Spammer {n}", email=f"s{n}@example.com", message="Cheap SEO")
+            for n in range(3)
+        ]
+        self.real = Enquiry.objects.create(name="Ann", email="ann@example.com", message="Wedding in June?")
+        self.application = AuditionApplication.objects.create(
+            name="Ben", email="ben@example.com", voice_part="tenor"
+        )
+        self.client.login(username="committee", password="pw")
+
+    def bulk(self, action, items):
+        return self.client.post(reverse("committee_inbox_bulk"), {"action": action, "items": items})
+
+    def test_delete_removes_only_the_selected_items(self):
+        response = self.client.post(
+            reverse("committee_inbox_bulk"),
+            {"action": "delete", "items": [f"enquiry:{e.id}" for e in self.spam]},
+            follow=True,
+        )
+        self.assertRedirects(response, reverse("committee_inbox"))
+        self.assertContains(response, "3 items deleted as spam.")
+        self.assertEqual(list(Enquiry.objects.all()), [self.real])
+        self.assertTrue(AuditionApplication.objects.exists())
+
+    def test_mark_handled_covers_both_kinds_and_records_who(self):
+        self.bulk("handled", [f"enquiry:{self.real.id}", f"audition:{self.application.id}"])
+        self.real.refresh_from_db()
+        self.application.refresh_from_db()
+        self.assertTrue(self.real.handled and self.application.handled)
+        self.assertEqual(self.real.handled_by, self.committee)
+        self.assertFalse(Enquiry.objects.filter(id=self.spam[0].id, handled=True).exists())
+
+    def test_malformed_or_unknown_items_are_ignored(self):
+        self.bulk("delete", ["parcel:1", "enquiry:abc", "enquiry", f"audition:{self.application.id}:x"])
+        self.assertEqual(Enquiry.objects.count(), 4)
+        self.assertTrue(AuditionApplication.objects.exists())
+
+    def test_unknown_action_changes_nothing(self):
+        response = self.bulk("archive", [f"enquiry:{self.real.id}"])
+        self.assertRedirects(response, reverse("committee_inbox"), fetch_redirect_response=False)
+        self.assertTrue(Enquiry.objects.filter(id=self.real.id).exists())
+
+    def test_inbox_renders_checkboxes_and_the_delete_confirmation(self):
+        page = self.client.get(reverse("committee_inbox"))
+        self.assertContains(page, f'value="enquiry:{self.real.id}" form="inbox-bulk"')
+        self.assertContains(page, 'data-confirm="Delete the selected items for good?')
+        self.assertContains(page, "js/select-all")
+
+    def test_bulk_is_committee_only_and_post_only(self):
+        self.assertEqual(self.client.get(reverse("committee_inbox_bulk")).status_code, 405)
+
+        self.client.login(username="member", password="pw")
+        response = self.bulk("delete", [f"enquiry:{e.id}" for e in self.spam])
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(Enquiry.objects.count(), 4)

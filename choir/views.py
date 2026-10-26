@@ -984,6 +984,42 @@ def committee_inbox_toggle_view(request, kind, item_id):
 
 @login_required
 @user_passes_test(is_committee)
+@require_POST
+def committee_inbox_bulk_view(request):
+    """Applies one action to the ticked inbox items: "handled" marks them
+    handled by the current user; "delete" removes them for good (the
+    "Delete as spam" button). Items arrive as "<kind>:<id>" values;
+    anything malformed or unknown is ignored."""
+    action = request.POST.get("action")
+    if action not in ("handled", "delete"):
+        messages.error(request, "Choose an action for the selected items.")
+        return redirect("committee_inbox")
+
+    ids_by_kind = {kind: [] for kind in INBOX_MODELS}
+    for value in request.POST.getlist("items"):
+        kind, _, item_id = value.partition(":")
+        if kind in ids_by_kind and item_id.isdigit():
+            ids_by_kind[kind].append(int(item_id))
+
+    count = 0
+    for kind, ids in ids_by_kind.items():
+        selected = INBOX_MODELS[kind].objects.filter(id__in=ids)
+        if action == "delete":
+            count += selected.delete()[0]
+        else:
+            count += selected.update(handled=True, handled_by=request.user)
+
+    if count == 0:
+        messages.info(request, "No items were selected.")
+    elif action == "delete":
+        messages.success(request, f"{count} item{'s' if count != 1 else ''} deleted as spam.")
+    else:
+        messages.success(request, f"{count} item{'s' if count != 1 else ''} marked handled.")
+    return redirect("committee_inbox")
+
+
+@login_required
+@user_passes_test(is_committee)
 def committee_financials_edit_view(request, payment_id):
     """Lets the committee correct a logged payment - amount, date, term,
     method, or notes - after the fact, e.g. a mis-keyed amount or a cash
