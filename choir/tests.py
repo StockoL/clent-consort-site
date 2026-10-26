@@ -4,6 +4,7 @@ from io import StringIO
 from datetime import timedelta
 
 from allauth.account.models import EmailAddress
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import CommandError, call_command
@@ -14,9 +15,11 @@ from django.utils import timezone
 
 from .models import (
     Attendance,
+    AuditionApplication,
     AvailabilityPoll,
     AvailabilityResponse,
     ChoirCommunication,
+    ChoirSettings,
     CommitteeDocument,
     Enquiry,
     Event,
@@ -1368,3 +1371,184 @@ class MemberPollNotesTests(TestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
+
+
+class ChoirSettingsTests(TestCase):
+    """Build Order Phase 4a: the term, subscription and bank details live
+    in one ChoirSettings row the committee edits on the site."""
+
+    def setUp(self):
+        User.objects.create_user(username="committee", password="pw", is_staff=True)
+        self.member = User.objects.create_user(username="member", password="pw", last_name="Singer")
+
+    def test_load_returns_the_seeded_row(self):
+        # The data migration (0022) seeds pk=1 from the old hard-coded values
+        choir_settings = ChoirSettings.load()
+        self.assertEqual(choir_settings.pk, 1)
+        self.assertEqual(choir_settings.current_term, settings.CURRENT_TERM)
+        self.assertEqual(choir_settings.bank_sort_code, "23-05-80")
+        self.assertEqual(ChoirSettings.objects.count(), 1)
+
+    def test_load_recreates_a_missing_row_and_save_keeps_one_row(self):
+        ChoirSettings.objects.all().delete()
+        choir_settings = ChoirSettings.load()
+        self.assertEqual(choir_settings.current_term, settings.CURRENT_TERM)
+
+        ChoirSettings(current_term="Spring 2027").save()
+        self.assertEqual(ChoirSettings.objects.count(), 1)
+        self.assertEqual(ChoirSettings.load().current_term, "Spring 2027")
+
+    def test_dashboard_reads_term_amount_and_bank_details_from_settings(self):
+        choir_settings = ChoirSettings.load()
+        choir_settings.current_term = "Spring 2027"
+        choir_settings.subscription_amount = "65.00"
+        choir_settings.bank_account_number = "11112222"
+        choir_settings.save()
+
+        self.client.login(username="member", password="pw")
+        response = self.client.get(reverse("members"))
+        self.assertEqual(response.context["current_term"], "Spring 2027")
+        self.assertContains(response, "£65.00 for Spring 2027")
+        self.assertContains(response, "11112222")
+        self.assertNotContains(response, "58234028")
+
+    def test_ledger_uses_the_settings_term(self):
+        choir_settings = ChoirSettings.load()
+        choir_settings.current_term = "Spring 2027"
+        choir_settings.save()
+        SubscriptionPayment.objects.create(
+            member=self.member.profile, amount=50, date_paid=timezone.now().date(), term_reference="Autumn 2026"
+        )
+
+        self.client.login(username="committee", password="pw")
+        response = self.client.get(reverse("committee_financials"))
+        row = next(r for r in response.context["roster"] if r["user"] == self.member)
+        self.assertIsNone(row["payment"])  # paid last term, not this one
+        self.assertEqual(response.context["selected_term"], "Spring 2027")
+
+        self.client.post(
+            reverse("committee_financials"),
+            {"member_id": self.member.profile.id, "amount": "50.00", "payment_method": "BACS"},
+        )
+        self.assertTrue(
+            SubscriptionPayment.objects.filter(member=self.member.profile, term_reference="Spring 2027").exists()
+        )
+
+    def test_ledger_term_selector_shows_an_earlier_term(self):
+        SubscriptionPayment.objects.create(
+            member=self.member.profile, amount=50, date_paid=timezone.now().date(), term_reference="Summer 2026"
+        )
+        self.client.login(username="committee", password="pw")
+        response = self.client.get(reverse("committee_financials"), {"term": "Summer 2026"})
+        self.assertEqual(response.context["earlier_terms"], ["Summer 2026"])
+        row = next(r for r in response.context["roster"] if r["user"] == self.member)
+        self.assertEqual(row["payment"].term_reference, "Summer 2026")
+
+    def test_settings_page_saves_and_is_committee_only(self):
+        self.client.login(username="member", password="pw")
+        self.assertEqual(self.client.get(reverse("committee_settings")).status_code, 302)
+
+        self.client.login(username="committee", password="pw")
+        response = self.client.post(
+            reverse("committee_settings"),
+            {
+                "current_term": "Spring 2027",
+                "subscription_amount": "55.00",
+                "bank_account_name": "Clent Consort",
+                "bank_sort_code": "23-05-80",
+                "bank_account_number": "58234028",
+                "instagram_url": "https://instagram.com/clentconsort",
+            },
+        )
+        self.assertRedirects(response, reverse("committee_settings"))
+        choir_settings = ChoirSettings.load()
+        self.assertEqual(choir_settings.current_term, "Spring 2027")
+        self.assertEqual(str(choir_settings.subscription_amount), "55.00")
+
+    def test_invalid_settings_post_rerenders(self):
+        self.client.login(username="committee", password="pw")
+        response = self.client.post(
+            reverse("committee_settings"),
+            {"current_term": "", "subscription_amount": "lots", "youtube_url": "not a url"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["form"].errors)
+        self.assertEqual(ChoirSettings.load().current_term, settings.CURRENT_TERM)
+
+    def test_footer_shows_only_the_social_icons_that_are_set(self):
+        response = self.client.get(reverse("home"))
+        self.assertNotContains(response, "social-icon")
+
+        choir_settings = ChoirSettings.load()
+        choir_settings.instagram_url = "https://instagram.com/clentconsort"
+        choir_settings.save()
+        response = self.client.get(reverse("home"))
+        self.assertContains(response, 'href="https://instagram.com/clentconsort"')
+        self.assertContains(response, "social-icon", count=1)
+        self.assertNotContains(response, "on YouTube")
+
+
+class CommitteeInboxTests(TestCase):
+    """Build Order Phase 4b: contact-form enquiries and audition
+    applications in one committee inbox, each markable as handled."""
+
+    def setUp(self):
+        self.committee = User.objects.create_user(username="committee", password="pw", is_staff=True)
+        User.objects.create_user(username="member", password="pw")
+        self.enquiry = Enquiry.objects.create(name="Ann", email="ann@example.com", message="Can you sing at our wedding?")
+        self.application = AuditionApplication.objects.create(
+            name="Ben", email="ben@example.com", voice_part="tenor"
+        )
+
+    def test_lists_both_kinds_unhandled_first(self):
+        self.enquiry.handled = True
+        self.enquiry.save()
+
+        self.client.login(username="committee", password="pw")
+        response = self.client.get(reverse("committee_inbox"))
+        objects = [item["obj"] for item in response.context["items"]]
+        self.assertEqual(objects, [self.application, self.enquiry])
+        self.assertContains(response, "Can you sing at our wedding?")
+
+    def test_mark_handled_records_who_and_can_be_undone(self):
+        self.client.login(username="committee", password="pw")
+        response = self.client.post(reverse("committee_inbox_toggle", args=["enquiry", self.enquiry.id]))
+        self.assertRedirects(response, reverse("committee_inbox"))
+        self.enquiry.refresh_from_db()
+        self.assertTrue(self.enquiry.handled)
+        self.assertEqual(self.enquiry.handled_by, self.committee)
+
+        self.client.post(reverse("committee_inbox_toggle", args=["enquiry", self.enquiry.id]))
+        self.enquiry.refresh_from_db()
+        self.assertFalse(self.enquiry.handled)
+        self.assertIsNone(self.enquiry.handled_by)
+
+    def test_unknown_kind_is_404_and_toggle_is_post_only(self):
+        self.client.login(username="committee", password="pw")
+        self.assertEqual(
+            self.client.post(reverse("committee_inbox_toggle", args=["parcel", 1])).status_code, 404
+        )
+        self.assertEqual(
+            self.client.get(reverse("committee_inbox_toggle", args=["audition", self.application.id])).status_code,
+            405,
+        )
+
+    def test_nav_badge_counts_unhandled_items(self):
+        self.client.login(username="committee", password="pw")
+        response = self.client.get(reverse("committee_hub"))
+        self.assertContains(response, 'members-nav__count">2<')
+
+        self.client.post(reverse("committee_inbox_toggle", args=["audition", self.application.id]))
+        response = self.client.get(reverse("committee_hub"))
+        self.assertContains(response, 'members-nav__count">1<')
+
+    def test_inbox_is_committee_only(self):
+        self.client.login(username="member", password="pw")
+        self.assertEqual(self.client.get(reverse("committee_inbox")).status_code, 302)
+        response = self.client.post(reverse("committee_inbox_toggle", args=["enquiry", self.enquiry.id]))
+        self.assertEqual(response.status_code, 302)
+        self.enquiry.refresh_from_db()
+        self.assertFalse(self.enquiry.handled)
+
+        response = self.client.get(reverse("members"))
+        self.assertNotContains(response, "members-nav__count")
