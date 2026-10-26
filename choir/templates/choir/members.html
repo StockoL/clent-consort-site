@@ -19,7 +19,7 @@
   <div class="card flow text-center" data-variant="invert" style="border: 2px solid #c9a45e; max-width: 40rem; margin-inline: auto; margin-block-start: var(--space-m)">
     <h3 class="text-primary">{{ current_term }} Subscriptions Due</h3>
     <p class="text-small" style="--flow-space: var(--space-3xs)">Please settle your termly subscription via BACS transfer.</p>
-    <p class="text-small" style="--flow-space: var(--space-3xs)">£50 by the end of July, please.</p>
+    <p class="text-small" style="--flow-space: var(--space-3xs)">£50 for {{ current_term }}, please.</p>
 
     <!-- Removed the gray background, replaced with a subtle gold border -->
     <div style="margin-top: 1rem; padding: 1rem; border: 1px solid rgba(201, 164, 94, 0.3); border-radius: 8px; text-align: left; display: inline-block;">
@@ -60,57 +60,29 @@
         {% if item.user_attendances %}
         <div class="flow flow--small">
           {% for attendance in item.user_attendances %}
-
-          <article class="event-card-highlight">
-
-            <button type="button" class="accordion__trigger" aria-expanded="false">
-              <h3 class="event-date">
-                {{ attendance.event.date_time|date:"l, j M Y" }}
-              </h3>
-              <svg class="accordion__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </button>
-
-            <div class="accordion__panel" data-state="closed">
-              <div class="accordion__content flow flow--small">
-
-                <div class="event-card-header" style="justify-content: flex-end;">
-                  <select class="rsvp-toggle rsvp-{{ attendance.status|lower }}" data-attendance-id="{{ attendance.id }}">
-                      <option value="PENDING" {% if attendance.status == 'PENDING' %}selected{% endif %}>No Response</option>
-                      <option value="ATTENDING" {% if attendance.status == 'ATTENDING' %}selected{% endif %}>Attending</option>
-                      <option value="ABSENT" {% if attendance.status == 'ABSENT' %}selected{% endif %}>Absent</option>
-                  </select>
-                </div>
-
-                <div class="event-card-body">
-                  <p class="event-meta">
-                    <strong>{{ attendance.event.get_event_type_display }}</strong> |
-                    {{ attendance.event.date_time|time:"g:i A" }} <br />📍 {{ attendance.event.location }}
-                  </p>
-
-                  <a href="{% url 'download_ics' attendance.event.id %}" class="button" data-variant="outline" style="padding: 0.5rem 1rem; font-size: 0.75rem;">
-                    📅 Add to Calendar
-                  </a>
-                </div>
-
-                {% if attendance.event.additional_notes %}
-                <div class="event-card-notes">
-                  <p class="text-small">
-                    <strong>Rehearsal Plan:</strong><br/>
-                    {{ attendance.event.additional_notes|safe }}
-                  </p>
-                </div>
-                {% endif %}
-
-              </div>
-            </div>
-
-          </article>
+            {% include 'choir/_event_card.html' with show_rsvp=True %}
           {% endfor %}
         </div>
         {% else %}
         <p>No upcoming events in the calendar.</p>
+        {% endif %}
+
+        {% if item.past_attendances %}
+        <div class="event-earlier">
+          <button type="button" class="accordion__trigger" aria-expanded="false">
+            <h3 class="text-step-0">Earlier this project ({{ item.past_attendances|length }})</h3>
+            <svg class="accordion__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          <div class="accordion__panel" data-state="closed">
+            <div class="accordion__content flow flow--small">
+              {% for attendance in item.past_attendances %}
+                {% include 'choir/_event_card.html' with show_rsvp=False %}
+              {% endfor %}
+            </div>
+          </div>
+        </div>
         {% endif %}
       </div>
       {% endfor %}

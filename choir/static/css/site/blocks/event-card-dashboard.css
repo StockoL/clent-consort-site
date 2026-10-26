@@ -116,3 +116,29 @@ select.rsvp-toggle option {
   padding: var(--space-2xs);
   border-radius: 4px;
 }
+
+/* RSVP select sits at the end of its row */
+.event-card-header[data-align="end"] {
+  justify-content: flex-end;
+}
+
+/* Compact "Add to Calendar" button inside the card */
+.button.event-card-calendar {
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+}
+
+/* --- "Earlier this project": collapsed list of past events --- */
+.event-earlier {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-block-start: var(--space-s);
+  padding-block-start: var(--space-2xs);
+}
+
+.event-earlier > .accordion__trigger {
+  padding-inline: 0;
+}
+
+.event-earlier > .accordion__panel > .accordion__content {
+  padding-inline: 0;
+}

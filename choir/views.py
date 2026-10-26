@@ -183,17 +183,21 @@ def dashboard_view(request):
         .order_by("event__date_time")
     )
 
-    projects_data = [
-        {
-            "project": project,
-            "user_attendances": [
-                attendance
-                for attendance in all_attendances
-                if attendance.event.project_id == project.id
-            ],
-        }
-        for project in active_projects
-    ]
+    # Upcoming events keep their RSVP select; past ones move to a collapsed
+    # "Earlier this project" list, most recent first.
+    now = timezone.now()
+    projects_data = []
+    for project in active_projects:
+        attendances = [a for a in all_attendances if a.event.project_id == project.id]
+        projects_data.append(
+            {
+                "project": project,
+                "user_attendances": [a for a in attendances if a.event.date_time >= now],
+                "past_attendances": [
+                    a for a in reversed(attendances) if a.event.date_time < now
+                ],
+            }
+        )
 
     context = {
         # Backward-compat aliases: the first (soonest) active project's data,

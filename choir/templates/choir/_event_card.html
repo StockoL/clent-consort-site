@@ -1,0 +1,54 @@
+{% comment %}
+    One collapsible event card on the member dashboard.
+    show_rsvp: render the RSVP select (upcoming events only).
+{% endcomment %}
+<article class="event-card-highlight">
+
+    <button type="button" class="accordion__trigger" aria-expanded="false">
+        <h3 class="event-date">
+            {{ attendance.event.date_time|date:"l, j M Y" }}
+        </h3>
+        <svg class="accordion__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+    </button>
+
+    <div class="accordion__panel" data-state="closed">
+        <div class="accordion__content flow flow--small">
+
+            {% if show_rsvp %}
+            <div class="event-card-header" data-align="end">
+                <select class="rsvp-toggle rsvp-{{ attendance.status|lower }}" data-attendance-id="{{ attendance.id }}" aria-label="Your RSVP for {{ attendance.event.date_time|date:'j M Y' }}">
+                    <option value="PENDING" {% if attendance.status == 'PENDING' %}selected{% endif %}>No Response</option>
+                    <option value="ATTENDING" {% if attendance.status == 'ATTENDING' %}selected{% endif %}>Attending</option>
+                    <option value="ABSENT" {% if attendance.status == 'ABSENT' %}selected{% endif %}>Absent</option>
+                </select>
+            </div>
+            {% endif %}
+
+            <div class="event-card-body">
+                <p class="event-meta">
+                    <strong>{{ attendance.event.get_event_type_display }}</strong> |
+                    {{ attendance.event.date_time|time:"g:i A" }} <br /><span aria-hidden="true">📍</span> {{ attendance.event.location }}
+                </p>
+
+                {% if show_rsvp %}
+                <a href="{% url 'download_ics' attendance.event.id %}" class="button event-card-calendar" data-variant="outline">
+                    <span aria-hidden="true">📅</span> Add to Calendar
+                </a>
+                {% endif %}
+            </div>
+
+            {% if attendance.event.additional_notes %}
+            <div class="event-card-notes">
+                <p class="text-small">
+                    <strong>Rehearsal Plan:</strong><br/>
+                    {{ attendance.event.additional_notes|safe }}
+                </p>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+</article>
