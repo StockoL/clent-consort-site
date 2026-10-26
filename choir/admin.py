@@ -62,12 +62,14 @@ class MemberProfileAdmin(admin.ModelAdmin):
         "get_username",
         "get_full_name",
         "voice_part",
+        "is_singer",
         "phone_number",
         "is_under_18",
     )
     list_editable = ("is_under_18",)
 
     list_filter = (
+        "is_singer",
         "voice_part",
         "is_under_18",
         "is_exempt_from_subs",
@@ -82,7 +84,7 @@ class MemberProfileAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ("User Link", {"fields": ("user",)}),
-        ("Choir Details", {"fields": ("voice_part", "phone_number")}),
+        ("Choir Details", {"fields": ("voice_part", "is_singer", "phone_number")}),
         # New dedicated section for finances
         ("Financial Settings", {"fields": ("is_exempt_from_subs",)}),
         (

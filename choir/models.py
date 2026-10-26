@@ -168,6 +168,14 @@ class MemberProfile(models.Model):
     )
     phone_number = models.CharField(max_length=20, blank=True)
 
+    # Unticked for people with a login who don't sing (see
+    # choir.permissions.is_singer): they get no RSVPs and are left out of
+    # the ledger, RSVP report, Duty of Care roster and broadcasts.
+    is_singer = models.BooleanField(
+        default=True,
+        help_text="Untick for members who have a login but don't sing (e.g. an accompanist or administrator).",
+    )
+
     # --- 1. Duty of Care (Emergency Contacts) ---
     emergency_contact_name = models.CharField(max_length=100, blank=True)
     emergency_contact_relation = models.CharField(max_length=50, blank=True)
@@ -544,11 +552,14 @@ class ChoirCommunication(models.Model):
 
         if is_new:
             # 1. Gather the recipients
+            # Singers only (MemberProfile.is_singer, Build Order Phase 5)
             if self.audience == "ALL":
-                recipients = User.objects.filter(is_active=True)
+                recipients = User.objects.filter(is_active=True, profile__is_singer=True)
             else:
                 recipients = User.objects.filter(
-                    is_active=True, profile__voice_part=self.audience[0]
+                    is_active=True,
+                    profile__is_singer=True,
+                    profile__voice_part=self.audience[0],
                 )
 
             # 2. Fire the email via Brevo - one send per recipient, not one
