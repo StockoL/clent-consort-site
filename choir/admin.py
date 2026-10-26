@@ -6,6 +6,7 @@ from .models import (
     AvailabilityPoll,
     AvailabilityResponse,
     ChoirCommunication,
+    ChoirSettings,
     CommitteeDocument,
     Enquiry,
     Event,
@@ -15,6 +16,21 @@ from .models import (
     Repertoire,
     SubscriptionPayment,
 )
+
+
+# ==============================================================================
+# 00. CHOIR SETTINGS
+# ==============================================================================
+@admin.register(ChoirSettings)
+class ChoirSettingsAdmin(admin.ModelAdmin):
+    """Fallback for the committee Settings page. There is exactly one row
+    (ChoirSettings.load() creates it), so it can't be added or deleted."""
+
+    def has_add_permission(self, request):
+        return not ChoirSettings.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 # ==============================================================================
@@ -152,15 +168,15 @@ class AvailabilityPollAdmin(admin.ModelAdmin):
 # ==============================================================================
 @admin.register(Enquiry)
 class EnquiryAdmin(admin.ModelAdmin):
-    list_display = ("name", "email", "subject", "created_at")
-    list_filter = ("subject", "created_at")
+    list_display = ("name", "email", "subject", "created_at", "handled")
+    list_filter = ("handled", "subject", "created_at")
     ordering = ("-created_at",)
 
 
 @admin.register(AuditionApplication)
 class AuditionApplicationAdmin(admin.ModelAdmin):
-    list_display = ("name", "email", "voice_part", "created_at")
-    list_filter = ("voice_part", "created_at")
+    list_display = ("name", "email", "voice_part", "created_at", "handled")
+    list_filter = ("handled", "voice_part", "created_at")
     ordering = ("-created_at",)
 
 

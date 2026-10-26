@@ -8,6 +8,71 @@ from django.utils.html import strip_tags
 from tinymce.models import HTMLField
 
 # ==============================================================================
+# 00. CHOIR SETTINGS
+# ==============================================================================
+
+
+class ChoirSettings(models.Model):
+    """
+    The choir's site-wide settings, edited by the committee on the site
+    (committee_settings) instead of in code: the current subscription term
+    and what it costs, the bank details members pay into, the footer's
+    social links, and the switch for the database-driven Events page.
+
+    Exactly one row (pk=1). Always read it through ChoirSettings.load().
+    Changing current_term is what starts a new subscription period: the
+    ledger and the member dashboard look up payments for that term only,
+    so everyone shows as Unpaid again while earlier terms' payments stay.
+    """
+
+    current_term = models.CharField(
+        max_length=100, help_text="e.g., Autumn 2026. Payments are logged against this."
+    )
+    subscription_amount = models.DecimalField(
+        max_digits=6, decimal_places=2, default=50, help_text="Per term, in pounds."
+    )
+    subscription_deadline = models.DateField(
+        blank=True, null=True, help_text="Optional. Shown to members when set."
+    )
+
+    bank_account_name = models.CharField(max_length=100, blank=True)
+    bank_sort_code = models.CharField(max_length=8, blank=True)
+    bank_account_number = models.CharField(max_length=8, blank=True)
+
+    # Build Order Phase 9: the public Events page reads Event rows when on.
+    events_page_from_db = models.BooleanField(default=False)
+
+    # Footer icons; each one only shows once its URL is filled in.
+    youtube_url = models.URLField(blank=True)
+    instagram_url = models.URLField(blank=True)
+    facebook_url = models.URLField(blank=True)
+
+    class Meta:
+        verbose_name = "Choir settings"
+        verbose_name_plural = "Choir settings"
+
+    def __str__(self):
+        return "Choir settings"
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def load(cls):
+        """
+        The settings row, created if it's missing. settings.CURRENT_TERM is
+        the fallback term for one release only; Build Order Phase 11
+        removes it once this row is the single source of truth.
+        """
+        obj, _ = cls.objects.get_or_create(
+            pk=1,
+            defaults={"current_term": getattr(settings, "CURRENT_TERM", "")},
+        )
+        return obj
+
+
+# ==============================================================================
 # 0. PROJECTS
 # ==============================================================================
 
@@ -407,6 +472,12 @@ class Enquiry(models.Model):
         auto_now_add=True
     )  # Automatically timestamps the entry
 
+    # Committee inbox (committee_inbox): who dealt with it, if anyone has.
+    handled = models.BooleanField(default=False)
+    handled_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+
     class Meta:
         verbose_name_plural = (
             "Enquiries"  # Fixes Django's default "Enquitys" spelling typo
@@ -432,6 +503,12 @@ class AuditionApplication(models.Model):
     voice_part = models.CharField(max_length=20, choices=VOICE_CHOICES)
     experience = models.TextField(blank=True, null=True)  # Optional field
     created_at = models.DateTimeField(auto_now_add=True)
+
+    # Committee inbox (committee_inbox): who dealt with it, if anyone has.
+    handled = models.BooleanField(default=False)
+    handled_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
 
     def __str__(self):
         return f"Audition application: {self.name} ({self.voice_part.title()})"
