@@ -4,7 +4,7 @@
 [![Lighthouse Performance](https://img.shields.io/badge/Lighthouse_Performance-98%25-brightgreen)](#testing)
 [![Lighthouse Accessibility](https://img.shields.io/badge/Lighthouse_Accessibility-100%25-brightgreen)](#testing)
 
-**[🔴 LIVE APPLICATION: Click here to view the deployed application on Render (Staging)](https://www.clentconsort.org)**
+**[🔴 LIVE APPLICATION: Click here to view the deployed application on Render](https://www.clentconsort.org)**
 
 The Clent Consort is a bespoke, full-stack web application developed for an amateur choral ensemble based in the Clent Hills, Worcestershire.
 
@@ -99,7 +99,7 @@ Instead of relying on rigid, breakpoint-heavy media queries, the site uses intri
 
 ## 4. <a name="backend-architecture"></a> ⚙️ Phase 2: Backend Production (Django Integration)
 
-Transitioning the prototype to a full-stack environment required engineering a robust backend infrastructure with a strict "Security by Design" mindset. The system was rebuilt utilizing **Python** and the **Django 5.0** framework, prioritising the protection of user data, proprietary ensemble assets, and scalable code maintainability.
+Transitioning the prototype to a full-stack environment required engineering a robust backend infrastructure with a strict "Security by Design" mindset. The system was rebuilt utilizing **Python** and the **Django 6.0.6** framework, prioritising the protection of user data, proprietary ensemble assets, and scalable code maintainability.
 
 ### Django Architecture & Template Inheritance
 
@@ -265,7 +265,7 @@ Leveraged and heavily customised Django's built-in Admin panel for the ensemble 
 
 A common pitfall in internal tooling is allowing administrative users to accidentally overwrite or resend historical data. To mitigate this risk within the `ChoirCommunication` broadcast system, I engineered strict, state-dependent mutability rules.
 
-By overriding the `get_readonly_fields` method in `admin.py`, the application dynamically assesses the object's lifecycle state. When an administrator drafts a new email, all fields are open. However, the millisecond the broadcast is saved and dispatched to the ensemble via the Brevo SMTP relay, the backend locks the `subject`, `message`, `audience`, and `author` fields. This guarantees that sent communications become immutable historical records, completely neutralizing the risk of accidental modification or duplicate mass emails.
+By overriding the `get_readonly_fields` method in `admin.py`, the application dynamically assesses the object's lifecycle state. When an administrator drafts a new email, all fields are open. However, the millisecond the broadcast is saved and dispatched to the ensemble via the Brevo HTTP API, the backend locks the `subject`, `message`, `audience`, and `author` fields. This guarantees that sent communications become immutable historical records, completely neutralizing the risk of accidental modification or duplicate mass emails.
 
 </details>
 
@@ -296,7 +296,7 @@ By setting the global `<body>` to a strict `height: 100vh`, I had accidentally c
 
 ### Phase 2: Backend Technical Log
 
-- **Dynamic Email Routing:** A hardcoded `EMAIL_BACKEND` broke the application flow. If pushed to production, emails would silently print to the server log. _Fix:_ Refactored `settings.py` to intelligently poll the `DEBUG` state, fetching secure SMTP credentials dynamically only when in production.
+- **Dynamic Email Routing:** A hardcoded `EMAIL_BACKEND` broke the application flow. If pushed to production, emails would silently print to the server log. _Fix:_ Refactored `settings.py` to intelligently poll the `DEBUG` state, fetching secure email credentials dynamically only when in production.
 - **Allauth Security Feedback Loop:** The default Allauth login form lacked interactive user feedback. _Fix:_ Engineered a state-driven CSS border system using `:placeholder-shown`, `:valid`, and `:invalid` pseudo-classes to handle validation natively.
 - **ModuleNotFoundError during Deployment:** Python crashed when parsing the production `settings.py` on Render. _Fix:_ Synchronised the production virtual environment using `pip freeze > requirements.txt` to ensure cloud servers had access to the `dj-database-url` and `whitenoise` middleware packages.
 
@@ -308,7 +308,7 @@ By setting the global `<body>` to a strict `height: 100vh`, I had accidentally c
 When integrating `django-invitations`, the system relies heavily on email delivery to provision user accounts. During local development, configuring Django to use an SMTP server is dangerous and slows down testing. However, leaving the development `console.EmailBackend` active in production results in a catastrophic silent failure—users request an invite, the server prints the token to a hidden backend log, and the user assumes the application is broken.
 
 **The Fix:** I engineered an environment-aware routing switch in `settings.py`.
-When `DEBUG = True`, the system utilises the `console` backend, allowing me to instantly click invitation tokens directly in my VS Code terminal. When `DEBUG = False`, the system automatically shifts to the `.smtp.EmailBackend` and queries the OS environment variables for the injected `EMAIL_HOST_USER` and `EMAIL_HOST_PASSWORD`. This ensures seamless parity between environments without ever exposing the ensemble's proprietary Gmail App Passwords to version control.
+When `DEBUG = True`, the system utilises the `console` backend, allowing me to instantly click invitation tokens directly in my VS Code terminal. When `DEBUG = False`, the system automatically shifts to Anymail's Brevo backend, which sends over Brevo's HTTP API (Render blocks outbound SMTP) and reads the `BREVO_API_KEY` from Render's environment variables. This ensures seamless parity between environments without ever exposing the ensemble's email credentials to version control.
 
 </details>
 
@@ -381,7 +381,7 @@ python manage.py migrate
 To run this full-stack application locally on your own machine:
 
 1. Open your terminal and clone the repository:
-   `git clone https://github.com/StockoL/clent-consort-project-ms1.git`
+   `git clone https://github.com/StockoL/clent-consort-site.git`
 
 2. Navigate into the directory and create a virtual environment:
    `python -m venv .venv`
@@ -409,6 +409,15 @@ DEBUG=True
    `python manage.py runserver`
 
 8. Navigate to `http://127.0.0.1:8000/` in your browser
+
+### Development
+
+I run the same commands for every piece of work through `scripts/dev.py`, using the virtual environment's Python from the project root:
+
+- `python scripts/dev.py test` runs the test suite.
+- `python scripts/dev.py check` confirms no model change is missing its migration, then runs Django's deploy checks against the production settings (with a throwaway key and database URL). The HSTS subdomain/preload warnings are expected while `SECURE_HSTS_SECONDS` is kept short.
+- `python scripts/dev.py run` starts the development server.
+- `python scripts/dev.py seed` fills the local database with sample data: a committee user (`committee@example.com`), three members across voice parts (`soprano@`, `alto@`, `tenor@example.com`), an active project with past and upcoming events and two pieces with learning assets, and a planning project with an open availability poll. Every seeded account uses the password `choir-dev-password`. The command refuses to run unless `DEBUG=True`, and must never be run in production.
 
 ## <p align="right">(<a href="#top">Back to top</a>)</p>
 
