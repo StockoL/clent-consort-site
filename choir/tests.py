@@ -12,8 +12,9 @@ from django.contrib.auth.models import Group, User
 from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import CommandError, call_command
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, connection, transaction
 from django.test import TestCase, override_settings
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
 from invitations.utils import get_invitation_model
@@ -2586,3 +2587,30 @@ class BroadcastWorkflowTests(TestCase):
         draft.refresh_from_db()
         self.assertEqual(draft.status, "DRAFT")
         self.assertEqual(mail.outbox, [])
+
+
+class RsvpReportQueryCountTests(TestCase):
+    """Phase 11 clean-up: the RSVP report runs a fixed number of queries,
+    however many events and singers there are."""
+
+    def setUp(self):
+        create_committee_user(username="committee", password="pw")
+        self.client.login(username="committee", password="pw")
+        self.project = Project.objects.create(name="Clent 2026", status="ACTIVE")
+
+    def add(self, events, singers):
+        for n in range(singers):
+            User.objects.create_user(username=f"singer{User.objects.count()}", password="pw", email=f"s{n}@example.com")
+        for n in range(events):
+            Event.objects.create(project=self.project, date_time=timezone.now() + timedelta(days=n + 1), location="Hall")
+
+    def queries_for_report(self):
+        with CaptureQueriesContext(connection) as queries:
+            self.assertEqual(self.client.get(reverse("committee_rsvps")).status_code, 200)
+        return len(queries)
+
+    def test_query_count_doesnt_grow_with_events_or_singers(self):
+        self.add(events=2, singers=2)
+        small = self.queries_for_report()
+        self.add(events=6, singers=8)
+        self.assertEqual(self.queries_for_report(), small)

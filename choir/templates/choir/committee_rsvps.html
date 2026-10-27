@@ -43,13 +43,13 @@
 
         <div class="rsvp-tab-container">
           <button type="button" id="btn-{{ data.event.id }}-attending" data-rsvp-tab="attending" data-event-id="{{ data.event.id }}" aria-pressed="true" class="rsvp-tab active">
-            Attend ({{ data.attending.count }})
+            Attend ({{ data.attending|length }})
           </button>
           <button type="button" id="btn-{{ data.event.id }}-absent" data-rsvp-tab="absent" data-event-id="{{ data.event.id }}" aria-pressed="false" class="rsvp-tab">
-            Absent ({{ data.absent.count }})
+            Absent ({{ data.absent|length }})
           </button>
           <button type="button" id="btn-{{ data.event.id }}-pending" data-rsvp-tab="pending" data-event-id="{{ data.event.id }}" aria-pressed="false" class="rsvp-tab">
-            Pending ({{ data.pending.count }})
+            Pending ({{ data.pending|length }})
           </button>
         </div>
 
@@ -81,7 +81,7 @@
           {% if data.pending %}
             <div class="rsvp-list__reminder">
                <a href="mailto:?bcc={{ data.pending_emails }}&subject=RSVP Reminder: {{ data.event.get_event_type_display }}&body=Hi everyone,%0A%0APlease could you log into the Clent Consort portal and update your RSVP for the upcoming {{ data.event.get_event_type_display }}.%0A%0AThank you!" class="button btn-small" data-variant="outline">
-                 <span aria-hidden="true">✉️</span> Email Reminder to {{ data.pending.count }} Members
+                 <span aria-hidden="true">✉️</span> Email Reminder to {{ data.pending|length }} Members
                </a>
             </div>
             <ul class="rsvp-list text-small" role="list">

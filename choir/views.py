@@ -839,71 +839,67 @@ def committee_rsvp_report(request):
     )
     default_event_id = default_event.id if default_event else None
 
-    all_attendances = (
+    # One query for every singer's RSVPs to these events, grouped here by
+    # event and status (it used to be several queries per event).
+    events = list(all_events)
+    rsvps_by_event = {
+        event.id: {"ATTENDING": [], "ABSENT": [], "PENDING": []} for event in events
+    }
+    for rsvp in (
         Attendance.objects.filter(
-            event__in=all_events, user__is_active=True, user__profile__is_singer=True
+            event__in=events, user__is_active=True, user__profile__is_singer=True
         )
-        .select_related("event", "user")
+        .select_related("user")
         .order_by("user__first_name")
-    )
+    ):
+        rsvps_by_event[rsvp.event_id][rsvp.status].append(rsvp)
 
     report_data = []
-    for event in all_events:
-        event_rsvps = all_attendances.filter(event=event)
-
-        attending = event_rsvps.filter(status="ATTENDING")
-        absent = event_rsvps.filter(status="ABSENT")
-        pending = event_rsvps.filter(status="PENDING")
-
-        pending_emails = ",".join(
-            [rsvp.user.email for rsvp in pending if rsvp.user.email]
-        )
-
+    for event in events:
+        by_status = rsvps_by_event[event.id]
         report_data.append(
             {
                 "event": event,
-                "attending": attending,
-                "absent": absent,
-                "pending": pending,
-                "pending_emails": pending_emails,
+                "attending": by_status["ATTENDING"],
+                "absent": by_status["ABSENT"],
+                "pending": by_status["PENDING"],
+                "pending_emails": ",".join(
+                    rsvp.user.email for rsvp in by_status["PENDING"] if rsvp.user.email
+                ),
             }
         )
 
     # --- DATASET 2: INDIVIDUAL MEMBER STATISTICS ---
-    active_users = User.objects.filter(
-        is_active=True, profile__is_singer=True
-    ).prefetch_related("attendances")
+    # One query: the database counts each singer's RSVPs by status (it used
+    # to be four queries per singer).
+    singers = (
+        User.objects.filter(is_active=True, profile__is_singer=True)
+        .select_related("profile")
+        .annotate(
+            total_rsvps=Count("attendances"),
+            attending_count=Count("attendances", filter=Q(attendances__status="ATTENDING")),
+            absent_count=Count("attendances", filter=Q(attendances__status="ABSENT")),
+            pending_count=Count("attendances", filter=Q(attendances__status="PENDING")),
+        )
+    )
     member_stats = []
-
-    for user in active_users:
-        if hasattr(user, "profile"):
-            user_rsvps = user.attendances.all()
-            total_events = user_rsvps.count()
-
-            # Calculate all-time totals
-            total_attending = user_rsvps.filter(status="ATTENDING").count()
-            total_absent = user_rsvps.filter(status="ABSENT").count()
-            total_pending = user_rsvps.filter(status="PENDING").count()
-
-            # Calculate an "All Time Attendance Rate" (ignoring pending events)
-            resolved_events = total_attending + total_absent
-            attendance_rate = (
-                int((total_attending / resolved_events) * 100)
-                if resolved_events > 0
-                else 0
-            )
-
-            member_stats.append(
-                {
-                    "user": user,
-                    "profile": user.profile,
-                    "total": total_events,
-                    "attending": total_attending,
-                    "absent": total_absent,
-                    "pending": total_pending,
-                    "rate": attendance_rate,
-                }
-            )
+    for user in singers:
+        # "All Time Attendance Rate", ignoring events not yet answered
+        resolved_events = user.attending_count + user.absent_count
+        attendance_rate = (
+            int((user.attending_count / resolved_events) * 100) if resolved_events > 0 else 0
+        )
+        member_stats.append(
+            {
+                "user": user,
+                "profile": user.profile,
+                "total": user.total_rsvps,
+                "attending": user.attending_count,
+                "absent": user.absent_count,
+                "pending": user.pending_count,
+                "rate": attendance_rate,
+            }
+        )
 
     # Sort the stats so the lowest attendance rates appear at the top for committee review
     member_stats = sorted(member_stats, key=lambda k: k["rate"])
