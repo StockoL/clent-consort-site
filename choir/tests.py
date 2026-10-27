@@ -1,5 +1,6 @@
 import importlib
 import json
+import re
 import tempfile
 from io import StringIO
 from unittest import mock
@@ -2614,3 +2615,33 @@ class RsvpReportQueryCountTests(TestCase):
         small = self.queries_for_report()
         self.add(events=6, singers=8)
         self.assertEqual(self.queries_for_report(), small)
+
+
+class TemplateAccessibilityRulesTests(TestCase):
+    """Phase 11 clean-up rules every template keeps: links opening a new tab
+    carry rel="noopener", and data tables have a caption and column scope."""
+
+    def templates(self):
+        from pathlib import Path
+
+        root = Path(__file__).resolve().parent / "templates"
+        for path in root.rglob("*.html"):
+            yield path.relative_to(root).as_posix(), path.read_text(encoding="utf-8")
+
+    def test_new_tab_links_use_noopener(self):
+        offenders = []
+        for name, text in self.templates():
+            for tag in re.findall(r"<a\b[^>]*>", text, re.S):
+                if 'target="_blank"' in tag and "noopener" not in tag:
+                    offenders.append(f"{name}: {tag[:80]}")
+        self.assertEqual(offenders, [])
+
+    def test_data_tables_have_a_caption_and_scoped_headers(self):
+        offenders = []
+        for name, text in self.templates():
+            for table in re.findall(r'<table class="data-table">.*?</table>', text, re.S):
+                if "<caption" not in table:
+                    offenders.append(f"{name}: no caption")
+                if re.search(r"<th(?=[ >])(?![^>]*scope=)", table):
+                    offenders.append(f"{name}: <th> without scope")
+        self.assertEqual(offenders, [])
