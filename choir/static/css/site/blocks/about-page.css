@@ -42,3 +42,14 @@
   flex-grow: 999;
   min-width: 50%;
 }
+
+/* Spotify embed: its compact 232px layout on phones (Build Order Phase 10) */
+.spotify-about-playlist {
+  height: 352px;
+}
+
+@media (max-width: 44.99rem) {
+  .spotify-about-playlist {
+    height: 232px;
+  }
+}

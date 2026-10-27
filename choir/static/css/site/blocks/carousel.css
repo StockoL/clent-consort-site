@@ -1,5 +1,5 @@
 /* ==========================================================================
-   BLOCK: PROJECT RHYTHM CAROUSEL (decanted from style.css "v1", unchanged)
+   BLOCK: PROJECT RHYTHM CAROUSEL (decanted from style.css "v1", plus tap-to-play)
    ==========================================================================
    About page's swipe carousel, driven by js/project-carousel.js.
    ========================================================================== */
@@ -151,4 +151,27 @@
     background-color: #c9a45e;
     transform: scale(1.2);
   }
+}
+
+/* Tap-to-play for the background videos on phones and with reduced motion
+   (js/project-carousel.js shows it; Build Order Phase 10) */
+.rhythm-play {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  margin-top: var(--space-s);
+  padding: 0.5rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.rhythm-play:hover,
+.rhythm-play:focus-visible {
+  background: rgba(201, 164, 94, 0.85);
+  color: #1a1a1a;
 }

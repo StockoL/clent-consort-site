@@ -53,6 +53,51 @@ const initProjectCarousel = () => {
 
   window.addEventListener("resize", checkMobileViewport);
   checkMobileViewport();
+
+  // Background videos (Build Order Phase 10). The markup has no autoplay
+  // and preload="none", so nothing downloads until played. Wider screens
+  // without reduced motion start them as before; on phones, or with
+  // reduced motion, each slide shows its poster and a play button.
+  const manualPlay = window.matchMedia("(prefers-reduced-motion: reduce), (max-width: 45rem)");
+
+  const setPlayLabel = (button, playing) => {
+    button.querySelector("[data-rhythm-icon]").textContent = playing ? "❚❚" : "▶";
+    button.querySelector("[data-rhythm-label]").textContent = playing ? "Pause video" : "Play video";
+  };
+
+  const setUpVideos = () => {
+    slides.forEach((slide) => {
+      const video = slide.querySelector("video");
+      const button = slide.querySelector("[data-rhythm-play]");
+      if (!video) return;
+      if (manualPlay.matches) {
+        video.pause();
+        if (button) {
+          button.hidden = false;
+          setPlayLabel(button, false);
+        }
+      } else {
+        if (button) button.hidden = true;
+        video.play().catch(() => {});
+      }
+    });
+  };
+
+  carousel.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-rhythm-play]");
+    if (!button) return;
+    const video = button.closest(".rhythm-slide").querySelector("video");
+    if (video.paused) {
+      video.play().catch(() => {});
+      setPlayLabel(button, true);
+    } else {
+      video.pause();
+      setPlayLabel(button, false);
+    }
+  });
+
+  manualPlay.addEventListener("change", setUpVideos);
+  setUpVideos();
 };
 
 document.addEventListener("DOMContentLoaded", initProjectCarousel);
