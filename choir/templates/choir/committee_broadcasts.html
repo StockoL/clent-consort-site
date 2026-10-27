@@ -1,0 +1,56 @@
+{% extends 'choir/_members_base.html' %}
+
+{% block title %}Broadcasts - Clent Consort{% endblock title %}
+
+{% block page_title %}Broadcasts{% endblock page_title %}
+{% block page_lede %}Emails to the choir: drafts waiting to go, and everything already sent.{% endblock page_lede %}
+
+{% block members_content %}
+  <p><a href="{% url 'committee_broadcast' %}" class="button" data-variant="primary">New Broadcast</a></p>
+
+  <section class="card flow" data-variant="invert">
+    <h2 class="text-primary text-step-1 card-heading">Drafts</h2>
+    {% if drafts %}
+    <ul class="list-unstyled flow flow--small" role="list">
+      {% for b in drafts %}
+      <li class="item-row">
+        <div>
+          <a href="{% url 'committee_broadcast_preview' b.id %}" class="text-link"><strong>{{ b.subject }}</strong></a><br>
+          <span class="text-small text-muted">{{ b.get_audience_display }}{% if b.author %} · by {{ b.author.get_full_name|default:b.author.username }}{% endif %}</span>
+        </div>
+        <a href="{% url 'committee_broadcast_preview' b.id %}" class="button btn-small" data-variant="outline">Preview &amp; Send<span class="visually-hidden"> {{ b.subject }}</span></a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-muted text-small">No drafts.</p>
+    {% endif %}
+  </section>
+
+  <section class="card flow" data-variant="invert">
+    <h2 class="text-primary text-step-1 card-heading">Sent</h2>
+    {% if sent %}
+    <ul class="list-unstyled flow flow--small" role="list">
+      {% for b in sent %}
+      <li class="item-row">
+        <div>
+          <a href="{% url 'committee_broadcast_preview' b.id %}" class="text-link"><strong>{{ b.subject }}</strong></a><br>
+          <span class="text-small text-muted">
+            {{ b.get_audience_display }} · {{ b.sent_at|date:"j M Y, g:i A" }}{% if b.author %} · by {{ b.author.get_full_name|default:b.author.username }}{% endif %}
+          </span>
+        </div>
+        <span class="text-small">
+          {% if b.delivered or b.failed %}
+            {{ b.delivered }} delivered{% if b.failed %} · <span class="badge" data-status="danger">{{ b.failed }} failed</span>{% endif %}
+          {% else %}
+            <span class="text-muted">No delivery record</span>
+          {% endif %}
+        </span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-muted text-small">Nothing sent yet.</p>
+    {% endif %}
+  </section>
+{% endblock members_content %}

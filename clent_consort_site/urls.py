@@ -11,6 +11,11 @@ from choir.views import (
     about_view,
     committee_asset_delete_view,
     committee_broadcast,
+    committee_broadcast_delete_view,
+    committee_broadcast_preview_view,
+    committee_broadcast_send_view,
+    committee_broadcast_test_view,
+    committee_broadcasts_view,
     committee_document_delete_view,
     committee_documents_view,
     committee_emergency_roster,
@@ -139,6 +144,32 @@ urlpatterns = [
     ),
     path(
         "members/committee/broadcast/", committee_broadcast, name="committee_broadcast"
+    ),
+    path("members/committee/broadcasts/", committee_broadcasts_view, name="committee_broadcasts"),
+    path(
+        "members/committee/broadcast/<int:broadcast_id>/",
+        committee_broadcast_preview_view,
+        name="committee_broadcast_preview",
+    ),
+    path(
+        "members/committee/broadcast/<int:broadcast_id>/edit/",
+        committee_broadcast,
+        name="committee_broadcast_edit",
+    ),
+    path(
+        "members/committee/broadcast/<int:broadcast_id>/test/",
+        committee_broadcast_test_view,
+        name="committee_broadcast_test",
+    ),
+    path(
+        "members/committee/broadcast/<int:broadcast_id>/send/",
+        committee_broadcast_send_view,
+        name="committee_broadcast_send",
+    ),
+    path(
+        "members/committee/broadcast/<int:broadcast_id>/delete/",
+        committee_broadcast_delete_view,
+        name="committee_broadcast_delete",
     ),
     path(
         "members/committee/roster/",

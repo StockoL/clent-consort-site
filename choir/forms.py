@@ -582,20 +582,16 @@ class EventEditForm(QuickEventScheduleForm):
 
 
 class BroadcastForm(forms.ModelForm):
-    """Frontend form to allow the committee to send choir-wide communications."""
+    """Writing or editing a broadcast draft. The message is a TinyMCE
+    HTMLField, so it renders with the TinyMCE widget - the template must
+    include {{ form.media }}."""
 
     class Meta:
         model = ChoirCommunication
         fields = ["audience", "subject", "message"]
         widgets = {
+            "audience": forms.Select(attrs={"class": "form-control"}),
             "subject": forms.TextInput(
                 attrs={"class": "form-control", "placeholder": "Subject line"}
-            ),
-            "message": forms.Textarea(
-                attrs={
-                    "class": "form-control",
-                    "rows": 8,
-                    "placeholder": "Enter your update here...",
-                }
             ),
         }

@@ -1,13 +1,14 @@
 {% extends 'choir/_members_base.html' %}
 
-{% block title %}Broadcast - Clent Consort{% endblock title %}
+{% block title %}{% if draft %}Edit Draft{% else %}New Broadcast{% endif %} - Clent Consort{% endblock title %}
 
-{% block page_title %}Committee Broadcast{% endblock page_title %}
-{% block page_lede %}Send an email to all members or one voice part.{% endblock page_lede %}
+{% block extra_head %}{{ form.media }}{% endblock extra_head %}
+
+{% block page_title %}{% if draft %}Edit Draft{% else %}New Broadcast{% endif %}{% endblock page_title %}
+{% block page_lede %}An email to all singers or one voice part. Saving keeps it as a draft: you'll see a preview and can send yourself a test before anything goes to the choir.{% endblock page_lede %}
 
 {% block members_content %}
   <section class="card flow" data-variant="invert">
-    <h2 class="text-primary text-step-1 card-heading">Send Choir Broadcast</h2>
     <form method="POST" class="flow flow--small">
       {% csrf_token %}
 
@@ -29,7 +30,10 @@
         <div class="form-error">{{ form.message.errors }}</div>
       </div>
 
-      <button type="submit" class="button w-100" data-variant="primary">Send Email</button>
+      <div class="cluster">
+        <button type="submit" class="button" data-variant="primary">Save Draft &amp; Preview</button>
+        <a href="{% if draft %}{% url 'committee_broadcast_preview' draft.id %}{% else %}{% url 'committee_broadcasts' %}{% endif %}" class="button" data-variant="outline">Cancel</a>
+      </div>
     </form>
   </section>
 {% endblock members_content %}

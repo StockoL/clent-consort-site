@@ -1,0 +1,70 @@
+{% extends 'choir/_members_base.html' %}
+{% load static %}
+
+{% block title %}{{ broadcast.subject }} - Broadcasts - Clent Consort{% endblock title %}
+
+{% block page_title %}{% if broadcast.is_sent %}Sent Broadcast{% else %}Preview &amp; Send{% endif %}{% endblock page_title %}
+{% block page_lede %}{% if broadcast.is_sent %}Sent {{ broadcast.sent_at|date:"j F Y, g:i A" }} to {{ broadcast.get_audience_display|lower }}.{% else %}Check it reads right, send yourself a test, then send it to the choir.{% endif %}{% endblock page_lede %}
+
+{% block members_content %}
+  <section class="card flow" data-variant="invert">
+    <h2 class="text-primary text-step-1 card-heading">The Email</h2>
+    <p class="text-small"><strong>Subject:</strong> {{ broadcast.subject }}</p>
+    {# The message as members' email apps will show it (committee-written HTML from TinyMCE). #}
+    <div class="broadcast-preview">{{ broadcast.message|safe }}</div>
+  </section>
+
+  {% if not broadcast.is_sent %}
+  <section class="card flow" data-variant="invert">
+    <h2 class="text-primary text-step-1 card-heading">Send</h2>
+    <p>
+      To <strong>{{ broadcast.get_audience_display }}</strong>:
+      <strong>{{ recipient_count }}</strong> singer{{ recipient_count|pluralize }} with an email address.
+      Each gets their own copy; nobody sees anyone else's address.
+    </p>
+
+    <div class="cluster">
+      <a href="{% url 'committee_broadcast_edit' broadcast.id %}" class="button btn-small" data-variant="outline">Edit</a>
+      <form method="POST" action="{% url 'committee_broadcast_test' broadcast.id %}" class="inline-form">
+        {% csrf_token %}
+        <button type="submit" class="button btn-small" data-variant="outline">Send a Test to Me</button>
+      </form>
+      <form method="POST" action="{% url 'committee_broadcast_delete' broadcast.id %}" class="inline-form" data-confirm="Delete this draft?">
+        {% csrf_token %}
+        <button type="submit" class="button btn-small" data-variant="outline">Delete Draft</button>
+      </form>
+    </div>
+
+    <form method="POST" action="{% url 'committee_broadcast_send' broadcast.id %}" class="flow flow--small broadcast-send" data-confirm="Send this email to {{ recipient_count }} singer{{ recipient_count|pluralize }} now? It can't be unsent.">
+      {% csrf_token %}
+      <div class="consent-row">
+        <input type="checkbox" name="confirm" value="yes" id="broadcast-confirm" required>
+        <label for="broadcast-confirm">I've checked the preview and want to send this to {{ recipient_count }} singer{{ recipient_count|pluralize }}.</label>
+      </div>
+      <button type="submit" class="button align-start" data-variant="primary">Send to {{ recipient_count }} Singer{{ recipient_count|pluralize }}</button>
+    </form>
+  </section>
+  {% else %}
+  <section class="card flow" data-variant="invert">
+    <h2 class="text-primary text-step-1 card-heading">Delivery</h2>
+    {% if delivered_count or failed_deliveries %}
+      <p>{{ delivered_count }} delivered{% if failed_deliveries %}, {{ failed_deliveries|length }} failed{% endif %}.</p>
+      {% if failed_deliveries %}
+      <ul class="list-unstyled flow flow--small text-small" role="list">
+        {% for d in failed_deliveries %}
+        <li><strong>{{ d.user.get_full_name|default:d.user.email|default:"A removed member" }}</strong> ({{ d.user.email }}): {{ d.error|default:"not delivered" }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    {% else %}
+      <p class="text-muted text-small">Sent before delivery records were kept, or to nobody.</p>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  <p><a href="{% url 'committee_broadcasts' %}" class="text-link">&larr; All broadcasts</a></p>
+{% endblock members_content %}
+
+{% block scripts %}
+<script src="{% static 'js/confirm-forms.js' %}" defer></script>
+{% endblock scripts %}

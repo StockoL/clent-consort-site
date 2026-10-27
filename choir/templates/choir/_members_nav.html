@@ -30,7 +30,7 @@
         <li><a href="{% url 'committee_polling' %}" class="members-nav__link"{% if current == 'committee_polling' or current == 'committee_poll_edit' %} aria-current="page"{% endif %}>Polling</a></li>
         <li><a href="{% url 'committee_financials' %}" class="members-nav__link"{% if current == 'committee_financials' or current == 'committee_financials_edit' %} aria-current="page"{% endif %}>Financials</a></li>
         <li><a href="{% url 'committee_documents' %}" class="members-nav__link"{% if current == 'committee_documents' %} aria-current="page"{% endif %}>Documents</a></li>
-        <li><a href="{% url 'committee_broadcast' %}" class="members-nav__link"{% if current == 'committee_broadcast' %} aria-current="page"{% endif %}>Broadcast</a></li>
+        <li><a href="{% url 'committee_broadcasts' %}" class="members-nav__link"{% if current == 'committee_broadcasts' or current == 'committee_broadcast' or current == 'committee_broadcast_edit' or current == 'committee_broadcast_preview' %} aria-current="page"{% endif %}>Broadcast</a></li>
         <li><a href="{% url 'committee_emergency' %}" class="members-nav__link"{% if current == 'committee_emergency' %} aria-current="page"{% endif %}>Duty of Care</a></li>
         <li><a href="{% url 'committee_settings' %}" class="members-nav__link"{% if current == 'committee_settings' %} aria-current="page"{% endif %}>Choir Settings</a></li>
         {% else %}

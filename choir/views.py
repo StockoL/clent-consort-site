@@ -9,7 +9,7 @@ from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -29,6 +29,7 @@ from .models import (
     AuditionApplication,
     AvailabilityPoll,
     AvailabilityResponse,
+    ChoirCommunication,
     ChoirSettings,
     CommitteeDocument,
     Enquiry,
@@ -1493,22 +1494,113 @@ def login_redirect_router(request):
 
 @login_required
 @user_passes_test(is_committee)
-def committee_broadcast(request):
-    """Processes frontend mass-email dispatch."""
+def committee_broadcast(request, broadcast_id=None):
+    """Write a new broadcast, or edit a draft (broadcast_id). Saving only
+    saves the draft; it goes to the preview page, where it can be tested
+    and sent. Sent broadcasts can't be edited."""
     from .forms import BroadcastForm
 
+    draft = None
+    if broadcast_id is not None:
+        draft = get_object_or_404(ChoirCommunication, id=broadcast_id)
+        if draft.is_sent:
+            messages.error(request, "That broadcast has already been sent, so it can't be edited.")
+            return redirect("committee_broadcast_preview", broadcast_id=draft.id)
+
     if request.method == "POST":
-        form = BroadcastForm(request.POST)
+        form = BroadcastForm(request.POST, instance=draft)
         if form.is_valid():
             broadcast = form.save(commit=False)
-            broadcast.author = request.user
+            if broadcast.author is None:
+                broadcast.author = request.user
             broadcast.save()
-            messages.success(request, "Communication broadcasted to the ensemble.")
-            return redirect("committee_hub")
+            messages.success(request, "Draft saved. Check the preview, send yourself a test, then send it.")
+            return redirect("committee_broadcast_preview", broadcast_id=broadcast.id)
     else:
-        form = BroadcastForm()
+        form = BroadcastForm(instance=draft)
 
-    return render(request, "choir/committee_broadcast.html", {"form": form})
+    return render(request, "choir/committee_broadcast.html", {"form": form, "draft": draft})
+
+
+@login_required
+@user_passes_test(is_committee)
+def committee_broadcasts_view(request):
+    """Drafts and sent broadcasts, with delivery counts for sent ones."""
+    broadcasts = ChoirCommunication.objects.select_related("author").annotate(
+        delivered=Count("deliveries", filter=Q(deliveries__sent_ok=True)),
+        failed=Count("deliveries", filter=Q(deliveries__sent_ok=False)),
+    )
+    context = {
+        "drafts": broadcasts.filter(status="DRAFT").order_by("-id"),
+        "sent": broadcasts.filter(status="SENT").order_by("-sent_at", "-id"),
+    }
+    return render(request, "choir/committee_broadcasts.html", context)
+
+
+@login_required
+@user_passes_test(is_committee)
+def committee_broadcast_preview_view(request, broadcast_id):
+    """The email as members will see it, who it goes to, and (once sent)
+    how its delivery went. Drafts can be tested, sent or deleted here."""
+    broadcast = get_object_or_404(ChoirCommunication.objects.select_related("author"), id=broadcast_id)
+    context = {
+        "broadcast": broadcast,
+        "recipient_count": broadcast.recipients().count(),
+        "failed_deliveries": broadcast.deliveries.filter(sent_ok=False).select_related("user"),
+        "delivered_count": broadcast.deliveries.filter(sent_ok=True).count(),
+    }
+    return render(request, "choir/committee_broadcast_preview.html", context)
+
+
+@login_required
+@user_passes_test(is_committee)
+@require_POST
+def committee_broadcast_test_view(request, broadcast_id):
+    """Sends the draft to the committee member looking at it, marked as a test."""
+    broadcast = get_object_or_404(ChoirCommunication, id=broadcast_id)
+    if not request.user.email:
+        messages.error(request, "Your account has no email address to send a test to.")
+    else:
+        try:
+            broadcast.send_test(request.user)
+            messages.success(request, f"Test sent to {request.user.email}.")
+        except Exception as error:
+            messages.error(request, f"The test couldn't be sent: {error}")
+    return redirect("committee_broadcast_preview", broadcast_id=broadcast.id)
+
+
+@login_required
+@user_passes_test(is_committee)
+@require_POST
+def committee_broadcast_send_view(request, broadcast_id):
+    """Sends a draft to its audience, once. Needs the explicit confirmation
+    box ticked on the preview page."""
+    broadcast = get_object_or_404(ChoirCommunication, id=broadcast_id)
+    if broadcast.is_sent:
+        messages.error(request, "That broadcast has already been sent.")
+    elif request.POST.get("confirm") != "yes":
+        messages.error(request, "Tick the confirmation box to send.")
+    else:
+        sent_ok, failed = broadcast.send()
+        if failed:
+            messages.warning(request, f"Sent to {sent_ok}; {failed} couldn't be delivered (listed below).")
+        else:
+            messages.success(request, f"Sent to {sent_ok} member{'s' if sent_ok != 1 else ''}.")
+    return redirect("committee_broadcast_preview", broadcast_id=broadcast.id)
+
+
+@login_required
+@user_passes_test(is_committee)
+@require_POST
+def committee_broadcast_delete_view(request, broadcast_id):
+    """Deletes a draft. Sent broadcasts are the record and are kept."""
+    broadcast = get_object_or_404(ChoirCommunication, id=broadcast_id)
+    if broadcast.is_sent:
+        messages.error(request, "Sent broadcasts are kept as a record and can't be deleted.")
+        return redirect("committee_broadcast_preview", broadcast_id=broadcast.id)
+    broadcast.delete()
+    messages.success(request, "Draft deleted.")
+    return redirect("committee_broadcasts")
 
 
 # ==============================================================================

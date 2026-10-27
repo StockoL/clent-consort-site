@@ -209,3 +209,21 @@
   flex-shrink: 0;
   cursor: pointer;
 }
+
+/* --- Broadcasts: the email as members will see it --- */
+.broadcast-preview {
+  padding: var(--space-s);
+  border-radius: 6px;
+  background: #ffffff;
+  color: #1a1a1a;
+  max-width: 40rem;
+}
+
+.broadcast-preview > * + * {
+  margin-block-start: 0.75em;
+}
+
+.broadcast-send {
+  padding-top: var(--space-xs);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
