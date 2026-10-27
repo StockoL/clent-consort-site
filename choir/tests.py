@@ -38,6 +38,14 @@ from .permissions import COMMITTEE_GROUP, is_committee
 Invitation = get_invitation_model()
 
 
+def create_committee_user(**kwargs):
+    """A committee member: a user in the Committee group (choir.permissions
+    .is_committee), which is all committee access depends on."""
+    user = User.objects.create_user(**kwargs)
+    user.groups.add(Group.objects.get_or_create(name=COMMITTEE_GROUP)[0])
+    return user
+
+
 class AttendanceAutoCreationTests(TestCase):
     """Guards against choir/models.py and choir/signals.py both firing
     post_save on Event and colliding on Attendance.unique_together."""
@@ -271,9 +279,7 @@ class CommitteeProjectManagementTests(TestCase):
     PLANNING -> ACTIVE status transition that happens there."""
 
     def setUp(self):
-        self.staff = User.objects.create_user(
-            username="committee", password="pw", is_staff=True
-        )
+        self.staff = create_committee_user(username="committee", password="pw")
         self.client.login(username="committee", password="pw")
 
     def test_create_project(self):
@@ -316,9 +322,7 @@ class CommitteeScheduleEventTests(TestCase):
     field here, every committee-scheduled event would fail validation."""
 
     def setUp(self):
-        self.staff = User.objects.create_user(
-            username="committee", password="pw", is_staff=True
-        )
+        self.staff = create_committee_user(username="committee", password="pw")
         self.client.login(username="committee", password="pw")
         self.project = Project.objects.create(name="Christmas 2026", status="ACTIVE")
 
@@ -457,9 +461,7 @@ class CommitteeBroadcastTests(TestCase):
     field, which silently left every frontend-sent broadcast unattributed."""
 
     def setUp(self):
-        self.staff = User.objects.create_user(
-            username="committee", password="pw", is_staff=True
-        )
+        self.staff = create_committee_user(username="committee", password="pw")
         self.client.login(username="committee", password="pw")
 
     def test_broadcast_records_author(self):
@@ -581,9 +583,7 @@ class CommitteePollManagementTests(TestCase):
     """Guards the committee-facing poll creation/results page."""
 
     def setUp(self):
-        self.staff = User.objects.create_user(
-            username="committee", password="pw", is_staff=True
-        )
+        self.staff = create_committee_user(username="committee", password="pw")
         self.client.login(username="committee", password="pw")
         self.planning = Project.objects.create(name="Easter 2027", status="PLANNING")
 
@@ -624,9 +624,7 @@ class CommitteeFinancialsTests(TestCase):
     Also covers editing, deleting, and the exempt-status toggle."""
 
     def setUp(self):
-        self.staff = User.objects.create_user(
-            username="committee", password="pw", is_staff=True
-        )
+        self.staff = create_committee_user(username="committee", password="pw")
         self.client.login(username="committee", password="pw")
 
         self.singer = User.objects.create_user(username="singer", password="pw")
@@ -726,7 +724,7 @@ class CommitteeDocumentDeleteTests(TestCase):
         )
 
     def test_staff_can_delete_document(self):
-        User.objects.create_user(username="committee", password="pw", is_staff=True)
+        create_committee_user(username="committee", password="pw")
         self.client.login(username="committee", password="pw")
 
         response = self.client.post(
@@ -757,9 +755,7 @@ class CommitteeRsvpProjectScopingTests(TestCase):
     regardless of which project is selected."""
 
     def setUp(self):
-        self.staff = User.objects.create_user(
-            username="committee", password="pw", is_staff=True
-        )
+        self.staff = create_committee_user(username="committee", password="pw")
         self.client.login(username="committee", password="pw")
 
         self.active_project = Project.objects.create(
@@ -901,7 +897,7 @@ class SiteMessagesTests(TestCase):
     never shown."""
 
     def setUp(self):
-        User.objects.create_user(username="committee", password="pw", is_staff=True)
+        create_committee_user(username="committee", password="pw")
         self.client.login(username="committee", password="pw")
         self.singer = User.objects.create_user(
             username="singer", password="pw", first_name="Sam", last_name="Singer"
@@ -1013,7 +1009,7 @@ class MembersShellTests(TestCase):
 
     def setUp(self):
         User.objects.create_user(username="member", password="pw")
-        User.objects.create_user(username="committee", password="pw", is_staff=True)
+        create_committee_user(username="committee", password="pw")
 
     def test_every_page_uses_the_shell_and_one_nav(self):
         self.client.login(username="committee", password="pw")
@@ -1086,7 +1082,7 @@ class PageScriptsTests(TestCase):
         self.assertContains(response, "js/project-carousel")
 
     def test_rsvp_dashboard_loads_its_script(self):
-        User.objects.create_user(username="committee", password="pw", is_staff=True)
+        create_committee_user(username="committee", password="pw")
         self.client.login(username="committee", password="pw")
         response = self.client.get(reverse("committee_rsvps"))
         self.assertContains(response, "js/rsvp-dashboard")
@@ -1119,7 +1115,7 @@ class CommitteeEventManagementTests(TestCase):
     from the schedule page instead of Django admin."""
 
     def setUp(self):
-        User.objects.create_user(username="committee", password="pw", is_staff=True)
+        create_committee_user(username="committee", password="pw")
         self.singer = User.objects.create_user(username="singer", password="pw")
         self.client.login(username="committee", password="pw")
 
@@ -1262,7 +1258,7 @@ class CommitteePollEditingTests(TestCase):
     from members' Looking Ahead."""
 
     def setUp(self):
-        User.objects.create_user(username="committee", password="pw", is_staff=True)
+        create_committee_user(username="committee", password="pw")
         self.member = User.objects.create_user(username="member", password="pw")
         self.planning = Project.objects.create(name="Easter 2027", status="PLANNING")
         self.poll = AvailabilityPoll.objects.create(
@@ -1325,7 +1321,7 @@ class MemberPollNotesTests(TestCase):
     sees it on the Results list."""
 
     def setUp(self):
-        User.objects.create_user(username="committee", password="pw", is_staff=True)
+        create_committee_user(username="committee", password="pw")
         self.member = User.objects.create_user(
             username="member", password="pw", first_name="Sam", last_name="Singer"
         )
@@ -1388,7 +1384,7 @@ class ChoirSettingsTests(TestCase):
     in one ChoirSettings row the committee edits on the site."""
 
     def setUp(self):
-        User.objects.create_user(username="committee", password="pw", is_staff=True)
+        create_committee_user(username="committee", password="pw")
         self.member = User.objects.create_user(username="member", password="pw", last_name="Singer")
 
     def test_load_returns_the_seeded_row(self):
@@ -1504,7 +1500,7 @@ class CommitteeInboxTests(TestCase):
     applications in one committee inbox, each markable as handled."""
 
     def setUp(self):
-        self.committee = User.objects.create_user(username="committee", password="pw", is_staff=True)
+        self.committee = create_committee_user(username="committee", password="pw")
         User.objects.create_user(username="member", password="pw")
         self.enquiry = Enquiry.objects.create(name="Ann", email="ann@example.com", message="Can you sing at our wedding?")
         self.application = AuditionApplication.objects.create(
@@ -1570,7 +1566,7 @@ class CommitteeInboxBulkTests(TestCase):
     Delete as spam (added after the first deploy showed 143 spam enquiries)."""
 
     def setUp(self):
-        self.committee = User.objects.create_user(username="committee", password="pw", is_staff=True)
+        self.committee = create_committee_user(username="committee", password="pw")
         User.objects.create_user(username="member", password="pw")
         self.spam = [
             Enquiry.objects.create(name=f"Spammer {n}", email=f"s{n}@example.com", message="Cheap SEO")
@@ -1662,9 +1658,25 @@ class CommitteeAccessModelTests(TestCase):
         self.assertFalse(user.is_staff)
         self.assert_reaches_every_committee_view("grouped")
 
-    def test_staff_user_outside_the_group_still_gets_in_during_the_transition(self):
+    def test_migration_0030_keeps_every_staff_users_access(self):
+        migration = importlib.import_module("choir.migrations.0030_staff_into_committee_group")
+        staffer = User.objects.create_user(username="staffer", password="pw", is_staff=True)
+        member = User.objects.create_user(username="member", password="pw")
+        self.assertFalse(is_committee(staffer))  # what would happen without it
+
+        migration.add_staff(django_apps, None)
+        migration.add_staff(django_apps, None)  # idempotent
+
+        self.assertTrue(is_committee(User.objects.get(id=staffer.id)))
+        self.assertFalse(is_committee(member))
+
+    def test_staff_user_outside_the_group_gets_no_committee_access(self):
+        # is_staff is Django admin access only; the Phase 5 transition is over
         User.objects.create_user(username="staffer", password="pw", is_staff=True)
-        self.assert_reaches_every_committee_view("staffer")
+        self.client.login(username="staffer", password="pw")
+        for name in COMMITTEE_VIEW_NAMES:
+            with self.subTest(view=name):
+                self.assertEqual(self.client.get(reverse(name)).status_code, 302)
 
     def test_superuser_gets_in(self):
         User.objects.create_superuser(username="root", password="pw", email="root@example.com")
@@ -1717,7 +1729,7 @@ class NonSingerTests(TestCase):
     broadcasts and poll reminders - but can still log in and use the vault."""
 
     def setUp(self):
-        self.committee = User.objects.create_user(username="committee", password="pw", is_staff=True)
+        self.committee = create_committee_user(username="committee", password="pw")
         self.singer = User.objects.create_user(username="singer", password="pw", email="singer@example.com")
         self.organist = User.objects.create_user(username="organist", password="pw", email="organist@example.com")
         self.organist.profile.is_singer = False
@@ -1781,7 +1793,7 @@ class RepertoireLibraryTests(TestCase):
     scores and tracks on the site."""
 
     def setUp(self):
-        User.objects.create_user(username="committee", password="pw", is_staff=True)
+        create_committee_user(username="committee", password="pw")
         User.objects.create_user(username="member", password="pw")
         self.client.login(username="committee", password="pw")
         self.piece = Repertoire.objects.create(composer="Byrd", title="Ave verum corpus")
@@ -2005,9 +2017,7 @@ class MemberInvitationTests(TestCase):
     invitee signs up."""
 
     def setUp(self):
-        self.committee = User.objects.create_user(
-            username="committee", password="pw", email="committee@example.com", is_staff=True
-        )
+        self.committee = create_committee_user(username="committee", password="pw", email="committee@example.com")
         User.objects.create_user(username="member", password="pw", email="member@example.com")
         self.client.login(username="committee", password="pw")
 
@@ -2086,7 +2096,7 @@ class MemberManagementTests(TestCase):
     """Build Order Phase 8: editing members, roles and leavers."""
 
     def setUp(self):
-        self.committee = User.objects.create_user(username="committee", password="pw", is_staff=True)
+        self.committee = create_committee_user(username="committee", password="pw")
         self.committee.groups.add(Group.objects.get_or_create(name=COMMITTEE_GROUP)[0])
         self.singer = User.objects.create_user(username="singer", password="pw", first_name="Sam")
         self.client.login(username="committee", password="pw")
@@ -2160,12 +2170,10 @@ class MemberManagementTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn(reverse("account_login"), response["Location"])
 
-    def test_unticking_committee_on_a_staff_user_warns_about_admin_access(self):
-        staffer = User.objects.create_user(username="staffer", password="pw", is_staff=True)
-        response = self.client.post(
-            reverse("committee_member_edit", args=[staffer.id]), self.edit_payload(), follow=True
-        )
-        self.assertContains(response, "still has admin (staff) access")
+    def test_unticking_committee_removes_access_even_for_a_staff_user(self):
+        staffer = create_committee_user(username="staffer", password="pw", is_staff=True)
+        self.client.post(reverse("committee_member_edit", args=[staffer.id]), self.edit_payload())
+        self.assertFalse(is_committee(User.objects.get(id=staffer.id)))
 
     def test_edit_page_is_committee_only(self):
         self.client.login(username="singer", password="pw")
@@ -2281,7 +2289,7 @@ class EventPublicFieldsAndCalendarTests(TestCase):
     and calendar files using end_time."""
 
     def setUp(self):
-        User.objects.create_user(username="committee", password="pw", is_staff=True)
+        create_committee_user(username="committee", password="pw")
         self.client.login(username="committee", password="pw")
         self.project = Project.objects.create(name="Clent 2026", status="ACTIVE")
         self.event = Event.objects.create(
@@ -2413,9 +2421,7 @@ class BroadcastWorkflowTests(TestCase):
     singer a private copy - with a delivery record per recipient."""
 
     def setUp(self):
-        self.committee = User.objects.create_user(
-            username="committee", password="pw", email="committee@example.com", is_staff=True
-        )
+        self.committee = create_committee_user(username="committee", password="pw", email="committee@example.com")
         # Not a singer, so the recipients are just the three singers below
         self.committee.profile.is_singer = False
         self.committee.profile.save()

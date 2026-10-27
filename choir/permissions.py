@@ -12,23 +12,18 @@ COMMITTEE_GROUP = "Committee"
 def is_committee(user):
     """
     Committee access: active, and a superuser or in the Committee group.
+    Django's is_staff only means "can use Django admin"; it gives no
+    committee access (it did during the Phase 5 transition, until migration
+    0030 put every staff user into the group and Phase 11 dropped it here).
 
     Gates the genuinely sensitive committee views (financials, emergency
     roster, broadcast, scheduling, RSVP overrides). committee_hub and
     committee_documents_view are deliberately NOT gated by this - see the
     comment on those views.
-
-    Transition (Build Order Phase 5): is_staff still counts too, for one
-    release, so nobody is locked out if the migration that put every staff
-    user into the group missed someone. Build Order Phase 11 removes it.
     """
     if not (user.is_authenticated and user.is_active):
         return False
-    return (
-        user.is_superuser
-        or user.is_staff
-        or user.groups.filter(name=COMMITTEE_GROUP).exists()
-    )
+    return user.is_superuser or user.groups.filter(name=COMMITTEE_GROUP).exists()
 
 
 def is_singer(user):

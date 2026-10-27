@@ -398,7 +398,8 @@ class MemberEditForm(forms.Form):
     part and flags on the MemberProfile; committee via the Committee group;
     active on the User. Email and password stay with the member (allauth).
     The committee can't take committee access away from themselves or
-    deactivate themselves - that's how a site gets locked out.
+    deactivate themselves - that's how a site gets locked out. Committee
+    access is the Committee group alone (choir.permissions.is_committee).
     """
 
     first_name = forms.CharField(max_length=150, required=False, widget=forms.TextInput(attrs={"class": "form-control"}))

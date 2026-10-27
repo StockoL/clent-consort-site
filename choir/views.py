@@ -1374,12 +1374,6 @@ def committee_member_edit_view(request, user_id):
         form = MemberEditForm(request.POST, member=member, editor=request.user)
         if form.is_valid():
             form.save()
-            if member.is_staff and not member.is_superuser and not form.cleaned_data["committee"]:
-                messages.warning(
-                    request,
-                    f"{member.get_full_name() or member.username} still has admin (staff) access, "
-                    "which keeps the committee tools open to them until staff access is removed in Django admin.",
-                )
             messages.success(request, f"{member.get_full_name() or member.username} updated.")
             return redirect("committee_members")
     else:
