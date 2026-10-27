@@ -6,6 +6,7 @@ from unittest import mock
 from datetime import datetime, timedelta
 
 from allauth.account.models import EmailAddress
+from anymail.message import AnymailRecipientStatus
 from django.apps import apps as django_apps
 from django.conf import settings
 from django.contrib.auth.models import Group, User
@@ -381,13 +382,15 @@ class CommitteePermissionModelTests(TestCase):
 
 
 class ChoirCommunicationSendTests(TestCase):
-    def test_save_does_not_crash_with_no_matching_recipients(self):
+    def test_send_does_not_crash_with_no_matching_recipients(self):
         # No users have voice_part "S" assigned, so recipients is empty.
-        ChoirCommunication.objects.create(
+        broadcast = ChoirCommunication.objects.create(
             audience="SOP",
             subject="Test subject",
             message="<p>Hello</p>",
         )
+        self.assertEqual(broadcast.send(), (0, 0))
+        self.assertEqual(broadcast.status, "SENT")
 
 
 class ContactFormTests(TestCase):
@@ -469,7 +472,7 @@ class CommitteeBroadcastTests(TestCase):
                 "message": "<p>This week's rehearsal moves to Tuesday.</p>",
             },
         )
-        broadcast = ChoirCommunication.objects.latest("sent_at")
+        broadcast = ChoirCommunication.objects.latest("id")
         self.assertEqual(broadcast.author, self.staff)
 
 
@@ -1763,7 +1766,7 @@ class NonSingerTests(TestCase):
         self.assertNotIn(self.organist, list(row["non_responders"]))
 
     def test_broadcasts_go_to_singers_only(self):
-        ChoirCommunication.objects.create(audience="ALL", subject="Rehearsal moved", message="<p>Hi</p>")
+        ChoirCommunication.objects.create(audience="ALL", subject="Rehearsal moved", message="<p>Hi</p>").send()
         recipients = [address for message in mail.outbox for address in message.to]
         self.assertIn("singer@example.com", recipients)
         self.assertNotIn("organist@example.com", recipients)
@@ -2402,3 +2405,178 @@ class PublicMobilePassTests(TestCase):
         response = self.client.get(reverse("events"))
         self.assertContains(response, "data-nav-backdrop")
         self.assertContains(response, 'Enquire<span class="cta-more"> for More Information</span>')
+
+
+class BroadcastWorkflowTests(TestCase):
+    """Build Order Phase 11: broadcasts are drafted, previewed, tested on
+    the author, then sent once - in one batch API call that gives each
+    singer a private copy - with a delivery record per recipient."""
+
+    def setUp(self):
+        self.committee = User.objects.create_user(
+            username="committee", password="pw", email="committee@example.com", is_staff=True
+        )
+        # Not a singer, so the recipients are just the three singers below
+        self.committee.profile.is_singer = False
+        self.committee.profile.save()
+        self.singers = []
+        for name, part in [("sop", "S"), ("alto", "A"), ("alto2", "A")]:
+            user = User.objects.create_user(username=name, password="pw", email=f"{name}@example.com")
+            user.profile.voice_part = part
+            user.profile.save()
+            self.singers.append(user)
+        User.objects.create_user(username="noemail", password="pw")  # singer without an address
+        self.client.login(username="committee", password="pw")
+
+    def draft(self, **kwargs):
+        defaults = {"audience": "ALL", "subject": "Rehearsal moved", "message": "<p>Tuesday this week.</p>", "author": self.committee}
+        defaults.update(kwargs)
+        return ChoirCommunication.objects.create(**defaults)
+
+    def test_saving_a_draft_sends_nothing_and_goes_to_the_preview(self):
+        response = self.client.post(
+            reverse("committee_broadcast"),
+            {"audience": "ALL", "subject": "Rehearsal moved", "message": "<p>Tuesday this week.</p>"},
+        )
+        draft = ChoirCommunication.objects.get()
+        self.assertRedirects(response, reverse("committee_broadcast_preview", args=[draft.id]))
+        self.assertEqual(draft.status, "DRAFT")
+        self.assertIsNone(draft.sent_at)
+        self.assertEqual(mail.outbox, [])
+
+    def test_preview_shows_the_email_and_who_it_goes_to(self):
+        draft = self.draft(audience="ALT")
+        response = self.client.get(reverse("committee_broadcast_preview", args=[draft.id]))
+        self.assertEqual(response.context["recipient_count"], 2)  # the two altos
+        self.assertContains(response, "<p>Tuesday this week.</p>", html=True)
+        self.assertContains(response, "Send to 2 Singers")
+
+    def test_send_a_test_to_me(self):
+        draft = self.draft()
+        self.client.post(reverse("committee_broadcast_test", args=[draft.id]))
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ["committee@example.com"])
+        self.assertEqual(mail.outbox[0].subject, "[Test] Rehearsal moved")
+        draft.refresh_from_db()
+        self.assertEqual(draft.status, "DRAFT")
+
+    def test_sending_needs_the_confirmation_box(self):
+        draft = self.draft()
+        self.client.post(reverse("committee_broadcast_send", args=[draft.id]))
+        draft.refresh_from_db()
+        self.assertEqual(draft.status, "DRAFT")
+        self.assertEqual(mail.outbox, [])
+
+    @override_settings(EMAIL_BACKEND="anymail.backends.test.EmailBackend")
+    def test_send_is_one_private_batch_with_a_delivery_record_each(self):
+        draft = self.draft()
+        self.client.post(reverse("committee_broadcast_send", args=[draft.id]), {"confirm": "yes"})
+
+        draft.refresh_from_db()
+        self.assertEqual(draft.status, "SENT")
+        self.assertIsNotNone(draft.sent_at)
+
+        self.assertEqual(len(mail.outbox), 1)  # one API call...
+        message = mail.outbox[0]
+        self.assertTrue(message.anymail_test_params["is_batch_send"])  # ...a private copy each
+        self.assertEqual(sorted(message.to), sorted(u.email for u in self.singers))
+        self.assertEqual(message.alternatives[0][1], "text/html")
+
+        deliveries = draft.deliveries.all()
+        self.assertEqual(sorted(d.user.username for d in deliveries), ["alto", "alto2", "sop"])
+        self.assertTrue(all(d.sent_ok for d in deliveries))
+
+    def test_a_broadcast_is_never_sent_twice(self):
+        draft = self.draft()
+        self.client.post(reverse("committee_broadcast_send", args=[draft.id]), {"confirm": "yes"})
+        self.client.post(reverse("committee_broadcast_send", args=[draft.id]), {"confirm": "yes"})
+        self.assertEqual(len(mail.outbox), 1)
+        with self.assertRaises(ValueError):
+            ChoirCommunication.objects.get(id=draft.id).send()
+
+    def test_a_failed_send_is_recorded_per_recipient_not_raised(self):
+        draft = self.draft()
+        with mock.patch("django.core.mail.EmailMultiAlternatives.send", side_effect=ConnectionError("Brevo down")):
+            response = self.client.post(
+                reverse("committee_broadcast_send", args=[draft.id]), {"confirm": "yes"}, follow=True
+            )
+        self.assertEqual(response.status_code, 200)
+        draft.refresh_from_db()
+        self.assertEqual(draft.status, "SENT")  # marked first, so it can't go twice
+        deliveries = draft.deliveries.all()
+        self.assertEqual(deliveries.count(), 3)
+        self.assertTrue(all(not d.sent_ok and "Brevo down" in d.error for d in deliveries))
+        self.assertContains(response, "t be delivered (listed below)")
+
+    @override_settings(
+        EMAIL_BACKEND="anymail.backends.test.EmailBackend",
+        ANYMAIL={"TEST_RECIPIENT_STATUS": "rejected"},
+    )
+    def test_rejected_recipients_are_marked_failed(self):
+        draft = self.draft(audience="SOP")
+        with mock.patch(
+            "anymail.backends.test.EmailBackend.parse_recipient_status",
+            return_value={"sop@example.com": AnymailRecipientStatus(message_id="x", status="rejected")},
+        ):
+            sent_ok, failed = draft.send()
+        self.assertEqual((sent_ok, failed), (0, 1))
+        self.assertIn("rejected", draft.deliveries.get().error)
+
+    def test_drafts_can_be_edited_and_deleted_but_sent_ones_cant(self):
+        draft = self.draft()
+        response = self.client.post(
+            reverse("committee_broadcast_edit", args=[draft.id]),
+            {"audience": "SOP", "subject": "Rehearsal moved (again)", "message": "<p>Wednesday.</p>"},
+        )
+        self.assertRedirects(response, reverse("committee_broadcast_preview", args=[draft.id]))
+        draft.refresh_from_db()
+        self.assertEqual(draft.subject, "Rehearsal moved (again)")
+
+        draft.send()
+        self.client.post(
+            reverse("committee_broadcast_edit", args=[draft.id]),
+            {"audience": "ALL", "subject": "Changed after sending", "message": "<p>x</p>"},
+        )
+        self.client.post(reverse("committee_broadcast_delete", args=[draft.id]))
+        draft.refresh_from_db()
+        self.assertEqual(draft.subject, "Rehearsal moved (again)")
+
+        other = self.draft(subject="Never mind")
+        self.client.post(reverse("committee_broadcast_delete", args=[other.id]))
+        self.assertFalse(ChoirCommunication.objects.filter(id=other.id).exists())
+
+    def test_list_shows_drafts_and_sent_with_delivery_counts(self):
+        self.draft(subject="Still a draft")
+        sent = self.draft(subject="Gone out")
+        sent.send()
+        response = self.client.get(reverse("committee_broadcasts"))
+        self.assertEqual([b.subject for b in response.context["drafts"]], ["Still a draft"])
+        row = response.context["sent"].get(id=sent.id)
+        self.assertEqual((row.delivered, row.failed), (3, 0))
+
+    def test_migration_marks_older_broadcasts_sent(self):
+        migration = importlib.import_module("choir.migrations.0029_mark_existing_broadcasts_sent")
+        old = self.draft()
+        ChoirCommunication.objects.filter(id=old.id).update(sent_at=timezone.now())
+        fresh_draft = self.draft(subject="A real draft")
+        migration.mark_sent(django_apps, None)
+        self.assertEqual(ChoirCommunication.objects.get(id=old.id).status, "SENT")
+        self.assertEqual(ChoirCommunication.objects.get(id=fresh_draft.id).status, "DRAFT")
+
+    def test_broadcast_pages_are_committee_only(self):
+        draft = self.draft()
+        self.client.login(username="sop", password="pw")
+        for method, name in [
+            ("get", "committee_broadcasts"),
+            ("get", "committee_broadcast_preview"),
+            ("post", "committee_broadcast_test"),
+            ("post", "committee_broadcast_send"),
+            ("post", "committee_broadcast_delete"),
+        ]:
+            with self.subTest(view=name):
+                args = [] if name == "committee_broadcasts" else [draft.id]
+                response = getattr(self.client, method)(reverse(name, args=args), {"confirm": "yes"} if method == "post" else None)
+                self.assertEqual(response.status_code, 302)
+        draft.refresh_from_db()
+        self.assertEqual(draft.status, "DRAFT")
+        self.assertEqual(mail.outbox, [])
