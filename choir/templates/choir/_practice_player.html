@@ -1,0 +1,60 @@
+{% comment %}
+    The practice player (Build Order Phase 7 / Learning Hub P1). Driven by
+    js/practice-player.js from the #player-data JSON block; hidden until
+    the script has started, so without JavaScript the hub's plain audio
+    players are all there is.
+{% endcomment %}
+<section class="card flow practice-player" data-variant="invert" id="practice-player" aria-labelledby="practice-player-title" data-player hidden>
+    <div class="practice-player__head">
+        <h2 class="text-primary text-step-1" id="practice-player-title">Practice Player</h2>
+        <p class="text-small"><strong data-player-name>Choose a track</strong> <span class="text-muted" data-player-piece></span></p>
+    </div>
+
+    <div class="practice-player__wave" data-player-wave aria-hidden="true"></div>
+    <p class="text-small text-muted" data-player-fallback hidden>The waveform isn't available for this track, but playing, looping and speed all work.</p>
+
+    <div class="practice-player__row">
+        <button type="button" class="button btn-small" data-variant="primary" data-player-toggle aria-label="Play">
+            <span aria-hidden="true" data-player-toggle-icon>▶</span><span data-player-toggle-text> Play</span>
+        </button>
+        <p class="practice-player__time text-small" aria-live="off"><span data-player-time>0:00</span> / <span data-player-duration>0:00</span></p>
+    </div>
+
+    <fieldset class="practice-player__group">
+        <legend class="form-label text-small">Loop</legend>
+        <div class="cluster">
+            <button type="button" class="button btn-small" data-variant="outline" data-player-loop aria-pressed="false">Loop off</button>
+            <button type="button" class="button btn-small" data-variant="outline" data-player-set-a>Set A</button>
+            <button type="button" class="button btn-small" data-variant="outline" data-player-set-b>Set B</button>
+            <button type="button" class="button btn-small" data-variant="outline" data-player-whole>Whole track</button>
+        </div>
+        <p class="text-small text-muted"><span data-player-range>Whole track</span>. Drag the shaded band's edges to change the loop, or its middle to move it. Keys: <kbd>[</kbd> sets A, <kbd>]</kbd> sets B.</p>
+        <div class="practice-player__inline">
+            <label for="player-lead-in" class="text-small">Lead-in before A</label>
+            <select id="player-lead-in" data-player-lead-in>
+                <option value="2">2 seconds</option>
+                <option value="0">Off</option>
+            </select>
+        </div>
+    </fieldset>
+
+    <div class="practice-player__group">
+        <label for="player-speed" class="form-label text-small">Speed: <output for="player-speed" data-player-speed-out>100%</output></label>
+        <input type="range" id="player-speed" min="50" max="110" step="5" value="100" data-player-speed>
+        <p class="text-small text-muted">Slower or faster without changing the pitch.</p>
+    </div>
+
+    <details class="practice-player__group">
+        <summary class="form-label text-small">Note finder</summary>
+        <p class="text-small text-muted">Tap a key to hear the note.</p>
+        <div class="player-keyboard" data-player-keyboard role="group" aria-label="Keyboard, C3 to C6"></div>
+    </details>
+</section>
+
+<div class="player-bar" data-player-bar role="region" aria-label="Player controls" hidden>
+    <button type="button" class="player-bar__play" data-player-toggle aria-label="Play">
+        <span aria-hidden="true" data-player-toggle-icon>▶</span>
+    </button>
+    <a href="#practice-player" class="player-bar__title text-small"><span data-player-name>Choose a track</span></a>
+    <button type="button" class="player-bar__loop text-small" data-player-loop aria-pressed="false">Loop off</button>
+</div>

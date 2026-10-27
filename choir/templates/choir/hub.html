@@ -1,12 +1,19 @@
 {% extends 'choir/_members_base.html' %}
+{% load static %}
 
 {% block title %}Learning Hub - Clent Consort{% endblock title %}
+
+{% block body_class %}{% if player_data.tracks %}has-player{% endif %}{% endblock body_class %}
 
 {% block page_title %}{{ voice_part_name }} Learning Hub{% endblock page_title %}
 {% block page_lede %}Access your rehearsal tracks and sheet music for {{ project.name }} below.{% endblock page_lede %}
 
 {% block members_content %}
-  <div class="flow flow--large">
+  {% if player_data.tracks %}
+    {% include 'choir/_practice_player.html' %}
+  {% endif %}
+
+  <div class="flow flow--large" data-hub>
     {% regroup assets by repertoire as grouped_assets %}
 
     {% for group in grouped_assets %}
@@ -31,11 +38,18 @@
               {# Audio Track Integration #}
               {% if ".mp3" in asset.file_upload.name|lower or ".wav" in asset.file_upload.name|lower or ".m4a" in asset.file_upload.name|lower %}
                 <div class="media-flex-row">
-                  <label class="visually-hidden" for="audio-{{ asset.id }}">Listen to {{ asset.asset_name }}</label>
-                  <audio id="audio-{{ asset.id }}" controls preload="none" class="w-100">
-                    <source src="{{ asset.file_upload.url }}" type="audio/mpeg">
-                    Your browser does not support the audio element.
-                  </audio>
+                  {# Opens the track in the practice player; shown once the player has started. #}
+                  <button type="button" class="button btn-small w-100 text-center" data-variant="primary" data-player-load="{{ asset.id }}" aria-pressed="false" hidden>
+                    <span aria-hidden="true">🎧</span> Practise
+                  </button>
+                  {# Plain audio for browsers without JavaScript; the player hides it. #}
+                  <div class="player-fallback w-100">
+                    <label class="visually-hidden" for="audio-{{ asset.id }}">Listen to {{ asset.asset_name }}</label>
+                    <audio id="audio-{{ asset.id }}" controls preload="none" class="w-100">
+                      <source src="{{ asset.file_upload.url }}" type="audio/mpeg">
+                      Your browser does not support the audio element.
+                    </audio>
+                  </div>
                   <a href="{{ asset.file_upload.url }}" download class="icon-action-btn" title="Download Audio" aria-label="Download audio">
                     <span aria-hidden="true">📥</span>
                   </a>
@@ -80,3 +94,12 @@
     {% endfor %}
   </div>
 {% endblock members_content %}
+
+{% block scripts %}
+{% if player_data.tracks %}
+{{ player_data|json_script:"player-data" }}
+<script src="{% static 'js/vendor/wavesurfer/wavesurfer-7.12.12.min.js' %}" defer></script>
+<script src="{% static 'js/vendor/wavesurfer/regions-7.12.12.min.js' %}" defer></script>
+<script src="{% static 'js/practice-player.js' %}" defer></script>
+{% endif %}
+{% endblock scripts %}
