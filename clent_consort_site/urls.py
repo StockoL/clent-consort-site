@@ -49,6 +49,7 @@ from choir.views import (
     member_poll_respond_view,
     member_polling_view,
     member_repertoire_view,
+    project_calendar_ics,
     settings_view,
     update_rsvp_view,
 )
@@ -199,6 +200,11 @@ urlpatterns = [
     # --- Action Handlers ---
     path("rsvp/<int:attendance_id>/", update_rsvp_view, name="update_rsvp"),
     path("event/<int:event_id>/calendar/", download_ics, name="download_ics"),
+    path(
+        "members/project/<int:project_id>/calendar.ics",
+        project_calendar_ics,
+        name="project_calendar_ics",
+    ),
     # --- Utilities ---
     path(
         "favicon.ico",

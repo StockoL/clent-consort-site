@@ -58,6 +58,9 @@
             {% include 'choir/_event_card.html' with show_rsvp=True %}
           {% endfor %}
         </div>
+        <p class="text-small">
+          <a href="{% url 'project_calendar_ics' item.project.id %}" class="text-link"><span aria-hidden="true">📅</span> Add all {{ item.project.name }} dates to your calendar</a>
+        </p>
         {% else %}
         <p>No upcoming events in the calendar.</p>
         {% endif %}
