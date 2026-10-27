@@ -16,6 +16,7 @@ from django.db import IntegrityError, transaction
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
+from invitations.utils import get_invitation_model
 
 from .models import (
     Attendance,
@@ -33,6 +34,8 @@ from .models import (
     SubscriptionPayment,
 )
 from .permissions import COMMITTEE_GROUP, is_committee
+
+Invitation = get_invitation_model()
 
 
 class AttendanceAutoCreationTests(TestCase):
@@ -1991,3 +1994,181 @@ class PracticePlayerTests(TestCase):
     def test_unknown_part_gets_no_tracks(self):
         response = self.client.get(reverse("hub_tracks", args=["kazoo", self.project.id]))
         self.assertEqual(response.json()["tracks"], [])
+
+
+class MemberInvitationTests(TestCase):
+    """Build Order Phase 8: the committee invites new members from the site,
+    and what they knew about them (name, voice part) is applied when the
+    invitee signs up."""
+
+    def setUp(self):
+        self.committee = User.objects.create_user(
+            username="committee", password="pw", email="committee@example.com", is_staff=True
+        )
+        User.objects.create_user(username="member", password="pw", email="member@example.com")
+        self.client.login(username="committee", password="pw")
+
+    def invite(self, **data):
+        payload = {"email": "new.singer@example.com", "first_name": "", "last_name": "", "voice_part": ""}
+        payload.update(data)
+        return self.client.post(reverse("committee_members"), payload)
+
+    def test_invite_creates_an_invitation_and_sends_one_email(self):
+        response = self.invite(first_name="Nia", last_name="Newsinger", voice_part="A")
+        self.assertRedirects(response, reverse("committee_members"))
+
+        invitation = Invitation.objects.get(email="new.singer@example.com")
+        self.assertEqual(invitation.inviter, self.committee)
+        self.assertIsNotNone(invitation.sent)
+        self.assertEqual(invitation.choir_profile.voice_part, "A")
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ["new.singer@example.com"])
+        self.assertIn(invitation.key, mail.outbox[0].body + "".join(a[0] for a in getattr(mail.outbox[0], "alternatives", [])))
+
+    def test_existing_account_or_repeat_invite_is_refused(self):
+        response = self.invite(email="MEMBER@example.com")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "already has an account")
+
+        self.invite()
+        response = self.invite()
+        self.assertContains(response, "already been invited")
+        self.assertEqual(Invitation.objects.count(), 1)
+
+    def test_pending_invitation_is_listed_and_can_be_resent(self):
+        self.invite()
+        invitation = Invitation.objects.get()
+        Invitation.objects.filter(id=invitation.id).update(sent=timezone.now() - timedelta(days=10))
+
+        page = self.client.get(reverse("committee_members"))
+        self.assertContains(page, "new.singer@example.com")
+        self.assertContains(page, "Expired")
+
+        self.client.post(reverse("committee_invitation_resend", args=[invitation.id]))
+        invitation.refresh_from_db()
+        self.assertFalse(invitation.key_expired())
+        self.assertEqual(len(mail.outbox), 2)
+
+    def test_accepting_creates_a_user_with_the_chosen_voice_part_and_name(self):
+        self.invite(first_name="Nia", last_name="Newsinger", voice_part="A")
+        invitation = Invitation.objects.get()
+        self.client.logout()
+
+        self.client.get(reverse("invitations:accept-invite", args=[invitation.key]))
+        response = self.client.post(
+            reverse("account_signup"),
+            {"email": "new.singer@example.com", "password1": "a-Long-pass-phrase-9", "password2": "a-Long-pass-phrase-9"},
+        )
+        self.assertEqual(response.status_code, 302)
+
+        user = User.objects.get(email="new.singer@example.com")
+        self.assertEqual(user.profile.voice_part, "A")
+        self.assertEqual((user.first_name, user.last_name), ("Nia", "Newsinger"))
+        self.assertTrue(user.profile.is_singer)
+        invitation.refresh_from_db()
+        self.assertTrue(invitation.accepted)
+
+    def test_invitation_pages_are_committee_only(self):
+        self.invite()
+        invitation = Invitation.objects.get()
+        self.client.login(username="member", password="pw")
+        self.assertEqual(self.client.get(reverse("committee_members")).status_code, 302)
+        response = self.client.post(reverse("committee_members"), {"email": "x@example.com"})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.client.post(reverse("committee_invitation_resend", args=[invitation.id])).status_code, 302)
+        self.assertEqual(Invitation.objects.count(), 1)
+
+
+class MemberManagementTests(TestCase):
+    """Build Order Phase 8: editing members, roles and leavers."""
+
+    def setUp(self):
+        self.committee = User.objects.create_user(username="committee", password="pw", is_staff=True)
+        self.committee.groups.add(Group.objects.get_or_create(name=COMMITTEE_GROUP)[0])
+        self.singer = User.objects.create_user(username="singer", password="pw", first_name="Sam")
+        self.client.login(username="committee", password="pw")
+
+    def edit_payload(self, **overrides):
+        payload = {
+            "first_name": "Sam",
+            "last_name": "Singer",
+            "voice_part": "T",
+            "is_singer": "on",
+            "is_active": "on",
+        }
+        payload.update(overrides)
+        return {k: v for k, v in payload.items() if v is not None}
+
+    def test_members_list_and_filters(self):
+        self.singer.profile.voice_part = "T"
+        self.singer.profile.save()
+        gone = User.objects.create_user(username="gone", password="pw", is_active=False)
+
+        response = self.client.get(reverse("committee_members"))
+        users = [row["user"] for row in response.context["rows"]]
+        self.assertIn(self.singer, users)
+        self.assertNotIn(gone, users)
+
+        response = self.client.get(reverse("committee_members"), {"status": "inactive"})
+        self.assertEqual([row["user"] for row in response.context["rows"]], [gone])
+
+        response = self.client.get(reverse("committee_members"), {"part": "T"})
+        self.assertEqual([row["user"] for row in response.context["rows"]], [self.singer])
+
+    def test_edit_saves_details_flags_and_committee(self):
+        response = self.client.post(
+            reverse("committee_member_edit", args=[self.singer.id]),
+            self.edit_payload(is_under_18="on", committee="on", is_singer=None),
+        )
+        self.assertRedirects(response, reverse("committee_members"))
+        self.singer.refresh_from_db()
+        self.assertEqual(self.singer.last_name, "Singer")
+        self.assertEqual(self.singer.profile.voice_part, "T")
+        self.assertTrue(self.singer.profile.is_under_18)
+        self.assertFalse(self.singer.profile.is_singer)
+        self.assertTrue(is_committee(self.singer))
+
+        self.client.post(reverse("committee_member_edit", args=[self.singer.id]), self.edit_payload())
+        self.assertFalse(is_committee(self.singer))
+
+    def test_committee_cant_deactivate_themselves_or_drop_their_own_committee_access(self):
+        response = self.client.post(
+            reverse("committee_member_edit", args=[self.committee.id]),
+            self.edit_payload(is_active=None, committee=None),
+        )
+        self.assertEqual(response.status_code, 200)
+        errors = response.context["form"].errors
+        self.assertIn("can't deactivate your own account", " ".join(errors["is_active"]))
+        self.assertIn("can't remove your own committee access", " ".join(errors["committee"]))
+        self.committee.refresh_from_db()
+        self.assertTrue(self.committee.is_active)
+        self.assertTrue(self.committee.groups.filter(name=COMMITTEE_GROUP).exists())
+
+    def test_deactivated_member_is_signed_out_and_redirected_to_login(self):
+        member_client = self.client_class()
+        member_client.login(username="singer", password="pw")
+        self.assertEqual(member_client.get(reverse("members")).status_code, 200)
+
+        self.client.post(reverse("committee_member_edit", args=[self.singer.id]), self.edit_payload(is_active=None))
+        self.singer.refresh_from_db()
+        self.assertFalse(self.singer.is_active)
+
+        response = member_client.get(reverse("members"))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse("account_login"), response["Location"])
+
+    def test_unticking_committee_on_a_staff_user_warns_about_admin_access(self):
+        staffer = User.objects.create_user(username="staffer", password="pw", is_staff=True)
+        response = self.client.post(
+            reverse("committee_member_edit", args=[staffer.id]), self.edit_payload(), follow=True
+        )
+        self.assertContains(response, "still has admin (staff) access")
+
+    def test_edit_page_is_committee_only(self):
+        self.client.login(username="singer", password="pw")
+        response = self.client.post(
+            reverse("committee_member_edit", args=[self.committee.id]), self.edit_payload(is_active=None)
+        )
+        self.assertEqual(response.status_code, 302)
+        self.committee.refresh_from_db()
+        self.assertTrue(self.committee.is_active)
