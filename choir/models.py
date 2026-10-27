@@ -215,6 +215,25 @@ class MemberProfile(models.Model):
         return f"{self.user.get_full_name()} ({self.get_voice_part_display()})"
 
 
+class InvitationProfile(models.Model):
+    """
+    What the committee knew about someone when inviting them (name, voice
+    part), kept with the django-invitations Invitation and copied onto the
+    new member's User and MemberProfile when they accept by signing up
+    (choir.signals.apply_invitation_profile).
+    """
+
+    invitation = models.OneToOneField(
+        "invitations.Invitation", on_delete=models.CASCADE, related_name="choir_profile"
+    )
+    first_name = models.CharField(max_length=150, blank=True)
+    last_name = models.CharField(max_length=150, blank=True)
+    voice_part = models.CharField(max_length=1, choices=MemberProfile.VOICE_CHOICES, blank=True)
+
+    def __str__(self):
+        return f"Invitation details for {self.invitation.email}"
+
+
 class SubscriptionPayment(models.Model):
     """
     Ledger for tracking who has paid what and when.
@@ -609,11 +628,18 @@ def create_user_profile(sender, instance, created, **kwargs):
 
 
 @receiver(post_save, sender=User)
-def save_user_profile(sender, instance, **kwargs):
+def save_user_profile(sender, instance, created, **kwargs):
     """
-    Ensures the profile saves whenever the core User object saves.
+    Makes sure an existing user has a profile (accounts that predate
+    profiles). Deliberately never re-saves one that exists: this used to
+    call instance.profile.save() on every User save, so any later save of
+    a User object (allauth recording a login, say) wrote its stale
+    in-memory copy of the profile over changes made since - it wiped the
+    voice part an invitation had just set. Code that changes a profile
+    saves the profile itself.
     """
-    instance.profile.save()
+    if not created:
+        MemberProfile.objects.get_or_create(user=instance)
 
 
 # NOTE: the "new Event -> backfill Attendance for every active user" receiver
