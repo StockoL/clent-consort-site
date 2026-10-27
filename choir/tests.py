@@ -2645,3 +2645,29 @@ class TemplateAccessibilityRulesTests(TestCase):
                 if re.search(r"<th(?=[ >])(?![^>]*scope=)", table):
                     offenders.append(f"{name}: <th> without scope")
         self.assertEqual(offenders, [])
+
+
+class CommitteeNavPanelTests(TestCase):
+    """On phones the committee links sit in their own panel, opened by a
+    Committee button at the end of the members nav reel."""
+
+    def test_committee_links_sit_in_the_panel_not_the_reel(self):
+        create_committee_user(username="committee", password="pw")
+        self.client.login(username="committee", password="pw")
+        html = self.client.get(reverse("committee_financials")).content.decode()
+
+        reel = re.search(r'<ul class="members-nav__list reel".*?</ul>', html, re.S).group(0)
+        panel = re.search(r"<div class=\"members-nav__committee\".*?</div>", html, re.S).group(0)
+        self.assertIn("data-committee-toggle", reel)
+        self.assertNotIn(reverse("committee_financials"), reel)
+        self.assertIn(reverse("committee_financials"), panel)
+        self.assertIn(reverse("committee_settings"), panel)
+        self.assertIn('aria-controls="members-nav-committee"', reel)
+
+    def test_members_get_no_committee_button_or_panel(self):
+        User.objects.create_user(username="member", password="pw")
+        self.client.login(username="member", password="pw")
+        html = self.client.get(reverse("members")).content.decode()
+        self.assertNotIn("data-committee-toggle", html)
+        self.assertNotIn("data-committee-panel", html)
+        self.assertIn("Document Vault", html)

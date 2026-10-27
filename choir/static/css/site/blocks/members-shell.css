@@ -227,3 +227,81 @@
   padding-top: var(--space-xs);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+/* --- Committee links (in their own panel; see _members_nav.html) ---
+   Phones: a two-column grid under the reel, opened by the reel's
+   "Committee" button once js/members-nav.js has set data-js on the nav
+   (without JavaScript the grid is always shown). Desktop: part of the
+   sidebar, always shown, one column like the member links. */
+.members-nav__committee {
+  margin-top: var(--space-2xs);
+}
+
+.members-nav__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3xs) var(--space-2xs);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.members-nav__grid .members-nav__link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  border-radius: 8px;
+}
+
+.members-nav__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: transparent;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+/* The button stands in for the current committee page while closed */
+.members-nav__toggle.is-current,
+.members-nav__toggle[aria-expanded="true"] {
+  background-color: var(--colors-action-primary);
+  color: var(--colors-text-on-action);
+  font-weight: 600;
+}
+
+.members-nav__toggle [aria-hidden="true"] {
+  transition: transform var(--transitions-dur-fast) ease;
+}
+
+.members-nav__toggle[aria-expanded="true"] [aria-hidden="true"] {
+  transform: rotate(180deg);
+}
+
+@media (max-width: 59.99rem) {
+  .members-nav[data-js] .members-nav__committee:not([data-open]) {
+    display: none;
+  }
+
+  /* The button names the panel on phones */
+  .members-nav[data-js] .members-nav__committee > .members-nav__group {
+    display: none;
+  }
+}
+
+@media (min-width: 60rem) {
+  .members-nav__toggle {
+    display: none !important;
+  }
+
+  .members-nav__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .members-nav__grid .members-nav__link {
+    min-height: 0;
+    border-radius: 6px;
+  }
+}
