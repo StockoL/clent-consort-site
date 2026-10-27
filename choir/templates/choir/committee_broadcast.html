@@ -8,7 +8,7 @@
 {% block page_lede %}An email to all singers or one voice part. Saving keeps it as a draft: you'll see a preview and can send yourself a test before anything goes to the choir.{% endblock page_lede %}
 
 {% block members_content %}
-  <section class="card flow" data-variant="invert">
+  <div class="card flow" data-variant="invert">
     <form method="POST" class="flow flow--small">
       {% csrf_token %}
 
@@ -35,5 +35,5 @@
         <a href="{% if draft %}{% url 'committee_broadcast_preview' draft.id %}{% else %}{% url 'committee_broadcasts' %}{% endif %}" class="button" data-variant="outline">Cancel</a>
       </div>
     </form>
-  </section>
+  </div>
 {% endblock members_content %}
