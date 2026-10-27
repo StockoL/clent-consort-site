@@ -45,3 +45,12 @@
   opacity: 0;
   pointer-events: none;
 }
+
+/* Phones: no floating button at all. It covered form fields and buttons
+   on every page at this width, and the footer has its own "Back to top"
+   link (Build Order Phase 10). */
+@media (max-width: 44.99rem) {
+  .back-to-top {
+    display: none;
+  }
+}

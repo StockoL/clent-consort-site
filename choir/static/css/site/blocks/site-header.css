@@ -1,11 +1,17 @@
 /* ==========================================================================
-   BLOCK: SITE HEADER (decanted from style.css "v1", unchanged)
+   BLOCK: SITE HEADER (decanted from style.css "v1"; mobile menu reworked in Build Order Phase 10)
    ==========================================================================
    The mobile nav markup/JS itself is untouched (still .menu-toggle/
    #nav-list, driven by js/mobile-menu.js) - converting it to looseleaf's
    .navbar block is flagged separately as higher-risk, needing
    interactive verification this environment can't do.
    ========================================================================== */
+
+:root {
+  /* The sticky header's height, for anything sized against the first
+     screen (the home hero) or sticking below it (archive year headings) */
+  --header-height: 4.95rem;
+}
 
 .site-header {
   position: sticky;
@@ -40,6 +46,7 @@
   text-transform: uppercase;
   letter-spacing: 0.1ch;
   color: #1a1a1a;
+  white-space: nowrap;
 }
 
 .main-nav {
@@ -49,7 +56,7 @@
 
 .nav-list a {
   font-family: var(--fonts-body);
-  font-size: var(--space-xs);
+  font-size: var(--step-0);
   font-weight: 505;
   color: #444;
   transition: color 0.2s;
@@ -70,7 +77,11 @@
 
 /* --- Mobile menu overlay --- */
 .menu-toggle {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
   background: none;
   border: none;
   cursor: pointer;
@@ -108,6 +119,27 @@
   top: 8px;
 }
 
+/* Open: the three lines become a cross */
+.menu-toggle[aria-expanded="true"] .hamburger {
+  background-color: transparent;
+}
+
+.menu-toggle[aria-expanded="true"] .hamburger::before {
+  transform: translateY(8px) rotate(45deg);
+}
+
+.menu-toggle[aria-expanded="true"] .hamburger::after {
+  transform: translateY(-8px) rotate(-45deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hamburger,
+  .hamburger::before,
+  .hamburger::after {
+    transition: none;
+  }
+}
+
 .nav-list {
   display: none;
   flex-direction: column;
@@ -115,7 +147,7 @@
   top: 100%;
   left: 0;
   width: 100%;
-  background-color: rgba(255, 255, 255, 0.98);
+  background-color: #ffffff;
   border-bottom: 1px solid #eee;
   padding: var(--space-s);
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
@@ -130,11 +162,30 @@
 }
 
 .nav-list li {
-  margin-bottom: var(--space-xs);
+  margin-bottom: var(--space-2xs);
+}
+
+/* Phones: every menu link is at least a 44px touch target */
+.nav-list a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+}
+
+/* Dims the page under the open mobile menu; tapping it closes the menu
+   (js/mobile-menu.js). A real element rather than a box-shadow so the tap
+   can't fall through to a link underneath. */
+.nav-backdrop {
+  position: fixed;
+  inset: var(--header-height) 0 0;
+  z-index: 1050;
+  background: rgba(0, 0, 0, 0.45);
 }
 
 @media (min-width: 45rem) {
-  .menu-toggle {
+  .menu-toggle,
+  .nav-backdrop {
     display: none;
   }
 
@@ -157,5 +208,11 @@
 
   .nav-list li {
     margin-bottom: 0;
+  }
+
+  /* The bar: one step down from the phone menu's size, on one line */
+  .nav-list a {
+    font-size: var(--step--1);
+    white-space: nowrap;
   }
 }
