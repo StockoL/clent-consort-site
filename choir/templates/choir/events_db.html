@@ -25,7 +25,7 @@
         {% if next_event.ticket_url %}
           <a href="{{ next_event.ticket_url }}" class="button" data-variant="primary" target="_blank" rel="noopener noreferrer">Tickets &amp; Booking</a>
         {% else %}
-          <a href="{% url 'contact' %}" class="button" data-variant="primary">Enquire for More Information</a>
+          <a href="{% url 'contact' %}" class="button" data-variant="primary">Enquire<span class="cta-more"> for More Information</span></a>
         {% endif %}
       {% else %}
         <h1>Our next performance</h1>

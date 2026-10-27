@@ -129,3 +129,63 @@
   font-size: var(--step-1);
   color: #c9a45e;
 }
+
+/* --- Build Order Phase 10: Events page on phones and tablets --- */
+
+/* Next-event heading: step-3 by default, step-2 on phones */
+.featured-event h1 {
+  font-size: var(--step-3);
+}
+
+/* Recent performances: each card sizes to its own content instead of all
+   stretching to the tallest; scroll-snap (reel.css) still applies. */
+.recent-reel .reel {
+  align-items: flex-start;
+}
+
+@media (max-width: 59.99rem) {
+  .recent-reel .reel > * {
+    flex: 0 0 auto;
+    inline-size: min(85%, 24rem);
+    min-inline-size: 18rem;
+  }
+}
+
+@media (max-width: 44.99rem) {
+  .featured-event h1 {
+    font-size: var(--step-2);
+  }
+
+  .featured-event .event-details {
+    padding: var(--space-s);
+  }
+
+  /* "Enquire for More Information" becomes "Enquire" and doesn't wrap */
+  .featured-event .button {
+    white-space: nowrap;
+  }
+
+  .cta-more {
+    display: none;
+  }
+
+  /* Archive year headings stay in view below the sticky header */
+  .archive-year {
+    position: sticky;
+    top: var(--header-height);
+    z-index: 1;
+    margin-top: 0;
+    padding-block: var(--space-2xs);
+    background: var(--colors-surface-base, #fff);
+    border-bottom: 1px solid #eee;
+  }
+}
+
+/* Gold text on white: the brand gold (#c9a45e) is 2.3:1 on white, too
+   faint to read; this darker gold is 4.9:1 (WCAG AA). The gold on the dark
+   next-event card is unchanged. */
+.event-card time,
+.archive-item time,
+.archive-year {
+  color: #8a6d34;
+}
