@@ -35,14 +35,19 @@
 
             <td data-label="Emergency Contact">
               <div>
+                {% if not member.profile.emergency_contact_name and not member.profile.emergency_contact_phone %}
+                  <span class="text-muted">None provided</span>
+                {% endif %}
                 {{ member.profile.emergency_contact_name }}
                 {% if member.profile.emergency_contact_relation %}
                   <span class="text-muted text-small">({{ member.profile.emergency_contact_relation }})</span>
                 {% endif %}
+                {% if member.profile.emergency_contact_phone %}
                 <br>
                 <a href="tel:{{ member.profile.emergency_contact_phone|cut:' ' }}" class="text-link">
                   {{ member.profile.emergency_contact_phone }}
                 </a>
+                {% endif %}
               </div>
             </td>
 

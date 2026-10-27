@@ -101,7 +101,7 @@
 
   .home-intro__label {
     display: block;
-    color: #8a6d34; /* darker gold: readable on the light panel */
+    color: var(--colors-text-accent); /* darker gold on the light panel */
     font-size: 0.8rem;
     font-weight: 600;
     letter-spacing: 0.2ch;
@@ -113,6 +113,6 @@
   }
 
   .home-intro__link {
-    color: #8a6d34;
+    color: var(--colors-text-accent);
   }
 }

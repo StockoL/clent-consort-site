@@ -1,5 +1,5 @@
 {
-  "_comment_colors": "PROCESS: neutral-* is the raw grayscale ramp and brand-* are Clent Consort's own brand primitives - both are static scales, never used directly in templates. Semantic tokens (surface-*, text-*, border-*, action-primary, text-on-action) alias into them via var(...) so the ramp/primitives stay the single source of truth. Status tokens (success/warning/danger/info) each ship a base + -bg/-border/-text trio for blocks like alert and badge. 'colors-invert' below carries the dark-scope overrides for the same semantic names - see that category's comment.",
+  "_comment_colors": "PROCESS: neutral-* is the raw grayscale ramp and brand-* are Clent Consort's own brand primitives - both are static scales, never used directly in templates. Semantic tokens (surface-*, text-*, border-*, action-primary, text-on-action) alias into them via var(...) so the ramp/primitives stay the single source of truth. Status tokens (success/warning/danger/info) each ship a base + -bg/-border/-text trio for blocks like alert and badge. 'colors-invert' below carries the dark-scope overrides for the same semantic names - see that category's comment. text-accent is the gold for text: the darker #8a6d34 on light backgrounds (4.9:1 on white, where the brand gold is only 2.3:1) and the brand gold itself inside inverted containers, where it reads well.",
   "colors": {
     "neutral-0": "#ffffff",
     "neutral-50": "#fafafa",
@@ -24,6 +24,7 @@
     "surface-sunken": "var(--colors-neutral-100)",
     "text-base": "var(--colors-neutral-900)",
     "text-muted": "var(--colors-neutral-600)",
+    "text-accent": "#8a6d34",
     "border-subtle": "var(--colors-neutral-200)",
     "border-strong": "var(--colors-neutral-300)",
 
@@ -53,6 +54,7 @@
     "surface-sunken": "#141414",
     "text-base": "var(--colors-neutral-0)",
     "text-muted": "var(--colors-neutral-400)",
+    "text-accent": "var(--colors-brand-gold)",
     "border-subtle": "rgba(255, 255, 255, 0.1)",
     "border-strong": "rgba(255, 255, 255, 0.2)",
 

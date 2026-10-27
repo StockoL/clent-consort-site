@@ -187,5 +187,5 @@
 .event-card time,
 .archive-item time,
 .archive-year {
-  color: #8a6d34;
+  color: var(--colors-text-accent);
 }

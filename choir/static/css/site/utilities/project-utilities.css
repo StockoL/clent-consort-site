@@ -19,6 +19,15 @@
    what they don't already cover.
    ========================================================================== */
 
+/* --- Gold text that stays readable: the vendored .text-primary uses the
+   brand gold, which is only 2.3:1 on white. --colors-text-accent is the
+   darker gold on light backgrounds and the brand gold inside inverted
+   (dark) containers. Same layer as colors.css and imported after it, so
+   this wins. --- */
+.text-primary {
+  color: var(--colors-text-accent);
+}
+
 /* --- Status text colors (fill the gap - looseleaf's own .text-danger
    maps to --colors-danger, the solid/badge shade; this site's plain-text
    convention uses the brighter -text shade instead) --- */

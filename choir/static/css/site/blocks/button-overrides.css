@@ -37,7 +37,7 @@
 
 .button[data-variant="outline"] {
   --button-bg: transparent;
-  --button-text: var(--colors-action-primary);
+  --button-text: var(--colors-text-accent);
   --button-border: var(--colors-action-primary);
 }
 

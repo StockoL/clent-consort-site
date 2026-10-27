@@ -66,7 +66,7 @@
   padding: 0.5rem 1rem;
   border: 1px solid var(--colors-action-primary);
   border-radius: 999px;
-  color: var(--colors-action-primary);
+  color: var(--colors-text-accent);
   font-size: 0.85rem;
   text-decoration: none;
   white-space: nowrap;
@@ -165,8 +165,10 @@
   min-width: 12rem; /* keeps the row's checkbox beside it on phones */
 }
 
+/* Handled items are greyed with the muted text colour rather than faded
+   with opacity, which took their text and links below 4.5:1. */
 .inbox-item[data-handled] .inbox-item__body {
-  opacity: 0.65;
+  color: var(--colors-text-muted);
 }
 
 /* Count badge on a nav link (unhandled inbox items) */
