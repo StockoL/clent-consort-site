@@ -1909,3 +1909,85 @@ class RepertoireLibraryTests(TestCase):
             with self.subTest(url=url):
                 self.assertEqual(getattr(self.client, method)(url).status_code, 302)
         self.assertTrue(LearningAsset.objects.filter(id=asset.id).exists())
+
+
+class PracticePlayerTests(TestCase):
+    """Build Order Phase 7 (Learning Hub P1): the voice-part hub embeds the
+    practice player's track list, and hub_tracks serves fresh URLs."""
+
+    def setUp(self):
+        User.objects.create_user(username="member", password="pw")
+        self.client.login(username="member", password="pw")
+        self.project = Project.objects.create(name="Clent 2026", status="ACTIVE")
+        self.other = Project.objects.create(name="Ewelme 2027", status="ACTIVE")
+        self.piece = Repertoire.objects.create(composer="Byrd", title="Ave verum")
+        self.other_piece = Repertoire.objects.create(composer="Tallis", title="If ye love me")
+        self.project.repertoire.add(self.piece)
+        self.other.repertoire.add(self.other_piece)
+
+        def asset(piece, part, name, filename=None, url=None):
+            return LearningAsset.objects.create(
+                repertoire=piece,
+                voice_part=part,
+                asset_name=name,
+                file_upload=SimpleUploadedFile(filename, b"ID3") if filename else None,
+                external_url=url,
+            )
+
+        self.sop_track = asset(self.piece, "SOP", "Soprano track", "sop.mp3")
+        self.full_track = asset(self.piece, "ALL", "Full choir", "full.m4a")
+        self.alto_track = asset(self.piece, "ALT", "Alto track", "alto.mp3")
+        self.score = asset(self.piece, "ALL", "Score", "score.pdf")
+        self.youtube = asset(self.piece, "SOP", "YouTube", url="https://youtube.com/x")
+        self.elsewhere = asset(self.other_piece, "SOP", "Other project", "other.mp3")
+
+    def player_ids(self, response):
+        return sorted(track["id"] for track in response.context["player_data"]["tracks"])
+
+    def test_hub_embeds_only_this_projects_audio_for_this_part(self):
+        response = self.client.get(reverse("hub", args=["soprano", self.project.id]))
+        self.assertEqual(self.player_ids(response), sorted([self.sop_track.id, self.full_track.id]))
+        self.assertContains(response, 'id="player-data"')
+        self.assertContains(response, "js/practice-player")
+        self.assertContains(response, f'data-player-load="{self.sop_track.id}"')
+        # The PDF and the link keep their own buttons
+        self.assertContains(response, "Open Score")
+        self.assertContains(response, "External Link")
+
+    def test_track_entries_carry_what_the_player_shows(self):
+        response = self.client.get(reverse("hub", args=["soprano", self.project.id]))
+        track = next(t for t in response.context["player_data"]["tracks"] if t["id"] == self.sop_track.id)
+        self.assertEqual(track["name"], "Soprano track")
+        self.assertEqual(track["piece"], "Ave verum")
+        self.assertTrue(track["url"])
+        self.assertEqual(
+            response.context["player_data"]["refreshUrl"],
+            reverse("hub_tracks", args=["soprano", self.project.id]),
+        )
+
+    def test_no_player_without_audio(self):
+        LearningAsset.objects.filter(file_upload__endswith=".mp3").delete()
+        LearningAsset.objects.filter(file_upload__endswith=".m4a").delete()
+        response = self.client.get(reverse("hub", args=["soprano", self.project.id]))
+        self.assertNotContains(response, 'id="player-data"')
+        self.assertNotContains(response, "practice-player")
+
+    def test_tracks_endpoint_returns_this_projects_tracks_for_the_part(self):
+        response = self.client.get(reverse("hub_tracks", args=["alto", self.project.id]))
+        self.assertEqual(response.status_code, 200)
+        ids = sorted(track["id"] for track in response.json()["tracks"])
+        self.assertEqual(ids, sorted([self.alto_track.id, self.full_track.id]))
+
+    def test_tracks_endpoint_requires_login(self):
+        self.client.logout()
+        response = self.client.get(reverse("hub_tracks", args=["soprano", self.project.id]))
+        self.assertEqual(response.status_code, 302)
+
+    def test_tracks_endpoint_404s_for_a_project_that_isnt_active(self):
+        archived = Project.objects.create(name="Old", status="ARCHIVED")
+        response = self.client.get(reverse("hub_tracks", args=["soprano", archived.id]))
+        self.assertEqual(response.status_code, 404)
+
+    def test_unknown_part_gets_no_tracks(self):
+        response = self.client.get(reverse("hub_tracks", args=["kazoo", self.project.id]))
+        self.assertEqual(response.json()["tracks"], [])
