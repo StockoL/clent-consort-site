@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
+from invitations.signals import invite_accepted
 
 from .models import Attendance, Event
 from .permissions import is_singer
@@ -54,3 +55,31 @@ def auto_add_existing_users_to_new_event(sender, instance, created, **kwargs):
         # ignore_conflicts as defense-in-depth against any other future
         # source of Attendance rows for the same (user, event) pair.
         Attendance.objects.bulk_create(attendances_to_create, ignore_conflicts=True)
+
+
+# 3. INVITATION ACCEPTED
+@receiver(invite_accepted)
+def apply_invitation_profile(sender, email, invitation=None, **kwargs):
+    """
+    When someone accepts an invitation (with
+    INVITATIONS_ACCEPT_INVITE_AFTER_SIGNUP that's as they finish signing up,
+    so their User and MemberProfile already exist), copy the name and voice
+    part the committee entered when inviting them. Never overwrites anything
+    the new member has already filled in themselves.
+    """
+    details = getattr(invitation, "choir_profile", None) if invitation else None
+    user = User.objects.filter(email__iexact=email).select_related("profile").first()
+    if details is None or user is None:
+        return
+
+    changed = False
+    for field in ("first_name", "last_name"):
+        if getattr(details, field) and not getattr(user, field):
+            setattr(user, field, getattr(details, field))
+            changed = True
+    if changed:
+        user.save(update_fields=["first_name", "last_name"])
+
+    if details.voice_part and not user.profile.voice_part:
+        user.profile.voice_part = details.voice_part
+        user.profile.save(update_fields=["voice_part"])
