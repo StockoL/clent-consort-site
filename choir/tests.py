@@ -2,6 +2,7 @@ import importlib
 import json
 import tempfile
 from io import StringIO
+from unittest import mock
 from datetime import timedelta
 
 from allauth.account.models import EmailAddress
@@ -1767,3 +1768,144 @@ class NonSingerTests(TestCase):
     def test_non_singer_can_still_use_the_vault(self):
         self.client.login(username="organist", password="pw")
         self.assertEqual(self.client.get(reverse("committee_documents")).status_code, 200)
+
+
+class RepertoireLibraryTests(TestCase):
+    """Build Order Phase 6: the committee adds pieces and uploads their
+    scores and tracks on the site."""
+
+    def setUp(self):
+        User.objects.create_user(username="committee", password="pw", is_staff=True)
+        User.objects.create_user(username="member", password="pw")
+        self.client.login(username="committee", password="pw")
+        self.piece = Repertoire.objects.create(composer="Byrd", title="Ave verum corpus")
+
+    def upload(self, **data):
+        payload = {"upload": "1", "voice_part": "SOP", "asset_name": "", "external_url": ""}
+        payload.update(data)
+        return self.client.post(reverse("committee_repertoire_detail", args=[self.piece.id]), payload)
+
+    def pdf(self, name="Ave verum - Soprano.pdf"):
+        return SimpleUploadedFile(name, b"%PDF-1.4 test", content_type="application/pdf")
+
+    def test_create_piece_goes_to_its_upload_page(self):
+        response = self.client.post(reverse("committee_repertoire"), {"composer": "Tallis", "title": "If ye love me"})
+        piece = Repertoire.objects.get(title="If ye love me")
+        self.assertRedirects(response, reverse("committee_repertoire_detail", args=[piece.id]))
+
+    def test_adding_from_a_project_attaches_the_piece(self):
+        project = Project.objects.create(name="Clent 2026", status="ACTIVE")
+        self.client.post(
+            reverse("committee_repertoire"),
+            {"composer": "Tallis", "title": "If ye love me", "project": project.id},
+        )
+        self.assertIn(Repertoire.objects.get(title="If ye love me"), project.repertoire.all())
+
+    def test_library_lists_counts_and_searches(self):
+        LearningAsset.objects.create(repertoire=self.piece, voice_part="SOP", asset_name="Sop", external_url="https://example.com")
+        Repertoire.objects.create(composer="Tallis", title="If ye love me")
+
+        response = self.client.get(reverse("committee_repertoire"))
+        row = next(r for r in response.context["rows"] if r["piece"] == self.piece)
+        self.assertEqual(row["counts"], [("Soprano", 1)])
+
+        response = self.client.get(reverse("committee_repertoire"), {"q": "tallis"})
+        self.assertEqual([r["piece"].title for r in response.context["rows"]], ["If ye love me"])
+
+    def test_upload_pdf_creates_asset_named_after_the_file(self):
+        response = self.upload(files=self.pdf(), voice_part="ALT")
+        self.assertRedirects(response, reverse("committee_repertoire_detail", args=[self.piece.id]))
+        asset = LearningAsset.objects.get(repertoire=self.piece)
+        self.assertEqual(asset.voice_part, "ALT")
+        self.assertEqual(asset.asset_name, "Ave verum - Soprano")
+        self.assertIsNotNone(asset.uploaded_at)
+
+    def test_single_file_uses_the_given_name(self):
+        self.upload(files=self.pdf(), asset_name="Full score")
+        self.assertEqual(LearningAsset.objects.get(repertoire=self.piece).asset_name, "Full score")
+
+    def test_several_files_make_one_asset_each(self):
+        self.upload(files=[self.pdf("Soprano.mp3"), self.pdf("Alto.m4a"), self.pdf("Score.pdf")], asset_name="Ignored")
+        self.assertEqual(
+            sorted(LearningAsset.objects.values_list("asset_name", flat=True)), ["Alto", "Score", "Soprano"]
+        )
+
+    def test_external_link_needs_a_name(self):
+        response = self.upload(external_url="https://youtube.com/watch?v=x")
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(LearningAsset.objects.exists())
+
+        self.upload(external_url="https://youtube.com/watch?v=x", asset_name="Recording")
+        self.assertTrue(LearningAsset.objects.filter(asset_name="Recording").exists())
+
+    def test_file_and_link_together_rejected(self):
+        response = self.upload(files=self.pdf(), external_url="https://example.com", asset_name="X")
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(LearningAsset.objects.exists())
+
+    def test_neither_file_nor_link_rejected(self):
+        response = self.upload()
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["upload_form"].non_field_errors())
+
+    def test_wrong_file_type_rejected(self):
+        response = self.upload(files=SimpleUploadedFile("virus.exe", b"MZ"))
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(LearningAsset.objects.exists())
+
+    def test_oversize_file_rejected(self):
+        with mock.patch("choir.forms.ASSET_MAX_BYTES", 5):
+            response = self.upload(files=self.pdf())
+        self.assertContains(response, "over 50 MB")
+        self.assertFalse(LearningAsset.objects.exists())
+
+    def test_delete_removes_the_row_and_the_stored_file(self):
+        self.upload(files=self.pdf())
+        asset = LearningAsset.objects.get()
+        stored_name = asset.file_upload.name
+        storage = asset.file_upload.storage
+        self.assertTrue(storage.exists(stored_name))
+
+        response = self.client.post(reverse("committee_asset_delete", args=[asset.id]))
+        self.assertRedirects(response, reverse("committee_repertoire_detail", args=[self.piece.id]))
+        self.assertFalse(LearningAsset.objects.exists())
+        self.assertFalse(storage.exists(stored_name))
+
+    def test_rename_piece(self):
+        self.client.post(
+            reverse("committee_repertoire_detail", args=[self.piece.id]),
+            {"composer": "William Byrd", "title": "Ave verum corpus"},
+        )
+        self.piece.refresh_from_db()
+        self.assertEqual(self.piece.composer, "William Byrd")
+
+    def test_project_edit_links_to_its_pieces_and_add_piece(self):
+        project = Project.objects.create(name="Clent 2026", status="ACTIVE")
+        project.repertoire.add(self.piece)
+        response = self.client.get(reverse("committee_project_edit", args=[project.id]))
+        self.assertContains(response, reverse("committee_repertoire_detail", args=[self.piece.id]))
+        self.assertContains(response, f"{reverse('committee_repertoire')}?project={project.id}")
+
+    def test_hub_shows_the_upload_date_when_known(self):
+        project = Project.objects.create(name="Clent 2026", status="ACTIVE")
+        project.repertoire.add(self.piece)
+        LearningAsset.objects.create(repertoire=self.piece, voice_part="SOP", asset_name="New", external_url="https://example.com")
+        old = LearningAsset.objects.create(repertoire=self.piece, voice_part="SOP", asset_name="Old", external_url="https://example.com")
+        LearningAsset.objects.filter(id=old.id).update(uploaded_at=None)  # predates the field
+
+        self.client.login(username="member", password="pw")
+        response = self.client.get(reverse("hub", args=["soprano", project.id]))
+        # Only the asset with a known upload date shows one
+        self.assertContains(response, "· added", count=1)
+
+    def test_library_urls_are_committee_only(self):
+        asset = LearningAsset.objects.create(repertoire=self.piece, voice_part="SOP", asset_name="A", external_url="https://example.com")
+        self.client.login(username="member", password="pw")
+        for method, url in [
+            ("get", reverse("committee_repertoire")),
+            ("get", reverse("committee_repertoire_detail", args=[self.piece.id])),
+            ("post", reverse("committee_asset_delete", args=[asset.id])),
+        ]:
+            with self.subTest(url=url):
+                self.assertEqual(getattr(self.client, method)(url).status_code, 302)
+        self.assertTrue(LearningAsset.objects.filter(id=asset.id).exists())
