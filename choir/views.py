@@ -312,37 +312,76 @@ def member_poll_respond_view(request, poll_id):
     return JsonResponse({"success": True, "response": response_value})
 
 
+HUB_PARTS = {
+    "soprano": "SOP",
+    "alto": "ALT",
+    "tenor": "TEN",
+    "baritone": "BAS",  # Grouping baritones with basses for assets
+    "bass": "BAS",
+}
+
+# Uploaded files the practice player can play (Build Order Phase 7).
+PLAYER_AUDIO_EXTENSIONS = (".mp3", ".m4a", ".wav")
+
+
+def _hub_assets(project, voice_part):
+    """One project's assets for one voice part (plus full-choir ones)."""
+    db_part = HUB_PARTS.get(voice_part.lower())
+    if not db_part:
+        return LearningAsset.objects.none()
+    # select_related optimizes the database hit when fetching foreign keys
+    return LearningAsset.objects.filter(
+        voice_part__in=[db_part, "ALL"], repertoire__in=project.repertoire.all()
+    ).select_related("repertoire")
+
+
+def _player_tracks(assets):
+    """The practice player's track list: uploaded audio only (PDFs and
+    external links keep their own buttons on the hub). URLs are presigned
+    and expire (AWS_QUERYSTRING_EXPIRE), which is why hub_tracks_view
+    exists to hand the player fresh ones."""
+    return [
+        {
+            "id": asset.id,
+            "name": asset.asset_name,
+            "piece": asset.repertoire.title,
+            "composer": asset.repertoire.composer,
+            "url": asset.file_upload.url,
+        }
+        for asset in assets
+        if asset.file_upload and asset.file_upload.name.lower().endswith(PLAYER_AUDIO_EXTENSIONS)
+    ]
+
+
 @login_required
 def hub_view(request, voice_part, project_id):
     """Renders the learning hub dynamically based on the requested voice
     part, scoped to one project's repertoire - a member picking a voice
-    part from Project A's tab shouldn't see Project B's assets mixed in."""
+    part from Project A's tab shouldn't see Project B's assets mixed in.
+    Audio tracks open in the practice player (js/practice-player.js),
+    whose track list is embedded in the page as JSON."""
     project = get_object_or_404(Project, id=project_id, status="ACTIVE")
-
-    part_map = {
-        "soprano": "SOP",
-        "alto": "ALT",
-        "tenor": "TEN",
-        "baritone": "BAS",  # Grouping baritones with basses for assets
-        "bass": "BAS",
-    }
-
-    db_part = part_map.get(voice_part.lower())
-
-    if db_part:
-        # select_related optimizes the database hit when fetching foreign keys
-        assets = LearningAsset.objects.filter(
-            voice_part__in=[db_part, "ALL"], repertoire__in=project.repertoire.all()
-        ).select_related("repertoire")
-    else:
-        assets = []
+    assets = _hub_assets(project, voice_part)
 
     context = {
         "voice_part_name": voice_part.title(),
         "assets": assets,
         "project": project,
+        "player_data": {
+            "tracks": _player_tracks(assets),
+            "refreshUrl": reverse("hub_tracks", args=[voice_part, project.id]),
+            "storageKey": f"{project.id}:{voice_part.lower()}",
+        },
     }
     return render(request, "choir/hub.html", context)
+
+
+@login_required
+def hub_tracks_view(request, voice_part, project_id):
+    """The practice player's track list as JSON, with freshly presigned
+    URLs - the player calls this when a track's URL has expired."""
+    project = get_object_or_404(Project, id=project_id, status="ACTIVE")
+    return JsonResponse({"tracks": _player_tracks(_hub_assets(project, voice_part))})
 
 
 @login_required

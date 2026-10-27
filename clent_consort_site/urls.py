@@ -40,6 +40,7 @@ from choir.views import (
     download_ics,
     events_view,
     home_view,
+    hub_tracks_view,
     hub_view,
     login_redirect_router,
     member_poll_respond_view,
@@ -72,6 +73,11 @@ urlpatterns = [
         name="member_poll_respond",
     ),
     path("members/hub/<str:voice_part>/<int:project_id>/", hub_view, name="hub"),
+    path(
+        "members/hub/<str:voice_part>/<int:project_id>/tracks.json",
+        hub_tracks_view,
+        name="hub_tracks",
+    ),
     path("members/settings/", settings_view, name="settings"),
     # --- Committee Area ---
     path("members/committee/", committee_hub, name="committee_hub"),

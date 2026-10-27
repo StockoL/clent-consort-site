@@ -269,6 +269,9 @@ if AWS_ACCESS_KEY_ID and AWS_ACCESS_KEY_ID != "pending_verification_id":
     AWS_S3_REGION_NAME = "eu-north-1"  # Stockholm
     AWS_S3_SIGNATURE_VERSION = "s3v4"
     AWS_QUERYSTRING_AUTH = True
+    # Presigned links last 6 hours rather than 1, so a practice session can
+    # switch back to a track it opened earlier (Build Order Phase 7).
+    AWS_QUERYSTRING_EXPIRE = 6 * 3600
     AWS_S3_FILE_OVERWRITE = False
 else:
     # Modern Django 5.0+ Local Storage Configuration
