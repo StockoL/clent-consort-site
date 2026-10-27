@@ -5,6 +5,7 @@ from .models import (
     AuditionApplication,
     AvailabilityPoll,
     AvailabilityResponse,
+    BroadcastDelivery,
     ChoirCommunication,
     ChoirSettings,
     CommitteeDocument,
@@ -200,18 +201,33 @@ class RepertoireAdmin(admin.ModelAdmin):
 # ==============================================================================
 # 5. COMMUNICATIONS HUB
 # ==============================================================================
+class BroadcastDeliveryInline(admin.TabularInline):
+    model = BroadcastDelivery
+    extra = 0
+    can_delete = False
+    fields = ("user", "sent_ok", "error")
+    readonly_fields = fields
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(ChoirCommunication)
 class ChoirCommunicationAdmin(admin.ModelAdmin):
-    list_display = ("subject", "get_audience_display", "sent_at", "author")
-    list_filter = ("audience", "sent_at")
-    search_fields = ("subject", "message")
+    """Fallback view of broadcasts. Saving here never sends anything: a
+    broadcast created here is a draft, sent from the committee's Broadcast
+    page (preview, test, then send). Once sent it's locked as a record."""
 
-    # Lock the fields so you can't accidentally re-send or edit an email that
-    # has already gone out to 24 people.
+    list_display = ("subject", "get_audience_display", "status", "sent_at", "author")
+    list_filter = ("status", "audience", "sent_at")
+    search_fields = ("subject", "message")
+    inlines = [BroadcastDeliveryInline]
+
+    # Lock a sent broadcast, so its record can't be edited after the fact.
     def get_readonly_fields(self, request, obj=None):
-        if obj:  # If the object already exists, lock everything down
-            return ("audience", "subject", "message", "author", "sent_at")
-        return ("author", "sent_at")  # If it's new, let them type!
+        if obj and obj.is_sent:
+            return ("audience", "subject", "message", "author", "status", "sent_at")
+        return ("author", "status", "sent_at")
 
     # Automatically stamp the logged-in admin as the author
     def save_model(self, request, obj, form, change):

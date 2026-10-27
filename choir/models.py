@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.contrib.auth.models import User  # Django's built-in secure login model
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -571,7 +571,14 @@ class AuditionApplication(models.Model):
 
 
 class ChoirCommunication(models.Model):
-    """An outbox for official choir broadcasts and headed letters."""
+    """
+    A broadcast email to the choir (all singers or one voice part).
+
+    Written as a DRAFT on the committee's Broadcast page, previewed, tested
+    on the author's own inbox, then sent once with send(). Saving never
+    sends anything; sending is explicit. Each recipient gets a
+    BroadcastDelivery row recording whether Brevo accepted their copy.
+    """
 
     AUDIENCE_CHOICES = [
         ("ALL", "All Active Members"),
@@ -580,6 +587,7 @@ class ChoirCommunication(models.Model):
         ("TEN", "Tenors Only"),
         ("BAS", "Basses Only"),
     ]
+    STATUS_CHOICES = [("DRAFT", "Draft"), ("SENT", "Sent")]
 
     audience = models.CharField(max_length=3, choices=AUDIENCE_CHOICES, default="ALL")
     subject = models.CharField(max_length=200)
@@ -587,47 +595,104 @@ class ChoirCommunication(models.Model):
     # UPGRADED: This tells the admin panel to render the TinyMCE editor
     message = HTMLField(help_text="The body of your email.")
 
-    sent_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=5, choices=STATUS_CHOICES, default="DRAFT")
+    sent_at = models.DateTimeField(null=True, blank=True, editable=False)
     author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
 
+    class Meta:
+        ordering = ["-sent_at", "-id"]
+
     def __str__(self):
-        return f"[{self.get_audience_display()}] {self.subject} ({self.sent_at.strftime('%d %b %Y')})"
+        when = self.sent_at.strftime("%d %b %Y") if self.sent_at else "draft"
+        return f"[{self.get_audience_display()}] {self.subject} ({when})"
 
-    def save(self, *args, **kwargs):
-        is_new = self.pk is None
+    @property
+    def is_sent(self):
+        return self.status == "SENT"
 
-        super().save(*args, **kwargs)
+    def recipients(self):
+        """Active singers (MemberProfile.is_singer) in the audience, with an
+        email address."""
+        users = User.objects.filter(is_active=True, profile__is_singer=True).exclude(email="")
+        if self.audience != "ALL":
+            users = users.filter(profile__voice_part=self.audience[0])
+        return users.order_by("first_name", "last_name")
 
-        if is_new:
-            # 1. Gather the recipients
-            # Singers only (MemberProfile.is_singer, Build Order Phase 5)
-            if self.audience == "ALL":
-                recipients = User.objects.filter(is_active=True, profile__is_singer=True)
-            else:
-                recipients = User.objects.filter(
-                    is_active=True,
-                    profile__is_singer=True,
-                    profile__voice_part=self.audience[0],
+    def _email(self, to, subject=None):
+        message = EmailMultiAlternatives(
+            subject=subject or self.subject,
+            body=strip_tags(self.message),  # plain-text fallback
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=to,
+        )
+        message.attach_alternative(self.message, "text/html")
+        return message
+
+    def send_test(self, user):
+        """Send this broadcast to one person (its author, checking it),
+        marked as a test. Records nothing and changes nothing."""
+        self._email([user.email], subject=f"[Test] {self.subject}").send()
+
+    def send(self):
+        """
+        Send to every recipient, once. One API call: with merge_data set,
+        Anymail's Brevo backend sends a separate copy to each address
+        (batch sending), so members never see each other's addresses.
+
+        Marked SENT before sending, so a failure part-way can never lead to
+        a second send. Any error is recorded per recipient in
+        BroadcastDelivery rather than raised. Returns (sent_ok, failed).
+        """
+        if self.is_sent:
+            raise ValueError("This broadcast has already been sent.")
+
+        users = list(self.recipients())
+        self.status = "SENT"
+        self.sent_at = timezone.now()
+        self.save(update_fields=["status", "sent_at"])
+
+        if not users:
+            return 0, 0
+
+        message = self._email([user.email for user in users])
+        message.merge_data = {}  # batch send: one private copy per recipient
+        try:
+            message.send()
+            statuses = getattr(getattr(message, "anymail_status", None), "recipients", {}) or {}
+            deliveries = []
+            for user in users:
+                status = statuses.get(user.email)
+                ok = status is None or status.status in ("sent", "queued", "scheduled")
+                deliveries.append(
+                    BroadcastDelivery(
+                        communication=self,
+                        user=user,
+                        sent_ok=ok,
+                        error="" if ok else f"Brevo status: {status.status}",
+                    )
                 )
+        except Exception as error:  # never raise after the row is saved
+            deliveries = [
+                BroadcastDelivery(communication=self, user=user, sent_ok=False, error=str(error)[:500])
+                for user in users
+            ]
 
-            # 2. Fire the email via Brevo - one send per recipient, not one
-            # shared recipient_list, so members' addresses stay private from
-            # each other.
-            # Create a clean, stripped-down version of the email for older email clients
-            # or strict spam filters that reject HTML.
-            plain_message = strip_tags(self.message)
+        BroadcastDelivery.objects.bulk_create(deliveries)
+        sent_ok = sum(1 for delivery in deliveries if delivery.sent_ok)
+        return sent_ok, len(deliveries) - sent_ok
 
-            for user in recipients:
-                if not user.email:
-                    continue
-                send_mail(
-                    subject=self.subject,
-                    message=plain_message,  # The plain-text fallback
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[user.email],
-                    html_message=self.message,  # THE MAGIC: Injects your TinyMCE formatting!
-                    fail_silently=False,
-                )
+
+class BroadcastDelivery(models.Model):
+    """One recipient's copy of a sent broadcast: whether Brevo accepted it,
+    and the error if not."""
+
+    communication = models.ForeignKey(ChoirCommunication, on_delete=models.CASCADE, related_name="deliveries")
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="+")
+    sent_ok = models.BooleanField(default=False)
+    error = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"{self.communication.subject} to {self.user}: {'ok' if self.sent_ok else 'failed'}"
 
 
 # ==============================================================================
