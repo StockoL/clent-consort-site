@@ -8,7 +8,6 @@ from datetime import datetime, timedelta
 from allauth.account.models import EmailAddress
 from anymail.message import AnymailRecipientStatus
 from django.apps import apps as django_apps
-from django.conf import settings
 from django.contrib.auth.models import Group, User
 from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -1396,14 +1395,15 @@ class ChoirSettingsTests(TestCase):
         # The data migration (0022) seeds pk=1 from the old hard-coded values
         choir_settings = ChoirSettings.load()
         self.assertEqual(choir_settings.pk, 1)
-        self.assertEqual(choir_settings.current_term, settings.CURRENT_TERM)
+        self.assertEqual(choir_settings.current_term, "Autumn 2026")
         self.assertEqual(choir_settings.bank_sort_code, "23-05-80")
         self.assertEqual(ChoirSettings.objects.count(), 1)
 
     def test_load_recreates_a_missing_row_and_save_keeps_one_row(self):
         ChoirSettings.objects.all().delete()
         choir_settings = ChoirSettings.load()
-        self.assertEqual(choir_settings.current_term, settings.CURRENT_TERM)
+        self.assertEqual(choir_settings.pk, 1)
+        self.assertEqual(choir_settings.current_term, "")
 
         ChoirSettings(current_term="Spring 2027").save()
         self.assertEqual(ChoirSettings.objects.count(), 1)
@@ -1484,7 +1484,7 @@ class ChoirSettingsTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.context["form"].errors)
-        self.assertEqual(ChoirSettings.load().current_term, settings.CURRENT_TERM)
+        self.assertEqual(ChoirSettings.load().current_term, "Autumn 2026")
 
     def test_footer_shows_only_the_social_icons_that_are_set(self):
         response = self.client.get(reverse("home"))

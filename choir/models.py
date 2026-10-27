@@ -61,15 +61,9 @@ class ChoirSettings(models.Model):
 
     @classmethod
     def load(cls):
-        """
-        The settings row, created if it's missing. settings.CURRENT_TERM is
-        the fallback term for one release only; Build Order Phase 11
-        removes it once this row is the single source of truth.
-        """
-        obj, _ = cls.objects.get_or_create(
-            pk=1,
-            defaults={"current_term": getattr(settings, "CURRENT_TERM", "")},
-        )
+        """The settings row, created (with no term yet) if it's missing.
+        Migration 0022 seeds it, so in practice it always exists."""
+        obj, _ = cls.objects.get_or_create(pk=1)
         return obj
 
 
