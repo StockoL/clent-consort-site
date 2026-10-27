@@ -3,7 +3,7 @@ import json
 import tempfile
 from io import StringIO
 from unittest import mock
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from allauth.account.models import EmailAddress
 from django.apps import apps as django_apps
@@ -2172,3 +2172,191 @@ class MemberManagementTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.committee.refresh_from_db()
         self.assertTrue(self.committee.is_active)
+
+
+class PublicEventsPageTests(TestCase):
+    """Build Order Phase 9: the public Events page from public residency
+    events, behind ChoirSettings.events_page_from_db."""
+
+    def setUp(self):
+        self.project = Project.objects.create(name="Ewelme 2027", status="ACTIVE", public_summary="Passion Sunday at Ewelme.")
+        self.piece = Repertoire.objects.create(composer="Lotti", title="Crucifixus")
+        self.project.repertoire.add(self.piece)
+
+    def public_event(self, days, **kwargs):
+        defaults = {
+            "project": self.project,
+            "event_type": "RES",
+            "is_public": True,
+            "date_time": timezone.now() + timedelta(days=days),
+            "location": f"Venue {days}",
+        }
+        defaults.update(kwargs)
+        return Event.objects.create(**defaults)
+
+    def switch_on(self):
+        choir_settings = ChoirSettings.load()
+        choir_settings.events_page_from_db = True
+        choir_settings.save()
+
+    def test_flag_off_renders_the_static_page(self):
+        self.public_event(10, public_title="Should not show")
+        response = self.client.get(reverse("events"))
+        self.assertTemplateUsed(response, "choir/events.html")
+        self.assertNotContains(response, "Should not show")
+
+    def test_flag_on_puts_events_in_the_right_places(self):
+        self.switch_on()
+        later = self.public_event(40, public_title="Later concert")
+        soon = self.public_event(10, public_title="Next concert")
+        past = [self.public_event(-30 * n, public_title=f"Past {n}") for n in range(1, 6)]
+
+        response = self.client.get(reverse("events"))
+        self.assertTemplateUsed(response, "choir/events_db.html")
+        self.assertEqual(response.context["next_event"], soon)
+        self.assertEqual(response.context["recent_events"], past[:3])
+        self.assertEqual(response.context["archive_events"], past[3:])
+        self.assertContains(response, "Next concert")
+        self.assertContains(response, "Lotti: Crucifixus")  # recent cards list repertoire
+        self.assertNotIn(later, response.context["recent_events"])
+
+    def test_rehearsals_and_non_public_events_never_appear(self):
+        self.switch_on()
+        self.public_event(5, event_type="REH", public_title="Secret rehearsal")
+        self.public_event(6, is_public=False, public_title="Not announced")
+        self.public_event(-5, event_type="REH", public_title="Old rehearsal")
+
+        response = self.client.get(reverse("events"))
+        self.assertIsNone(response.context["next_event"])
+        self.assertEqual(response.context["recent_events"], [])
+        for text in ("Secret rehearsal", "Not announced", "Old rehearsal"):
+            self.assertNotContains(response, text)
+        self.assertContains(response, "being confirmed")
+
+    def test_midnight_start_shows_time_tbc_and_summary_falls_back_to_project(self):
+        self.switch_on()
+        midnight = timezone.localtime(timezone.now() + timedelta(days=20)).replace(hour=0, minute=0, second=0, microsecond=0)
+        self.public_event(20, date_time=midnight)
+        response = self.client.get(reverse("events"))
+        self.assertContains(response, "time TBC")
+        self.assertContains(response, "Passion Sunday at Ewelme.")
+
+
+class EventArchiveImportTests(TestCase):
+    """import_event_archive brings the static page's past performances in
+    as public events, without RSVPs, and can be re-run safely."""
+
+    def setUp(self):
+        User.objects.create_user(username="singer", password="pw")
+
+    def test_import_creates_public_past_events_without_rsvps(self):
+        call_command("import_event_archive", stdout=StringIO())
+        events = Event.objects.all()
+        self.assertEqual(events.count(), 29)
+        self.assertTrue(all(e.is_public and e.event_type == "RES" for e in events))
+        self.assertFalse(Attendance.objects.exists())
+
+        ludlow = Event.objects.get(location="St Lawrence's Church, Ludlow")
+        self.assertEqual((ludlow.date_time.year, ludlow.date_time.month), (2026, 3))  # visible date, not the tag
+        self.assertEqual(ludlow.project.status, "ARCHIVED")
+        self.assertEqual(ludlow.project.repertoire.count(), 6)
+        self.assertEqual(Event.objects.get(location="Rochester Cathedral").project.name, "Performance archive 2024")
+
+    def test_import_is_idempotent_and_dry_run_saves_nothing(self):
+        call_command("import_event_archive", "--dry-run", stdout=StringIO())
+        self.assertFalse(Event.objects.exists())
+
+        call_command("import_event_archive", stdout=StringIO())
+        out = StringIO()
+        call_command("import_event_archive", stdout=out)
+        self.assertEqual(Event.objects.count(), 29)
+        self.assertIn("29 already present", out.getvalue())
+
+
+class EventPublicFieldsAndCalendarTests(TestCase):
+    """The event edit form's public listing fields, the settings switch,
+    and calendar files using end_time."""
+
+    def setUp(self):
+        User.objects.create_user(username="committee", password="pw", is_staff=True)
+        self.client.login(username="committee", password="pw")
+        self.project = Project.objects.create(name="Clent 2026", status="ACTIVE")
+        self.event = Event.objects.create(
+            project=self.project,
+            event_type="RES",
+            date_time=timezone.make_aware(datetime(2026, 12, 6, 18, 0)),
+            location="St Leonard's Church, Clent",
+            additional_notes="<p>Bring folders, black dress</p>",
+        )
+
+    def test_edit_saves_the_public_listing(self):
+        response = self.client.post(
+            reverse("committee_event_edit", args=[self.event.id]),
+            {
+                "project": self.project.id,
+                "event_type": "RES",
+                "date_time": "2026-12-06T18:00",
+                "location": "St Leonard's Church, Clent",
+                "is_public": "on",
+                "public_title": "Advent Carols",
+                "public_blurb": "Readings and carols by candlelight.",
+                "ticket_url": "https://tickets.example.com",
+                "end_time": "2026-12-06T19:30",
+            },
+        )
+        self.assertRedirects(response, reverse("committee_schedule"))
+        self.event.refresh_from_db()
+        self.assertTrue(self.event.is_public)
+        self.assertEqual(self.event.public_title, "Advent Carols")
+        self.assertEqual(timezone.localtime(self.event.end_time).strftime("%H:%M"), "19:30")
+
+    def test_end_before_start_is_refused(self):
+        response = self.client.post(
+            reverse("committee_event_edit", args=[self.event.id]),
+            {
+                "project": self.project.id,
+                "event_type": "RES",
+                "date_time": "2026-12-06T18:00",
+                "location": "Clent",
+                "end_time": "2026-12-06T17:00",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("end_time", response.context["form"].errors)
+
+    def test_settings_switch_turns_the_database_page_on(self):
+        choir_settings = ChoirSettings.load()
+        self.client.post(
+            reverse("committee_settings"),
+            {
+                "current_term": choir_settings.current_term,
+                "subscription_amount": "50.00",
+                "events_page_from_db": "on",
+            },
+        )
+        self.assertTrue(ChoirSettings.load().events_page_from_db)
+
+    def test_calendar_file_uses_end_time_and_escapes_text(self):
+        self.event.end_time = self.event.date_time + timedelta(minutes=90)
+        self.event.save()
+        response = self.client.get(reverse("download_ics", args=[self.event.id]))
+        body = response.content.decode()
+        self.assertIn("DTSTART:20261206T180000Z", body)
+        self.assertIn("DTEND:20261206T193000Z", body)
+        self.assertIn("LOCATION:St Leonard's Church\\, Clent", body)
+        self.assertIn("\r\nEND:VCALENDAR\r\n", body)
+
+    def test_calendar_file_defaults_to_two_hours(self):
+        body = self.client.get(reverse("download_ics", args=[self.event.id])).content.decode()
+        self.assertIn("DTEND:20261206T200000Z", body)
+
+    def test_project_feed_lists_every_event_and_needs_login(self):
+        Event.objects.create(project=self.project, date_time=self.event.date_time + timedelta(days=7), location="Hall")
+        response = self.client.get(reverse("project_calendar_ics", args=[self.project.id]))
+        body = response.content.decode()
+        self.assertEqual(body.count("BEGIN:VEVENT"), 2)
+        self.assertIn("X-WR-CALNAME:Clent Consort: Clent 2026", body)
+
+        self.client.logout()
+        response = self.client.get(reverse("project_calendar_ics", args=[self.project.id]))
+        self.assertEqual(response.status_code, 302)
