@@ -100,6 +100,9 @@ class Project(models.Model):
     )
     status = models.CharField(max_length=8, choices=STATUS_CHOICES, default="PLANNING")
     description = models.TextField(blank=True)
+    # Shown with the project's public performances on the Events page
+    # (Build Order Phase 9); description stays committee-only.
+    public_summary = models.TextField(blank=True)
 
     # Optional - a Project can exist (PLANNING) before firm dates are known.
     start_date = models.DateField(blank=True, null=True)
@@ -384,6 +387,21 @@ class Event(models.Model):
     date_time = models.DateTimeField()
     location = models.CharField(max_length=200, default="St Laurence's Church")
     additional_notes = HTMLField(blank=True)
+
+    # --- Public listing (Build Order Phase 9) ---
+    # Only residencies/performances (event_type "RES") with is_public set
+    # ever appear on the public Events page; rehearsals never do.
+    is_public = models.BooleanField(
+        default=False, help_text="Show this performance on the public Events page."
+    )
+    public_title = models.CharField(
+        max_length=200, blank=True, help_text="e.g., Choral Evensong. Defaults to the event type."
+    )
+    public_blurb = models.TextField(blank=True, help_text="A sentence or two for the public listing.")
+    ticket_url = models.URLField(blank=True, help_text="Optional link for tickets or booking.")
+    end_time = models.DateTimeField(
+        blank=True, null=True, help_text="Optional. Used for calendar files; otherwise two hours."
+    )
 
     # The clean link to your members via the intermediate model
     attendees = models.ManyToManyField(
