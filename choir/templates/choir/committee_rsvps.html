@@ -124,7 +124,11 @@
             </td>
 
             <td data-label="Rate" data-align="center">
+              {% if stat.rate is None %}
+              <span class="text-small text-muted">No replies yet</span>
+              {% else %}
               <strong data-tone="{% if stat.rate >= 80 %}success{% elif stat.rate >= 50 %}warning{% else %}danger{% endif %}">{{ stat.rate }}%</strong>
+              {% endif %}
             </td>
 
             <td data-label="Attended" data-align="center">{{ stat.attending }}</td>

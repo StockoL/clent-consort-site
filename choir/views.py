@@ -884,10 +884,12 @@ def committee_rsvp_report(request):
     )
     member_stats = []
     for user in singers:
-        # "All Time Attendance Rate", ignoring events not yet answered
+        # "All Time Attendance Rate", ignoring events not yet answered. With
+        # no answers at all there is no rate (None, shown as "No replies
+        # yet"), rather than a 0% that reads as never attending.
         resolved_events = user.attending_count + user.absent_count
         attendance_rate = (
-            int((user.attending_count / resolved_events) * 100) if resolved_events > 0 else 0
+            int((user.attending_count / resolved_events) * 100) if resolved_events > 0 else None
         )
         member_stats.append(
             {
@@ -901,8 +903,11 @@ def committee_rsvp_report(request):
             }
         )
 
-    # Sort the stats so the lowest attendance rates appear at the top for committee review
-    member_stats = sorted(member_stats, key=lambda k: k["rate"])
+    # Sort the stats so the lowest attendance rates appear at the top for
+    # committee review; singers with no replies yet go to the bottom.
+    member_stats = sorted(
+        member_stats, key=lambda k: (k["rate"] is None, k["rate"] or 0)
+    )
 
     context = {
         "report_data": report_data,

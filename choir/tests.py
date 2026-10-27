@@ -2671,3 +2671,49 @@ class CommitteeNavPanelTests(TestCase):
         self.assertNotIn("data-committee-toggle", html)
         self.assertNotIn("data-committee-panel", html)
         self.assertIn("Document Vault", html)
+
+
+class RsvpOverviewNoRepliesTests(TestCase):
+    """A singer who hasn't answered any RSVP has no attendance rate yet,
+    rather than a 0% that reads as never attending."""
+
+    def setUp(self):
+        create_committee_user(username="committee", password="pw")
+        self.client.login(username="committee", password="pw")
+        project = Project.objects.create(name="Clent 2026", status="ACTIVE")
+        self.keen = User.objects.create_user(username="keen", password="pw", first_name="Keen")
+        self.new = User.objects.create_user(username="new", password="pw", first_name="New")
+        self.away = User.objects.create_user(username="away", password="pw", first_name="Away")
+        Event.objects.create(project=project, date_time=timezone.now() + timedelta(days=1), location="Hall")
+        Attendance.objects.filter(user=self.keen).update(status="ATTENDING")
+        Attendance.objects.filter(user=self.away).update(status="ABSENT")
+
+    def stats(self):
+        response = self.client.get(reverse("committee_rsvps"))
+        return {stat["user"].username: stat for stat in response.context["member_stats"]}, response
+
+    def test_no_replies_gives_no_rate(self):
+        stats, response = self.stats()
+        self.assertIsNone(stats["new"]["rate"])
+        self.assertEqual(stats["keen"]["rate"], 100)
+        self.assertEqual(stats["away"]["rate"], 0)
+        self.assertContains(response, "No replies yet")
+
+    def test_singers_without_replies_sort_last(self):
+        response = self.client.get(reverse("committee_rsvps"))
+        order = [stat["user"].username for stat in response.context["member_stats"]]
+        self.assertEqual(order[0], "away")
+        self.assertEqual(order[-1], "new")
+
+
+class CommitteeEventsNavLabelTests(TestCase):
+    """The committee's schedule link is called Events, so the members nav
+    doesn't have two links called Schedule."""
+
+    def test_only_one_schedule_link(self):
+        create_committee_user(username="committee", password="pw")
+        self.client.login(username="committee", password="pw")
+        html = self.client.get(reverse("committee_hub")).content.decode()
+        nav = re.search(r'<nav class="members-nav".*?</nav>', html, re.S).group(0)
+        self.assertEqual(nav.count(">Schedule</a>"), 1)
+        self.assertRegex(nav, r'href="%s"[^>]*>Events</a>' % reverse("committee_schedule"))
