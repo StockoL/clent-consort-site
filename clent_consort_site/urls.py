@@ -9,6 +9,7 @@ from django.views.generic import RedirectView, TemplateView
 # 1. ADD 'committee_schedule_event' TO YOUR EXPLICIT IMPORTS TUPLE BELOW
 from choir.views import (
     about_view,
+    committee_asset_delete_view,
     committee_broadcast,
     committee_document_delete_view,
     committee_documents_view,
@@ -27,6 +28,8 @@ from choir.views import (
     committee_poll_toggle_view,
     committee_project_edit_view,
     committee_projects_view,
+    committee_repertoire_detail_view,
+    committee_repertoire_view,
     committee_rsvp_report,
     committee_schedule_event,  # <-- ADD THIS IMPORT LINE HERE
     committee_settings_view,
@@ -77,6 +80,21 @@ urlpatterns = [
         "members/committee/projects/<int:project_id>/edit/",
         committee_project_edit_view,
         name="committee_project_edit",
+    ),
+    path(
+        "members/committee/repertoire/",
+        committee_repertoire_view,
+        name="committee_repertoire",
+    ),
+    path(
+        "members/committee/repertoire/<int:piece_id>/",
+        committee_repertoire_detail_view,
+        name="committee_repertoire_detail",
+    ),
+    path(
+        "members/committee/repertoire/assets/<int:asset_id>/delete/",
+        committee_asset_delete_view,
+        name="committee_asset_delete",
     ),
     path("members/committee/polling/", committee_poll_manage_view, name="committee_polling"),
     path(

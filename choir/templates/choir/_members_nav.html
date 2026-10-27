@@ -23,6 +23,7 @@
         <li><a href="{% url 'committee_hub' %}" class="members-nav__link"{% if current == 'committee_hub' %} aria-current="page"{% endif %}>Hub</a></li>
         <li><a href="{% url 'committee_inbox' %}" class="members-nav__link"{% if current == 'committee_inbox' %} aria-current="page"{% endif %}>Inbox{% if inbox_unhandled_count %}<span class="members-nav__count">{{ inbox_unhandled_count }}<span class="visually-hidden"> unhandled</span></span>{% endif %}</a></li>
         <li><a href="{% url 'committee_projects' %}" class="members-nav__link"{% if current == 'committee_projects' or current == 'committee_project_edit' %} aria-current="page"{% endif %}>Projects</a></li>
+        <li><a href="{% url 'committee_repertoire' %}" class="members-nav__link"{% if current == 'committee_repertoire' or current == 'committee_repertoire_detail' %} aria-current="page"{% endif %}>Music Library</a></li>
         <li><a href="{% url 'committee_schedule' %}" class="members-nav__link"{% if current == 'committee_schedule' or current == 'committee_event_edit' %} aria-current="page"{% endif %} aria-describedby="members-nav-committee">Schedule</a></li>
         <li><a href="{% url 'committee_rsvps' %}" class="members-nav__link"{% if current == 'committee_rsvps' %} aria-current="page"{% endif %}>RSVPs</a></li>
         <li><a href="{% url 'committee_polling' %}" class="members-nav__link"{% if current == 'committee_polling' or current == 'committee_poll_edit' %} aria-current="page"{% endif %}>Polling</a></li>

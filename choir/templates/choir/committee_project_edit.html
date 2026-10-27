@@ -46,7 +46,21 @@
         <fieldset class="form-group form-fieldset flow flow--small">
           <legend class="form-label text-small">{{ form.repertoire.label }}</legend>
           {{ form.repertoire }}
+          <p class="text-small">
+            <a href="{% url 'committee_repertoire' %}?project={{ project.id }}" class="text-link">+ Add a new piece to this project</a>
+          </p>
         </fieldset>
+
+        {% if project.repertoire.exists %}
+        <div class="flow flow--small">
+          <p class="form-label text-small">Scores &amp; tracks</p>
+          <ul class="list-unstyled flow flow--small text-small" role="list">
+            {% for piece in project.repertoire.all %}
+            <li><a href="{% url 'committee_repertoire_detail' piece.id %}" class="text-link">{{ piece.title }}</a> <span class="text-muted">({{ piece.assets.count }} asset{{ piece.assets.count|pluralize }})</span></li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
 
         <button type="submit" class="button" data-variant="primary">Save Changes</button>
       </form>

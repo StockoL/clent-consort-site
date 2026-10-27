@@ -1,0 +1,101 @@
+{% extends 'choir/_members_base.html' %}
+{% load static %}
+
+{% block title %}{{ piece.title }} - Music Library - Clent Consort{% endblock title %}
+
+{% block page_title %}{{ piece.title }}{% endblock page_title %}
+{% block page_lede %}{{ piece.composer }}{% if projects %} · in {% for p in projects %}{{ p.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}{% endblock page_lede %}
+
+{% block members_content %}
+  <section class="card flow" data-variant="invert">
+    <h2 class="text-primary text-step-1 card-heading">Scores &amp; Tracks</h2>
+
+    {% if assets %}
+    <ul class="list-unstyled flow flow--small" role="list">
+      {% for asset in assets %}
+      <li class="item-row">
+        <div>
+          <strong>{{ asset.asset_name }}</strong>
+          <span class="badge">{{ asset.get_voice_part_display }}</span>
+          <br>
+          <span class="text-small text-muted">
+            {% if asset.file_upload %}<a href="{{ asset.file_upload.url }}" target="_blank" rel="noopener noreferrer" class="text-link">{{ asset.file_upload.name|cut:"learning_assets/" }}</a>{% elif asset.external_url %}<a href="{{ asset.external_url }}" target="_blank" rel="noopener noreferrer" class="text-link">External link</a>{% else %}No file{% endif %}
+            {% if asset.uploaded_at %} · added {{ asset.uploaded_at|date:"j M Y" }}{% endif %}
+          </span>
+        </div>
+
+        <form method="POST" action="{% url 'committee_asset_delete' asset.id %}" class="inline-form" data-confirm="Delete '{{ asset.asset_name }}'? Members will no longer see it, and the file is removed.">
+          {% csrf_token %}
+          <button type="submit" class="button btn-small" data-variant="outline">Delete<span class="visually-hidden"> {{ asset.asset_name }}</span></button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-muted text-small">Nothing uploaded yet.</p>
+    {% endif %}
+  </section>
+
+  <section class="card flow" data-variant="invert">
+    <h2 class="text-primary text-step-1 card-heading">Upload</h2>
+    <p class="text-small settings-hint">PDF, MP3, M4A or WAV, up to 50 MB each. Choose several files at once and each becomes its own asset, named after its file. Very large WAVs are best converted to MP3 first: uploads that take too long can time out.</p>
+
+    <form method="POST" enctype="multipart/form-data" class="flow flow--small">
+      {% csrf_token %}
+      <input type="hidden" name="upload" value="1">
+      {% if upload_form.non_field_errors %}<div class="form-error">{{ upload_form.non_field_errors }}</div>{% endif %}
+
+      <div class="form-group flow flow--small">
+        <label for="{{ upload_form.voice_part.id_for_label }}" class="form-label text-small">Voice part</label>
+        {{ upload_form.voice_part }}
+      </div>
+
+      <div class="form-group flow flow--small">
+        <label for="{{ upload_form.files.id_for_label }}" class="form-label text-small">Files</label>
+        {{ upload_form.files }}
+        <div class="form-error">{{ upload_form.files.errors }}</div>
+      </div>
+
+      <p class="text-small settings-hint">Or, instead of files, link to a recording elsewhere (e.g. YouTube):</p>
+
+      <div class="switcher field-row">
+        <div class="form-group flow flow--small">
+          <label for="{{ upload_form.external_url.id_for_label }}" class="form-label text-small">Link</label>
+          {{ upload_form.external_url }}
+          <div class="form-error">{{ upload_form.external_url.errors }}</div>
+        </div>
+        <div class="form-group flow flow--small">
+          <label for="{{ upload_form.asset_name.id_for_label }}" class="form-label text-small">Name (optional for a single file)</label>
+          {{ upload_form.asset_name }}
+          <div class="form-error">{{ upload_form.asset_name.errors }}</div>
+        </div>
+      </div>
+
+      <button type="submit" class="button align-start" data-variant="primary">Upload</button>
+    </form>
+  </section>
+
+  <section class="card flow" data-variant="invert">
+    <h2 class="text-primary text-step-1 card-heading">Piece Details</h2>
+    <form method="POST" class="flow flow--small">
+      {% csrf_token %}
+      <div class="switcher field-row">
+        <div class="form-group flow flow--small">
+          <label for="{{ piece_form.composer.id_for_label }}" class="form-label text-small">Composer</label>
+          {{ piece_form.composer }}
+          <div class="form-error">{{ piece_form.composer.errors }}</div>
+        </div>
+        <div class="form-group flow flow--small">
+          <label for="{{ piece_form.title.id_for_label }}" class="form-label text-small">Title</label>
+          {{ piece_form.title }}
+          <div class="form-error">{{ piece_form.title.errors }}</div>
+        </div>
+      </div>
+      <button type="submit" class="button align-start" data-variant="outline">Save Details</button>
+    </form>
+  </section>
+{% endblock members_content %}
+
+{% block scripts %}
+<script src="{% static 'js/confirm-forms.js' %}" defer></script>
+{% endblock scripts %}

@@ -150,3 +150,18 @@
   min-height: 2.5rem;
   padding: 0.25rem 0.5rem;
 }
+
+/* Music library: per-voice-part asset counts, and the search box */
+.asset-count {
+  display: inline-block;
+  margin-inline-end: 0.6rem;
+  white-space: nowrap;
+}
+
+[data-variant="invert"] .library-search {
+  width: auto;
+  flex: 1 1 12rem;
+  min-height: 2.5rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 1rem;
+}

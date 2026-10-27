@@ -24,7 +24,7 @@
       <div class="flow flow--small">
         {% for asset in group.list %}
           <div class="asset-item flow flow--small">
-            <p><strong>{{ asset.asset_name }}</strong></p>
+            <p><strong>{{ asset.asset_name }}</strong>{% if asset.uploaded_at %} <span class="text-small text-muted">· added {{ asset.uploaded_at|date:"j M Y" }}</span>{% endif %}</p>
 
             {% if asset.file_upload %}
 

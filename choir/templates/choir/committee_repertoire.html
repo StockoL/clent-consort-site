@@ -1,0 +1,76 @@
+{% extends 'choir/_members_base.html' %}
+
+{% block title %}Music Library - Clent Consort{% endblock title %}
+
+{% block page_title %}Music Library{% endblock page_title %}
+{% block page_lede %}Every piece the choir has learned or is learning, with its scores and practice tracks.{% endblock page_lede %}
+
+{% block members_content %}
+  <section class="card flow" data-variant="invert">
+    <h2 class="text-primary text-step-1 card-heading">Add a Piece{% if project %} to {{ project.name }}{% endif %}</h2>
+    <form method="POST" class="flow flow--small">
+      {% csrf_token %}
+      {% if project %}<input type="hidden" name="project" value="{{ project.id }}">{% endif %}
+      <div class="switcher field-row">
+        <div class="form-group flow flow--small">
+          <label for="{{ form.composer.id_for_label }}" class="form-label text-small">Composer</label>
+          {{ form.composer }}
+          <div class="form-error">{{ form.composer.errors }}</div>
+        </div>
+        <div class="form-group flow flow--small">
+          <label for="{{ form.title.id_for_label }}" class="form-label text-small">Title</label>
+          {{ form.title }}
+          <div class="form-error">{{ form.title.errors }}</div>
+        </div>
+      </div>
+      <button type="submit" class="button align-start" data-variant="primary">Add Piece</button>
+    </form>
+  </section>
+
+  <section class="card flow" data-variant="invert">
+    <h2 class="text-primary text-step-1 card-heading">Library</h2>
+
+    <form method="GET" class="cluster ledger-term" role="search">
+      <label for="library-search" class="text-small">Search</label>
+      <input type="search" id="library-search" name="q" value="{{ query }}" placeholder="Composer or title" class="library-search">
+      <button type="submit" class="button btn-small" data-variant="outline">Search</button>
+      {% if query %}<a href="{% url 'committee_repertoire' %}" class="text-link text-small">Clear</a>{% endif %}
+    </form>
+
+    {% if rows %}
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Piece</th>
+          <th>Scores &amp; tracks</th>
+          <th>Projects</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td data-label="Piece">
+            <div>
+              <a href="{% url 'committee_repertoire_detail' row.piece.id %}" class="text-link"><strong>{{ row.piece.title }}</strong></a><br>
+              <span class="text-small text-muted">{{ row.piece.composer }}</span>
+            </div>
+          </td>
+          <td data-label="Assets" class="text-small">
+            <div>
+              {% for label, count in row.counts %}<span class="asset-count">{{ label }}: {{ count }}</span>{% empty %}<span class="text-muted">None yet</span>{% endfor %}
+            </div>
+          </td>
+          <td data-label="Projects" class="text-small">
+            <div>{% for p in row.projects %}{{ p.name }}{% if not forloop.last %}, {% endif %}{% empty %}<span class="text-muted">None</span>{% endfor %}</div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% elif query %}
+    <p class="text-muted text-small">No pieces match "{{ query }}".</p>
+    {% else %}
+    <p class="text-muted text-small">No pieces yet. Add one above.</p>
+    {% endif %}
+  </section>
+{% endblock members_content %}

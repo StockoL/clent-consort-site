@@ -10,6 +10,7 @@ from .models import (
     CommitteeDocument,
     Enquiry,
     Event,
+    LearningAsset,
     MemberProfile,
     Project,
     Repertoire,
@@ -167,6 +168,123 @@ class ProjectForm(forms.ModelForm):
             "start_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
             "end_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
         }
+
+
+class RepertoireForm(forms.ModelForm):
+    """Add or rename a piece in the committee's repertoire library."""
+
+    class Meta:
+        model = Repertoire
+        fields = ["composer", "title"]
+        widgets = {
+            "composer": forms.TextInput(attrs={"class": "form-control", "placeholder": "e.g., Byrd"}),
+            "title": forms.TextInput(attrs={"class": "form-control", "placeholder": "e.g., Ave verum corpus"}),
+        }
+
+
+class MultipleFileInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
+
+class MultipleFileField(forms.FileField):
+    """A file field that accepts several files from one <input multiple>;
+    cleans to a list (empty when nothing was chosen)."""
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("widget", MultipleFileInput())
+        super().__init__(*args, **kwargs)
+
+    def clean(self, data, initial=None):
+        single_clean = super().clean
+        if isinstance(data, (list, tuple)):
+            return [single_clean(item, initial) for item in data if item]
+        return [single_clean(data, initial)] if data else []
+
+
+ASSET_EXTENSIONS = (".pdf", ".mp3", ".m4a", ".wav")
+ASSET_MAX_BYTES = 50 * 1024 * 1024  # 50 MB per file
+
+
+class AssetUploadForm(forms.Form):
+    """
+    Adds learning assets to one piece: either one or more files (each
+    becomes its own asset) or a single external link, never both. With
+    several files, each asset is named after its file (minus the
+    extension); asset_name is used when exactly one file or a link is
+    added, and falls back to the filename when left blank.
+    """
+
+    asset_name = forms.CharField(
+        max_length=150,
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "e.g., Soprano practice track"}),
+    )
+    voice_part = forms.ChoiceField(
+        choices=LearningAsset.PART_CHOICES,
+        widget=forms.Select(attrs={"class": "form-control"}),
+    )
+    files = MultipleFileField(
+        required=False,
+        widget=MultipleFileInput(attrs={"accept": ",".join(ASSET_EXTENSIONS)}),
+    )
+    external_url = forms.URLField(
+        required=False,
+        widget=forms.URLInput(attrs={"class": "form-control", "placeholder": "https://"}),
+    )
+
+    def clean_files(self):
+        files = self.cleaned_data["files"]
+        for upload in files:
+            if not upload.name.lower().endswith(ASSET_EXTENSIONS):
+                raise forms.ValidationError(
+                    f"{upload.name}: only PDF, MP3, M4A and WAV files can be uploaded."
+                )
+            if upload.size > ASSET_MAX_BYTES:
+                raise forms.ValidationError(
+                    f"{upload.name} is over 50 MB. Convert large WAVs to MP3 before uploading."
+                )
+        return files
+
+    def clean(self):
+        cleaned = super().clean()
+        files = cleaned.get("files") or []
+        url = cleaned.get("external_url")
+        if files and url:
+            raise forms.ValidationError("Upload files or give a link, not both.")
+        if not files and not url and not self.errors:
+            raise forms.ValidationError("Choose at least one file to upload, or give a link.")
+        if url and not cleaned.get("asset_name"):
+            self.add_error("asset_name", "Give the link a name, e.g. 'YouTube recording'.")
+        return cleaned
+
+    def save(self, repertoire):
+        """Creates and returns the new LearningAsset rows for repertoire."""
+        name = self.cleaned_data.get("asset_name", "").strip()
+        part = self.cleaned_data["voice_part"]
+        files = self.cleaned_data.get("files") or []
+
+        if not files:
+            return [
+                LearningAsset.objects.create(
+                    repertoire=repertoire,
+                    voice_part=part,
+                    asset_name=name,
+                    external_url=self.cleaned_data["external_url"],
+                )
+            ]
+
+        assets = []
+        for upload in files:
+            file_name = upload.name.rsplit(".", 1)[0][:150]
+            assets.append(
+                LearningAsset.objects.create(
+                    repertoire=repertoire,
+                    voice_part=part,
+                    asset_name=name if (name and len(files) == 1) else file_name,
+                    file_upload=upload,
+                )
+            )
+        return assets
 
 
 class AvailabilityPollForm(forms.ModelForm):

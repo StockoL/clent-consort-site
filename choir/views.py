@@ -9,6 +9,7 @@ from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
+from django.db.models import Q
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -34,6 +35,7 @@ from .models import (
     Event,
     LearningAsset,
     Project,
+    Repertoire,
     SubscriptionPayment,  # <-- Added for the new financial logic
 )
 from .permissions import is_committee, is_singer
@@ -495,6 +497,125 @@ def committee_project_edit_view(request, project_id):
         "project": project,
     }
     return render(request, "choir/committee_project_edit.html", context)
+
+
+# =============================================================================
+# 4.0b COMMITTEE REPERTOIRE LIBRARY
+# =============================================================================
+@login_required
+@user_passes_test(is_committee)
+def committee_repertoire_view(request):
+    """Every piece in the library (searchable by ?q= on composer or title),
+    with its asset count per voice part and the projects using it, plus a
+    form to add a piece. Adding from a project's edit page passes
+    ?project=<id>: the new piece joins that project and the committee goes
+    straight to the piece's upload page."""
+    from .forms import RepertoireForm
+
+    project = None
+    project_id = request.POST.get("project") or request.GET.get("project")
+    if project_id and str(project_id).isdigit():
+        project = Project.objects.filter(id=project_id).first()
+
+    if request.method == "POST":
+        form = RepertoireForm(request.POST)
+        if form.is_valid():
+            piece = form.save()
+            if project:
+                project.repertoire.add(piece)
+                messages.success(request, f"'{piece.title}' added to {project.name}. Now upload its scores and tracks.")
+            else:
+                messages.success(request, f"'{piece.title}' added. Now upload its scores and tracks.")
+            return redirect("committee_repertoire_detail", piece_id=piece.id)
+    else:
+        form = RepertoireForm()
+
+    query = request.GET.get("q", "").strip()
+    pieces = Repertoire.objects.prefetch_related("assets", "projects").order_by("composer", "title")
+    if query:
+        pieces = pieces.filter(Q(composer__icontains=query) | Q(title__icontains=query))
+
+    rows = []
+    for piece in pieces:
+        counts = {code: 0 for code, _ in LearningAsset.PART_CHOICES}
+        for asset in piece.assets.all():
+            counts[asset.voice_part] = counts.get(asset.voice_part, 0) + 1
+        rows.append(
+            {
+                "piece": piece,
+                # (label, count) per voice part that has any assets
+                "counts": [
+                    (label, counts[code])
+                    for code, label in LearningAsset.PART_CHOICES
+                    if counts[code]
+                ],
+                "projects": list(piece.projects.all()),
+            }
+        )
+
+    context = {
+        "form": form,
+        "rows": rows,
+        "query": query,
+        "project": project,
+    }
+    return render(request, "choir/committee_repertoire.html", context)
+
+
+@login_required
+@user_passes_test(is_committee)
+def committee_repertoire_detail_view(request, piece_id):
+    """One piece: rename it, see its assets by voice part, delete any, and
+    upload more (several files at once, or one external link)."""
+    from .forms import AssetUploadForm, RepertoireForm
+
+    piece = get_object_or_404(Repertoire, id=piece_id)
+    piece_form = RepertoireForm(instance=piece)
+    upload_form = AssetUploadForm()
+
+    if request.method == "POST":
+        if "upload" in request.POST:
+            upload_form = AssetUploadForm(request.POST, request.FILES)
+            if upload_form.is_valid():
+                added = upload_form.save(piece)
+                messages.success(
+                    request, f"{len(added)} asset{'s' if len(added) != 1 else ''} added to '{piece.title}'."
+                )
+                return redirect("committee_repertoire_detail", piece_id=piece.id)
+        else:
+            piece_form = RepertoireForm(request.POST, instance=piece)
+            if piece_form.is_valid():
+                piece_form.save()
+                messages.success(request, "Piece details saved.")
+                return redirect("committee_repertoire_detail", piece_id=piece.id)
+
+    assets = piece.assets.order_by("voice_part", "asset_name")
+    context = {
+        "piece": piece,
+        "piece_form": piece_form,
+        "upload_form": upload_form,
+        "assets": assets,
+        "projects": piece.projects.all(),
+    }
+    return render(request, "choir/committee_repertoire_detail.html", context)
+
+
+@login_required
+@user_passes_test(is_committee)
+@require_POST
+def committee_asset_delete_view(request, asset_id):
+    """Deletes a learning asset and its stored file (from S3 in production),
+    so a removed score doesn't linger in the bucket."""
+    asset = get_object_or_404(LearningAsset, id=asset_id)
+    piece_id = asset.repertoire_id
+    name = asset.asset_name
+
+    if asset.file_upload:
+        asset.file_upload.delete(save=False)
+    asset.delete()
+
+    messages.success(request, f"'{name}' deleted.")
+    return redirect("committee_repertoire_detail", piece_id=piece_id)
 
 
 @login_required
