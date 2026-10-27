@@ -1,0 +1,127 @@
+{% extends 'choir/_members_base.html' %}
+
+{% block title %}Members - Clent Consort{% endblock title %}
+
+{% block page_title %}Members{% endblock page_title %}
+{% block page_lede %}Everyone with an account, inviting new members, and pending invitations.{% endblock page_lede %}
+
+{% block members_content %}
+  <div class="switcher">
+    <section class="card flow" data-variant="invert">
+      <h2 class="text-primary text-step-1 card-heading">Invite a Member</h2>
+      <p class="text-small settings-hint">They'll get an email with a link to set a password. The link lasts 3 days; you can resend it below.</p>
+      <form method="POST" class="flow flow--small">
+        {% csrf_token %}
+        <div class="form-group flow flow--small">
+          <label for="{{ form.email.id_for_label }}" class="form-label text-small">Email address</label>
+          {{ form.email }}
+          <div class="form-error">{{ form.email.errors }}</div>
+        </div>
+        <div class="switcher field-row">
+          <div class="form-group flow flow--small">
+            <label for="{{ form.first_name.id_for_label }}" class="form-label text-small">First name (optional)</label>
+            {{ form.first_name }}
+          </div>
+          <div class="form-group flow flow--small">
+            <label for="{{ form.last_name.id_for_label }}" class="form-label text-small">Last name (optional)</label>
+            {{ form.last_name }}
+          </div>
+        </div>
+        <div class="form-group flow flow--small">
+          <label for="{{ form.voice_part.id_for_label }}" class="form-label text-small">Voice part (optional)</label>
+          {{ form.voice_part }}
+        </div>
+        <button type="submit" class="button align-start" data-variant="primary">Send Invitation</button>
+      </form>
+    </section>
+
+    <section class="card flow" data-variant="invert">
+      <h2 class="text-primary text-step-1 card-heading">Pending Invitations</h2>
+      {% if invitations %}
+      <ul class="list-unstyled flow flow--small" role="list">
+        {% for row in invitations %}
+        {% with inv=row.invitation %}
+        <li class="item-row">
+          <div>
+            <strong>{{ inv.email }}</strong>
+            {% if row.expired %}<span class="badge" data-status="warning">Expired</span>{% endif %}
+            <br>
+            <span class="text-small text-muted">
+              {% with p=inv.choir_profile %}{% if p.first_name or p.last_name %}{{ p.first_name }} {{ p.last_name }} · {% endif %}{% if p.voice_part %}{{ p.get_voice_part_display }} · {% endif %}{% endwith %}
+              {% if inv.sent %}sent {{ inv.sent|date:"j M Y" }}{% else %}not sent{% endif %}
+            </span>
+          </div>
+          <form method="POST" action="{% url 'committee_invitation_resend' inv.id %}" class="inline-form">
+            {% csrf_token %}
+            <button type="submit" class="button btn-small" data-variant="outline">Resend<span class="visually-hidden"> to {{ inv.email }}</span></button>
+          </form>
+        </li>
+        {% endwith %}
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="text-muted text-small">No invitations waiting to be accepted.</p>
+      {% endif %}
+    </section>
+  </div>
+
+  <section class="card flow" data-variant="invert">
+    <h2 class="text-primary text-step-1 card-heading">Everyone</h2>
+
+    <form method="GET" class="cluster ledger-term">
+      <label for="members-part" class="text-small">Voice part</label>
+      <select id="members-part" name="part">
+        <option value="">All</option>
+        {% for code, label in voice_choices %}<option value="{{ code }}"{% if part == code %} selected{% endif %}>{{ label }}</option>{% endfor %}
+        <option value="none"{% if part == 'none' %} selected{% endif %}>Not set</option>
+      </select>
+      <label for="members-status" class="text-small">Status</label>
+      <select id="members-status" name="status">
+        <option value="active"{% if status == 'active' %} selected{% endif %}>Active</option>
+        <option value="inactive"{% if status == 'inactive' %} selected{% endif %}>Inactive</option>
+        <option value="all"{% if status == 'all' %} selected{% endif %}>All</option>
+      </select>
+      <button type="submit" class="button btn-small" data-variant="outline">Show</button>
+    </form>
+
+    {% if rows %}
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Voice</th>
+          <th>Roles</th>
+          <th>Last login</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        {% with u=row.user %}
+        <tr>
+          <td data-label="Name">
+            <div>
+              <a href="{% url 'committee_member_edit' u.id %}" class="text-link"><strong>{{ u.get_full_name|default:u.username }}</strong></a><br>
+              <span class="text-small text-muted">{{ u.email|default:"no email" }}</span>
+            </div>
+          </td>
+          <td data-label="Voice">{{ u.profile.get_voice_part_display|default:"-" }}</td>
+          <td data-label="Roles" class="text-small">
+            <div>
+              {% if u.profile.is_singer %}<span class="badge">Singer</span>{% endif %}
+              {% if row.committee %}<span class="badge" data-status="success">Committee</span>{% endif %}
+              {% if u.profile.is_under_18 %}<span class="data-table__flag">Under 18</span>{% endif %}
+            </div>
+          </td>
+          <td data-label="Last login" class="text-small">{{ u.last_login|date:"j M Y"|default:"Never" }}</td>
+          <td data-label="Status">{% if u.is_active %}<span class="badge" data-status="success">Active</span>{% else %}<span class="badge">Inactive</span>{% endif %}</td>
+        </tr>
+        {% endwith %}
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted text-small">No members match.</p>
+    {% endif %}
+  </section>
+{% endblock members_content %}

@@ -1,0 +1,54 @@
+{% extends 'choir/_members_base.html' %}
+
+{% block title %}{{ member.get_full_name|default:member.username }} - Members - Clent Consort{% endblock title %}
+
+{% block page_title %}{{ member.get_full_name|default:member.username }}{% endblock page_title %}
+{% block page_lede %}{{ member.email|default:"No email address" }} · last logged in {{ member.last_login|date:"j M Y"|default:"never" }}{% endblock page_lede %}
+
+{% block members_content %}
+  <section class="card flow" data-variant="invert">
+    <form method="POST" class="flow">
+      {% csrf_token %}
+
+      <fieldset class="form-fieldset flow flow--small">
+        <legend><h2 class="text-primary text-step-1 card-heading">Details</h2></legend>
+        <div class="switcher field-row">
+          <div class="form-group flow flow--small">
+            <label for="{{ form.first_name.id_for_label }}" class="form-label text-small">First name</label>
+            {{ form.first_name }}
+          </div>
+          <div class="form-group flow flow--small">
+            <label for="{{ form.last_name.id_for_label }}" class="form-label text-small">Last name</label>
+            {{ form.last_name }}
+          </div>
+        </div>
+        <div class="form-group flow flow--small">
+          <label for="{{ form.voice_part.id_for_label }}" class="form-label text-small">Voice part</label>
+          {{ form.voice_part }}
+        </div>
+        <p class="text-small settings-hint">Members change their own email address and password from their Settings page.</p>
+      </fieldset>
+
+      <fieldset class="form-fieldset flow flow--small">
+        <legend><h2 class="text-primary text-step-1 card-heading">Roles &amp; Access</h2></legend>
+        {% for field in form %}{% if field.name in "is_singer is_under_18 is_exempt_from_subs committee is_active" %}
+        <div class="consent-row">
+          {{ field }}
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        </div>
+        {% if field.errors %}<div class="form-error">{{ field.errors }}</div>{% endif %}
+        {% endif %}{% endfor %}
+        <p class="text-small settings-hint">
+          Unticking "Sings with the choir" removes them from RSVPs, the ledger, the Duty of Care roster and broadcasts.
+          Unticking "Active" is how someone leaves: they're signed out straight away and can't log in, and their attendance history is kept.
+          {% if form.editing_self %}You can't remove your own committee access or deactivate yourself.{% endif %}
+        </p>
+      </fieldset>
+
+      <div class="cluster">
+        <button type="submit" class="button" data-variant="primary">Save Changes</button>
+        <a href="{% url 'committee_members' %}" class="button" data-variant="outline">Cancel</a>
+      </div>
+    </form>
+  </section>
+{% endblock members_content %}

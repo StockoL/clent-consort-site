@@ -16,6 +16,7 @@ from .models import (
     Repertoire,
     SubscriptionPayment,
 )
+from .permissions import COMMITTEE_GROUP
 
 
 class EnquiryForm(forms.ModelForm):
@@ -357,6 +358,111 @@ class ChoirSettingsForm(forms.ModelForm):
             "instagram_url": forms.URLInput(attrs={"class": "form-control", "placeholder": "https://"}),
             "facebook_url": forms.URLInput(attrs={"class": "form-control", "placeholder": "https://"}),
         }
+
+
+class InviteMemberForm(forms.Form):
+    """Invite someone to join the members area. Name and voice part are
+    optional; when given they're applied to the new member's account as
+    they sign up (InvitationProfile, choir.signals.apply_invitation_profile)."""
+
+    email = forms.EmailField(widget=forms.EmailInput(attrs={"class": "form-control", "placeholder": "name@example.com"}))
+    first_name = forms.CharField(max_length=150, required=False, widget=forms.TextInput(attrs={"class": "form-control"}))
+    last_name = forms.CharField(max_length=150, required=False, widget=forms.TextInput(attrs={"class": "form-control"}))
+    voice_part = forms.ChoiceField(
+        choices=[("", "Not known yet")] + MemberProfile.VOICE_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={"class": "form-control"}),
+    )
+
+    def clean_email(self):
+        from allauth.account.models import EmailAddress
+        from invitations.utils import get_invitation_model
+
+        email = self.cleaned_data["email"].strip()
+        if User.objects.filter(email__iexact=email).exists() or EmailAddress.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("Someone with this email address already has an account.")
+        if get_invitation_model().objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError(
+                "This address has already been invited. Use Resend in the invitations list instead."
+            )
+        return email
+
+
+class MemberEditForm(forms.Form):
+    """
+    The committee's edit page for one member: names on the User; voice
+    part and flags on the MemberProfile; committee via the Committee group;
+    active on the User. Email and password stay with the member (allauth).
+    The committee can't take committee access away from themselves or
+    deactivate themselves - that's how a site gets locked out.
+    """
+
+    first_name = forms.CharField(max_length=150, required=False, widget=forms.TextInput(attrs={"class": "form-control"}))
+    last_name = forms.CharField(max_length=150, required=False, widget=forms.TextInput(attrs={"class": "form-control"}))
+    voice_part = forms.ChoiceField(
+        choices=[("", "Not set")] + MemberProfile.VOICE_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={"class": "form-control"}),
+    )
+    is_singer = forms.BooleanField(required=False, label="Sings with the choir")
+    is_under_18 = forms.BooleanField(required=False, label="Under 18")
+    is_exempt_from_subs = forms.BooleanField(required=False, label="Exempt from subscriptions")
+    committee = forms.BooleanField(required=False, label="Committee member")
+    is_active = forms.BooleanField(required=False, label="Active (can log in)")
+
+    def __init__(self, *args, member, editor, **kwargs):
+        self.member = member
+        self.editor = editor
+        profile = member.profile
+        kwargs.setdefault(
+            "initial",
+            {
+                "first_name": member.first_name,
+                "last_name": member.last_name,
+                "voice_part": profile.voice_part or "",
+                "is_singer": profile.is_singer,
+                "is_under_18": profile.is_under_18,
+                "is_exempt_from_subs": profile.is_exempt_from_subs,
+                "committee": member.groups.filter(name=COMMITTEE_GROUP).exists(),
+                "is_active": member.is_active,
+            },
+        )
+        super().__init__(*args, **kwargs)
+
+    @property
+    def editing_self(self):
+        return self.member.pk == self.editor.pk
+
+    def clean(self):
+        cleaned = super().clean()
+        if self.editing_self:
+            if not cleaned.get("is_active"):
+                self.add_error("is_active", "You can't deactivate your own account.")
+            if not cleaned.get("committee") and self.initial.get("committee"):
+                self.add_error("committee", "You can't remove your own committee access.")
+        return cleaned
+
+    def save(self):
+        from django.contrib.auth.models import Group
+
+        member, profile, data = self.member, self.member.profile, self.cleaned_data
+        member.first_name = data["first_name"]
+        member.last_name = data["last_name"]
+        member.is_active = data["is_active"]
+        member.save(update_fields=["first_name", "last_name", "is_active"])
+
+        profile.voice_part = data["voice_part"] or None
+        profile.is_singer = data["is_singer"]
+        profile.is_under_18 = data["is_under_18"]
+        profile.is_exempt_from_subs = data["is_exempt_from_subs"]
+        profile.save(update_fields=["voice_part", "is_singer", "is_under_18", "is_exempt_from_subs"])
+
+        group, _ = Group.objects.get_or_create(name=COMMITTEE_GROUP)
+        if data["committee"]:
+            member.groups.add(group)
+        else:
+            member.groups.remove(group)
+        return member
 
 
 class SubscriptionPaymentForm(forms.ModelForm):

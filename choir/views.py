@@ -1231,6 +1231,112 @@ def committee_toggle_exempt_view(request, profile_id):
 
 
 # ==============================================================================
+# 4.4 COMMITTEE MEMBERS & INVITATIONS
+# ==============================================================================
+@login_required
+@user_passes_test(is_committee)
+def committee_members_view(request):
+    """Everyone with an account (filterable by ?part= and ?status=), the
+    invite form, and invitations not yet accepted, each with Resend."""
+    from invitations.utils import get_invitation_model
+
+    from .forms import InviteMemberForm
+    from .models import InvitationProfile
+
+    Invitation = get_invitation_model()
+
+    if request.method == "POST":
+        form = InviteMemberForm(request.POST)
+        if form.is_valid():
+            data = form.cleaned_data
+            invitation = Invitation.create(data["email"], inviter=request.user)
+            InvitationProfile.objects.create(
+                invitation=invitation,
+                first_name=data["first_name"],
+                last_name=data["last_name"],
+                voice_part=data["voice_part"],
+            )
+            invitation.send_invitation(request)
+            messages.success(request, f"Invitation sent to {invitation.email}.")
+            return redirect("committee_members")
+    else:
+        form = InviteMemberForm()
+
+    part = request.GET.get("part", "")
+    status = request.GET.get("status", "active")
+    members = User.objects.select_related("profile").prefetch_related("groups").order_by(
+        "-is_active", "first_name", "last_name", "username"
+    )
+    if status == "active":
+        members = members.filter(is_active=True)
+    elif status == "inactive":
+        members = members.filter(is_active=False)
+    if part == "none":
+        members = members.filter(Q(profile__voice_part__isnull=True) | Q(profile__voice_part=""))
+    elif part:
+        members = members.filter(profile__voice_part=part)
+
+    rows = [{"user": member, "committee": is_committee(member)} for member in members if hasattr(member, "profile")]
+
+    pending = Invitation.objects.filter(accepted=False).select_related("choir_profile").order_by("-sent")
+    expired_ids = set(Invitation.objects.all_expired().values_list("id", flat=True))
+    invitations = [{"invitation": inv, "expired": inv.id in expired_ids} for inv in pending]
+
+    from .models import MemberProfile
+
+    context = {
+        "form": form,
+        "rows": rows,
+        "invitations": invitations,
+        "part": part,
+        "status": status,
+        "voice_choices": MemberProfile.VOICE_CHOICES,
+    }
+    return render(request, "choir/committee_members.html", context)
+
+
+@login_required
+@user_passes_test(is_committee)
+@require_POST
+def committee_invitation_resend_view(request, invitation_id):
+    """Sends an invitation again, which also restarts its expiry."""
+    from invitations.utils import get_invitation_model
+
+    invitation = get_object_or_404(get_invitation_model(), id=invitation_id, accepted=False)
+    invitation.send_invitation(request)
+    messages.success(request, f"Invitation sent again to {invitation.email}.")
+    return redirect("committee_members")
+
+
+@login_required
+@user_passes_test(is_committee)
+def committee_member_edit_view(request, user_id):
+    """Edit one member's details, singer/committee flags and active state.
+    Deactivating is how someone leaves: their attendance history stays,
+    and they're signed out on their next request."""
+    from .forms import MemberEditForm
+
+    member = get_object_or_404(User.objects.select_related("profile"), id=user_id)
+
+    if request.method == "POST":
+        form = MemberEditForm(request.POST, member=member, editor=request.user)
+        if form.is_valid():
+            form.save()
+            if member.is_staff and not member.is_superuser and not form.cleaned_data["committee"]:
+                messages.warning(
+                    request,
+                    f"{member.get_full_name() or member.username} still has admin (staff) access, "
+                    "which keeps the committee tools open to them until staff access is removed in Django admin.",
+                )
+            messages.success(request, f"{member.get_full_name() or member.username} updated.")
+            return redirect("committee_members")
+    else:
+        form = MemberEditForm(member=member, editor=request.user)
+
+    return render(request, "choir/committee_member_edit.html", {"form": form, "member": member})
+
+
+# ==============================================================================
 # 4.1 COMMITTEE EVENT SCHEDULING
 # =============================================================================
 
