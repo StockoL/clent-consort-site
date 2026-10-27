@@ -7,7 +7,7 @@
 
 {% block members_content %}
   <div class="wrapper wrapper--narrow">
-    <section class="card flow" data-variant="invert">
+    <div class="card flow" data-variant="invert">
       <form method="POST" class="flow flow--small">
         {% csrf_token %}
 
@@ -70,6 +70,6 @@
 
         <button type="submit" class="button" data-variant="primary">Save Changes</button>
       </form>
-    </section>
+    </div>
   </div>
 {% endblock members_content %}

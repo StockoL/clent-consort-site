@@ -40,7 +40,7 @@
                   <span class="text-muted text-small">({{ member.profile.emergency_contact_relation }})</span>
                 {% endif %}
                 <br>
-                <a href="tel:{{ member.profile.emergency_contact_phone }}" class="text-link">
+                <a href="tel:{{ member.profile.emergency_contact_phone|cut:' ' }}" class="text-link">
                   {{ member.profile.emergency_contact_phone }}
                 </a>
               </div>

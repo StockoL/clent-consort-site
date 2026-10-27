@@ -44,8 +44,7 @@
                   </button>
                   {# Plain audio for browsers without JavaScript; the player hides it. #}
                   <div class="player-fallback w-100">
-                    <label class="visually-hidden" for="audio-{{ asset.id }}">Listen to {{ asset.asset_name }}</label>
-                    <audio id="audio-{{ asset.id }}" controls preload="none" class="w-100">
+                    <audio id="audio-{{ asset.id }}" controls preload="none" class="w-100" aria-label="Listen to {{ asset.asset_name }}">
                       <source src="{{ asset.file_upload.url }}" type="audio/mpeg">
                       Your browser does not support the audio element.
                     </audio>

@@ -62,6 +62,12 @@ class EnquiryForm(forms.ModelForm):
 class AuditionForm(forms.ModelForm):
     """Form for prospective singers applying to audition."""
 
+    def __init__(self, *args, **kwargs):
+        # It shares the contact page with EnquiryForm, which has name and
+        # email fields too, so its ids get a prefix to stay unique.
+        kwargs.setdefault("auto_id", "audition_%s")
+        super().__init__(*args, **kwargs)
+
     # THE HONEYPOT: Protecting the audition endpoint from automated spam as well.
     website = forms.CharField(
         required=False,
@@ -167,8 +173,8 @@ class ProjectForm(forms.ModelForm):
             "status": forms.Select(attrs={"class": "form-control"}),
             "description": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
             "public_summary": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
-            "start_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
-            "end_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+            "start_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}, format="%Y-%m-%d"),
+            "end_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}, format="%Y-%m-%d"),
         }
 
 
@@ -309,9 +315,7 @@ class AvailabilityPollForm(forms.ModelForm):
                     "placeholder": "e.g., Are you available the weekend of 14-15 March 2027?",
                 }
             ),
-            "proposed_date": forms.DateInput(
-                attrs={"type": "date", "class": "form-control"}
-            ),
+            "proposed_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}, format="%Y-%m-%d"),
             "notes": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
         }
         labels = {"is_open": "Open for responses"}
@@ -354,7 +358,7 @@ class ChoirSettingsForm(forms.ModelForm):
         widgets = {
             "current_term": forms.TextInput(attrs={"class": "form-control"}),
             "subscription_amount": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
-            "subscription_deadline": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+            "subscription_deadline": forms.DateInput(attrs={"type": "date", "class": "form-control"}, format="%Y-%m-%d"),
             "bank_account_name": forms.TextInput(attrs={"class": "form-control"}),
             "bank_sort_code": forms.TextInput(attrs={"class": "form-control", "placeholder": "00-00-00"}),
             "bank_account_number": forms.TextInput(attrs={"class": "form-control", "inputmode": "numeric"}),
@@ -486,9 +490,7 @@ class SubscriptionPaymentForm(forms.ModelForm):
             "amount": forms.NumberInput(
                 attrs={"class": "form-control", "step": "0.01"}
             ),
-            "date_paid": forms.DateInput(
-                attrs={"type": "date", "class": "form-control"}
-            ),
+            "date_paid": forms.DateInput(attrs={"type": "date", "class": "form-control"}, format="%Y-%m-%d"),
             "term_reference": forms.TextInput(attrs={"class": "form-control"}),
             "payment_method": forms.Select(attrs={"class": "form-control"}),
             "notes": forms.Textarea(attrs={"class": "form-control", "rows": 2}),

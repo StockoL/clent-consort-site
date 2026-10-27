@@ -13,7 +13,7 @@
   </div>
 
   <div id="panel-events">
-    <section class="card flow rsvp-dashboard__card" data-variant="invert">
+    <div class="card flow rsvp-dashboard__card" data-variant="invert">
 
       {% csrf_token %}
 
@@ -80,7 +80,7 @@
         <div id="list-{{ data.event.id }}-pending" hidden>
           {% if data.pending %}
             <div class="rsvp-list__reminder">
-               <a href="mailto:?bcc={{ data.pending_emails }}&subject=RSVP Reminder: {{ data.event.get_event_type_display }}&body=Hi everyone,%0A%0APlease could you log into the Clent Consort portal and update your RSVP for the upcoming {{ data.event.get_event_type_display }}.%0A%0AThank you!" class="button btn-small" data-variant="outline">
+               <a href="mailto:?bcc={{ data.pending_emails }}&subject=RSVP%20Reminder:%20{{ data.event.get_event_type_display|urlencode }}&body=Hi%20everyone,%0A%0APlease%20could%20you%20log%20into%20the%20Clent%20Consort%20portal%20and%20update%20your%20RSVP%20for%20the%20upcoming%20{{ data.event.get_event_type_display|urlencode }}.%0A%0AThank%20you!" class="button btn-small" data-variant="outline">
                  <span aria-hidden="true">✉️</span> Email Reminder to {{ data.pending|length }} Members
                </a>
             </div>
@@ -96,7 +96,7 @@
 
       </div>
       {% endfor %}
-    </section>
+    </div>
   </div>
 
   <div id="panel-stats" hidden>

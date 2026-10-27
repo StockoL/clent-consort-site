@@ -7,7 +7,7 @@
 
 {% block members_content %}
   <div class="wrapper wrapper--narrow">
-    <section class="card flow" data-variant="invert">
+    <div class="card flow" data-variant="invert">
       <form method="POST" class="flow flow--small">
         {% csrf_token %}
         {% include 'choir/_poll_fields.html' %}
@@ -17,6 +17,6 @@
           <a href="{% url 'committee_polling' %}" class="button" data-variant="outline">Cancel</a>
         </div>
       </form>
-    </section>
+    </div>
   </div>
 {% endblock members_content %}

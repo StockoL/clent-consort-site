@@ -7,7 +7,7 @@
 {% block page_lede %}Enquiries and audition applications from the contact page. Unhandled ones come first.{% endblock page_lede %}
 
 {% block members_content %}
-  <section class="card flow" data-variant="invert">
+  <div class="card flow" data-variant="invert">
     {% if items %}
     {# Row checkboxes join this form through their form="inbox-bulk" attribute, #}
     {# since each row also holds its own Mark handled form and forms can't nest. #}
@@ -59,7 +59,7 @@
     {% else %}
     <p class="text-muted text-small">Nothing has come in through the contact page yet.</p>
     {% endif %}
-  </section>
+  </div>
 {% endblock members_content %}
 
 {% block scripts %}

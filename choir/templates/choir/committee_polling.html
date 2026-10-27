@@ -56,7 +56,7 @@
             <p class="text-small text-muted">
               {{ row.non_responders|length }} member{{ row.non_responders|length|pluralize }} yet to respond
               {% if row.non_responder_emails %}
-              - <a href="mailto:?bcc={{ row.non_responder_emails }}&subject=Availability Poll Reminder&body=Hi everyone,%0A%0APlease could you log into the Clent Consort portal and let us know your availability for: {{ row.poll.question }}.%0A%0AThank you!" class="text-link"><span aria-hidden="true">✉️</span> Send reminder</a>
+              - <a href="mailto:?bcc={{ row.non_responder_emails }}&subject=Availability%20Poll%20Reminder&body=Hi%20everyone,%0A%0APlease%20could%20you%20log%20into%20the%20Clent%20Consort%20portal%20and%20let%20us%20know%20your%20availability%20for:%20{{ row.poll.question|urlencode }}.%0A%0AThank%20you!" class="text-link"><span aria-hidden="true">✉️</span> Send reminder</a>
               {% endif %}
             </p>
             {% endif %}

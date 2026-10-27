@@ -40,9 +40,23 @@
   flex-wrap: wrap; /* Allows the RSVP button to drop below on smaller screens */
 }
 
-.event-date {
+/* Accordion triggers are buttons, which can't contain headings, so the
+   date and the "Earlier this project" label are spans styled as the h3s
+   they used to be. On Looking Ahead, .event-date is a real h2 at h3 size. */
+.event-date,
+.accordion__heading {
+  display: block;
   margin: 0;
+  font-family: var(--fonts-heading);
+  font-weight: 700;
   line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.05ch;
+  text-wrap: balance;
+}
+
+.event-date {
+  font-size: var(--step-2);
 }
 
 /* --- RSVP dropdown --- */

@@ -5,9 +5,9 @@
 <article class="event-card-highlight">
 
     <button type="button" class="accordion__trigger" aria-expanded="false">
-        <h3 class="event-date">
+        <span class="event-date">
             {{ attendance.event.date_time|date:"l, j M Y" }}
-        </h3>
+        </span>
         <svg class="accordion__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
@@ -41,10 +41,10 @@
 
             {% if attendance.event.additional_notes %}
             <div class="event-card-notes">
-                <p class="text-small">
-                    <strong>Rehearsal Plan:</strong><br/>
+                <div class="text-small flow flow--small">
+                    <p><strong>Rehearsal Plan:</strong></p>
                     {{ attendance.event.additional_notes|safe }}
-                </p>
+                </div>
             </div>
             {% endif %}
 

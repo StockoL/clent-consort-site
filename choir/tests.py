@@ -2717,3 +2717,26 @@ class CommitteeEventsNavLabelTests(TestCase):
         nav = re.search(r'<nav class="members-nav".*?</nav>', html, re.S).group(0)
         self.assertEqual(nav.count(">Schedule</a>"), 1)
         self.assertRegex(nav, r'href="%s"[^>]*>Events</a>' % reverse("committee_schedule"))
+
+
+class ValidatorFindingsTests(TestCase):
+    """Regressions for bugs the W3C validator found."""
+
+    def test_date_inputs_render_iso_values(self):
+        # type="date" inputs only accept YYYY-MM-DD. With en-gb localisation
+        # Django rendered 26/11/2026, which browsers show as an empty field.
+        create_committee_user(username="committee", password="pw")
+        self.client.login(username="committee", password="pw")
+        choir_settings = ChoirSettings.load()
+        choir_settings.subscription_deadline = datetime(2026, 11, 26).date()
+        choir_settings.save()
+        html = self.client.get(reverse("committee_settings")).content.decode()
+        self.assertIn('value="2026-11-26"', html)
+        self.assertNotIn("26/11/2026", html)
+
+    def test_contact_page_ids_are_unique_and_labels_match(self):
+        html = self.client.get(reverse("contact")).content.decode()
+        ids = re.findall(r'\sid="([^"]+)"', html)
+        self.assertEqual([i for i in set(ids) if ids.count(i) > 1], [])
+        for target in re.findall(r'<label[^>]*\sfor="([^"]+)"', html):
+            self.assertIn(target, ids)
