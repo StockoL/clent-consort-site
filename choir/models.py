@@ -4,6 +4,7 @@ from django.core.mail import send_mail
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils import timezone
 from django.utils.html import strip_tags
 from tinymce.models import HTMLField
 
@@ -305,8 +306,18 @@ class LearningAsset(models.Model):
     file_upload = models.FileField(upload_to="learning_assets/", blank=True, null=True)
     external_url = models.URLField(blank=True, null=True)
 
+    # When the asset was added; shown on the member hub. Null for assets
+    # that predate the field (deliberately not auto_now_add, which would
+    # stamp every existing row with the migration's run time).
+    uploaded_at = models.DateTimeField(null=True, blank=True, editable=False)
+
     def __str__(self):
         return f"{self.repertoire.title} - {self.get_voice_part_display()} Asset"
+
+    def save(self, *args, **kwargs):
+        if self._state.adding and self.uploaded_at is None:
+            self.uploaded_at = timezone.now()
+        super().save(*args, **kwargs)
 
 
 # ==============================================================================
