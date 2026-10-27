@@ -16,6 +16,7 @@
         <div class="form-group flow flow--small">
           <label for="{{ form.current_term.id_for_label }}" class="form-label text-small">Current term</label>
           {{ form.current_term }}
+          {% include 'choir/_field_help.html' with field=form.current_term %}
           <p class="text-small settings-hint">Changing the term resets everyone to Unpaid for the new term; previous terms' payments are kept.</p>
           <div class="form-error">{{ form.current_term.errors }}</div>
         </div>
@@ -29,6 +30,7 @@
           <div class="form-group flow flow--small">
             <label for="{{ form.subscription_deadline.id_for_label }}" class="form-label text-small">Pay by (optional)</label>
             {{ form.subscription_deadline }}
+            {% include 'choir/_field_help.html' with field=form.subscription_deadline %}
             <div class="form-error">{{ form.subscription_deadline.errors }}</div>
           </div>
         </div>

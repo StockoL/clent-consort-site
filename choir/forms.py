@@ -126,6 +126,17 @@ class UserUpdateForm(forms.ModelForm):
 class ProfileUpdateForm(forms.ModelForm):
     """Allows members to update their choir-specific details and legal consents."""
 
+    # These fields' help texts are the wording members agree to, so the page
+    # shows them as the labels; as help texts too, screen readers would read
+    # them twice.
+    HELP_AS_LABEL = ("consent_audio_video", "consent_photography", "medical_accessibility_notes")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name in self.HELP_AS_LABEL:
+            self.fields[name].label = self.fields[name].help_text
+            self.fields[name].help_text = ""
+
     class Meta:
         model = MemberProfile
         fields = [
@@ -165,6 +176,8 @@ class ProjectForm(forms.ModelForm):
 
     class Meta:
         model = Project
+        # Repeats the label or placeholder, so not shown on the page.
+        help_texts = {"name": ""}
         fields = ["name", "status", "description", "public_summary", "start_date", "end_date", "repertoire"]
         widgets = {
             "name": forms.TextInput(
@@ -307,6 +320,8 @@ class AvailabilityPollForm(forms.ModelForm):
 
     class Meta:
         model = AvailabilityPoll
+        # Repeats the label or placeholder, so not shown on the page.
+        help_texts = {"question": ""}
         fields = ["project", "question", "proposed_date", "notes", "is_open"]
         widgets = {
             "question": forms.TextInput(
@@ -337,6 +352,8 @@ class ChoirSettingsForm(forms.ModelForm):
 
     class Meta:
         model = ChoirSettings
+        # Repeats the label or placeholder, so not shown on the page.
+        help_texts = {"subscription_amount": ""}
         fields = [
             "current_term",
             "subscription_amount",
@@ -566,6 +583,8 @@ class EventEditForm(QuickEventScheduleForm):
             ),
         }
         labels = {"is_public": "Show on the public Events page"}
+        # The label already says it, so the help text is not shown.
+        help_texts = {"is_public": ""}
 
     def clean(self):
         cleaned = super().clean()
@@ -591,6 +610,8 @@ class BroadcastForm(forms.ModelForm):
 
     class Meta:
         model = ChoirCommunication
+        # Repeats the label or placeholder, so not shown on the page.
+        help_texts = {"message": ""}
         fields = ["audience", "subject", "message"]
         widgets = {
             "audience": forms.Select(attrs={"class": "form-control"}),

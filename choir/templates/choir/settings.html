@@ -87,7 +87,7 @@
                 <div class="form-group consent-row">
                     {{ profile_form.consent_audio_video }}
                     <label for="{{ profile_form.consent_audio_video.id_for_label }}">
-                        {{ profile_form.consent_audio_video.help_text }}
+                        {{ profile_form.consent_audio_video.label }}
                     </label>
                 </div>
                 <div class="form-error">{{ profile_form.consent_audio_video.errors }}</div>
@@ -95,7 +95,7 @@
                 <div class="form-group consent-row">
                     {{ profile_form.consent_photography }}
                     <label for="{{ profile_form.consent_photography.id_for_label }}">
-                        {{ profile_form.consent_photography.help_text }}
+                        {{ profile_form.consent_photography.label }}
                     </label>
                 </div>
                 <div class="form-error">{{ profile_form.consent_photography.errors }}</div>
@@ -109,7 +109,7 @@
           <h2 class="section-heading text-step-1">Medical & Accessibility Support</h2>
           <div class="form-group settings-textarea flow flow--small">
               <label for="{{ profile_form.medical_accessibility_notes.id_for_label }}">
-                  {{ profile_form.medical_accessibility_notes.help_text }}
+                  {{ profile_form.medical_accessibility_notes.label }}
               </label>
               {{ profile_form.medical_accessibility_notes }}
               <div class="form-error">{{ profile_form.medical_accessibility_notes.errors }}</div>

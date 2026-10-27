@@ -2740,3 +2740,39 @@ class ValidatorFindingsTests(TestCase):
         self.assertEqual([i for i in set(ids) if ids.count(i) > 1], [])
         for target in re.findall(r'<label[^>]*\sfor="([^"]+)"', html):
             self.assertIn(target, ids)
+
+
+class HelpTextReferenceTests(TestCase):
+    """Every aria-describedby on a form page points at an element on that
+    page: help texts are shown with the id Django refers to, or cleared."""
+
+    def test_described_by_targets_exist(self):
+        committee = create_committee_user(username="committee", password="pw")
+        self.client.login(username="committee", password="pw")
+        project = Project.objects.create(name="Clent 2026", status="ACTIVE")
+        planning = Project.objects.create(name="Easter 2027", status="PLANNING")
+        event = Event.objects.create(project=project, event_type="RES", date_time=timezone.now() + timedelta(days=3), location="Hall")
+        poll = AvailabilityPoll.objects.create(project=planning, question="Free?")
+        payment = SubscriptionPayment.objects.create(
+            member=committee.profile, amount="50.00", date_paid=timezone.now().date(), term_reference="Autumn 2026"
+        )
+        urls = [
+            reverse("settings"),
+            reverse("contact"),
+            reverse("committee_projects"),
+            reverse("committee_project_edit", args=[project.id]),
+            reverse("committee_polling"),
+            reverse("committee_poll_edit", args=[poll.id]),
+            reverse("committee_settings"),
+            reverse("committee_broadcast"),
+            reverse("committee_event_edit", args=[event.id]),
+            reverse("committee_documents"),
+            reverse("committee_financials_edit", args=[payment.id]),
+        ]
+        missing = []
+        for url in urls:
+            html = self.client.get(url).content.decode()
+            ids = set(re.findall(r'\sid="([^"]+)"', html))
+            for target in re.findall(r'aria-describedby="([^"]+)"', html):
+                missing += [f"{url}: {t}" for t in target.split() if t not in ids]
+        self.assertEqual(missing, [])

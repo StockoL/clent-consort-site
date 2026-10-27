@@ -34,21 +34,25 @@
         <div class="form-group flow flow--small">
           <label for="{{ form.public_title.id_for_label }}" class="form-label form-label--heading">Public title</label>
           {{ form.public_title }}
+          {% include 'choir/_field_help.html' with field=form.public_title %}
         </div>
 
         <div class="form-group flow flow--small">
           <label for="{{ form.public_blurb.id_for_label }}" class="form-label form-label--heading">Description</label>
           {{ form.public_blurb }}
+          {% include 'choir/_field_help.html' with field=form.public_blurb %}
         </div>
 
         <div class="switcher field-row">
           <div class="form-group flow flow--small">
             <label for="{{ form.ticket_url.id_for_label }}" class="form-label form-label--heading">Tickets link</label>
             {{ form.ticket_url }}
+            {% include 'choir/_field_help.html' with field=form.ticket_url %}
           </div>
           <div class="form-group flow flow--small">
             <label for="{{ form.end_time.id_for_label }}" class="form-label form-label--heading">Ends at (optional)</label>
             {{ form.end_time }}
+            {% include 'choir/_field_help.html' with field=form.end_time %}
             {{ form.end_time.errors }}
           </div>
         </div>

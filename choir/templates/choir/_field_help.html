@@ -1,0 +1,5 @@
+{% comment %}
+    A form field's help text, with the id Django's aria-describedby on the
+    field already points to ({auto_id}_helptext). Renders nothing for a
+    field without help text. Usage: {% include 'choir/_field_help.html' with field=form.notes %}
+{% endcomment %}{% if field.help_text %}<p class="field-help text-small text-muted" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</p>{% endif %}

@@ -31,12 +31,14 @@
         <div class="form-group flow flow--small">
           <label for="{{ form.term_reference.id_for_label }}" class="form-label text-small">{{ form.term_reference.label }}</label>
           {{ form.term_reference }}
+          {% include 'choir/_field_help.html' with field=form.term_reference %}
           <div class="form-error">{{ form.term_reference.errors }}</div>
         </div>
 
         <div class="form-group flow flow--small">
           <label for="{{ form.notes.id_for_label }}" class="form-label text-small">{{ form.notes.label }}</label>
           {{ form.notes }}
+          {% include 'choir/_field_help.html' with field=form.notes %}
         </div>
 
         <button type="submit" class="button" data-variant="primary">Save Changes</button>
