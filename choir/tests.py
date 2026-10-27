@@ -2360,3 +2360,45 @@ class EventPublicFieldsAndCalendarTests(TestCase):
         self.client.logout()
         response = self.client.get(reverse("project_calendar_ics", args=[self.project.id]))
         self.assertEqual(response.status_code, 302)
+
+
+class PublicMobilePassTests(TestCase):
+    """Build Order Phase 10: the markup behind the public pages' phone
+    layout (the layout itself was checked in a browser at 375/768/1366)."""
+
+    def test_home_intro_shows_the_next_public_performance_when_the_events_page_is_built_from_events(self):
+        project = Project.objects.create(name="Ewelme 2027", status="ACTIVE")
+        Event.objects.create(
+            project=project,
+            event_type="RES",
+            is_public=True,
+            public_title="Choral Evensong",
+            date_time=timezone.now() + timedelta(days=30),
+            location="St Mary the Virgin, Ewelme",
+        )
+
+        response = self.client.get(reverse("home"))
+        self.assertContains(response, 'class="home-intro')
+        self.assertIsNone(response.context["next_event"])  # switch off: no event
+
+        choir_settings = ChoirSettings.load()
+        choir_settings.events_page_from_db = True
+        choir_settings.save()
+        response = self.client.get(reverse("home"))
+        self.assertContains(response, "Choral Evensong")
+        self.assertContains(response, "St Mary the Virgin, Ewelme")
+
+    def test_about_videos_dont_autoplay_or_preload(self):
+        response = self.client.get(reverse("about"))
+        content = response.content.decode()
+        self.assertEqual(content.count("<video"), 3)
+        self.assertNotIn("<video autoplay", content)
+        self.assertEqual(content.count('preload="none"'), 3)
+        self.assertEqual(content.count("data-rhythm-play"), 3)
+        self.assertContains(response, '<h1 class="visually-hidden">About Clent Consort</h1>', html=True)
+        self.assertContains(response, 'title="Clent Consort repertoire playlist on Spotify"')
+
+    def test_every_page_has_the_menu_backdrop_and_the_events_cta_shortens(self):
+        response = self.client.get(reverse("events"))
+        self.assertContains(response, "data-nav-backdrop")
+        self.assertContains(response, 'Enquire<span class="cta-more"> for More Information</span>')
