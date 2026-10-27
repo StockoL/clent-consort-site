@@ -152,15 +152,15 @@ Editing a member covers their name, voice part and roles, and deactivating them 
 
 ### Scheduling and publishing a performance
 
-The schedule lists coming events by project, with the form for a new one below. Editing a performance shows the Public Listing section. Ticking "Show on the public Events page" and giving it a title and description is all it takes to put it on the public site.
+The committee's Events page lists coming events by project, with the form for a new one below. Editing a performance shows the Public Listing section. Ticking "Show on the public Events page" and giving it a title and description is all it takes to put it on the public site.
 
-| Schedule | Editing a performance |
+| Events | Editing a performance |
 | --- | --- |
-| ![Schedule](images/journeys/committee/schedule-desktop.jpg) | ![Event edit with public listing](images/journeys/committee/event-edit-public-listing-desktop.jpg) |
+| ![Committee events list](images/journeys/committee/schedule-desktop.jpg) | ![Event edit with public listing](images/journeys/committee/event-edit-public-listing-desktop.jpg) |
 
 ### Checking who is coming
 
-Event Logistics shows each event's replies by status. The committee can override a reply, and email everyone who has not answered in one click. Member Overview shows each singer's attendance over time.
+Event Logistics shows each event's replies by status. The committee can override a reply, and email everyone who has not answered in one click. Member Overview shows each singer's attendance rate, lowest first. Singers who have not answered anything yet show "No replies yet" rather than a misleading 0%.
 
 | Event logistics | Member overview |
 | --- | --- |

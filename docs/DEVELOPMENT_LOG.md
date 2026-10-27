@@ -22,7 +22,7 @@ How the site was built, stage by stage, with the problems I hit and how I solved
 | July 2026 | A test suite, and the CSS rebuilt on LooseLeaf UI with cascade layers and design tokens |
 | August 2026 | Gift Aid removed; dashboard tidying |
 | September 2026 | Content updates for the Ewelme project |
-| October 2026 | A planned rebuild in twelve phases, of which Phases 0 to 11 are done |
+| October 2026 | A planned rebuild in twelve phases, of which Phases 0 to 11 are done, then validation, accessibility fixes and a single production stylesheet |
 
 ## April 2026: the static site
 
@@ -78,6 +78,17 @@ In October I audited the whole site and planned a rebuild in twelve phases. The 
 | 11. Broadcasts and clean-up | Draft, preview, test, send once with per-recipient records; transition code removed | 184 |
 
 Two follow-ups came from my own use of the site. Setting a loop while a track was already playing did not keep playback inside it, so I made the player check the loop on every frame and renamed "Set A" and "Set B" to "Loop start" and "Loop end". And on phones the committee had to swipe through all 18 navigation links, so the committee tools moved into a drop-down grid. That brought the suite to 186 tests.
+
+After that I re-ran the validators and Lighthouse, which had last been run on the static site in April, and they found more than I expected:
+
+- Date fields on four committee edit pages had been showing up empty. Django wrote dates in the British format and a date input only reads `2026-11-26`, so editing a project, poll, payment or Choir Settings could clear or reject the date.
+- The audition form's labels pointed at the enquiry form's fields.
+- 25 fields told screen readers to read help text that wasn't on the page.
+- The members' area used the brand gold on white, which fails contrast.
+
+Each got a fix and, where it could recur, a test; the [testing page](TESTING.md#bugs-found-and-fixed) lists them all. The same pass removed the RSVP overview's misleading 0% for singers with no replies yet, and renamed the committee's Schedule link to Events, so there are no longer two links called Schedule.
+
+Lighthouse also showed that every page's first paint waited for the stylesheet, which the browser loaded as 52 files, one after another. Production now serves them as one minified file built during each deploy, while the source files stay the ones I edit. Before switching it on I had Chrome compare the two and confirm they produce the same 496 rules in the same layers. My first attempt at the bundle had quietly lost a fifth of the CSS, because an apostrophe in a comment was read as the start of a string, and that comparison is what caught it. The suite is now at 196 tests.
 
 Phase 12, the rest of the practice player, is on the [roadmap](ROADMAP.md).
 

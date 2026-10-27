@@ -53,7 +53,7 @@ The site is at http://127.0.0.1:8000/.
 
 | Command | Does |
 | --- | --- |
-| `python scripts/dev.py test` | Collects static files, then runs the test suite |
+| `python scripts/dev.py test` | Builds the CSS bundle and collects static files, then runs the test suite |
 | `python scripts/dev.py check` | Fails if a model change has no migration, then runs Django's deploy checks against the production settings, with a throwaway key and database URL |
 | `python scripts/dev.py run` | Starts the development server |
 | `python scripts/dev.py seed` | Fills the local database with sample data |
@@ -103,9 +103,12 @@ The site runs as a Render web service on the free plan, with a Render PostgreSQL
 
 ```bash
 pip install -r requirements.txt
+python scripts/build_css.py
 python manage.py collectstatic --no-input
 python manage.py migrate
 ```
+
+`build_css.py` joins the site's CSS into the single minified file that production pages load (see [Architecture](ARCHITECTURE.md#one-file-in-production)).
 
 The free plan has two consequences. The service sleeps when idle, so the first visit after a quiet spell is slow. And there is no Shell tab, so one-off commands are run from my own computer (see [below](#one-off-commands-on-the-live-database)).
 

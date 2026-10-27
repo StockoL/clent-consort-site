@@ -69,7 +69,7 @@ You cannot remove your own committee access or deactivate yourself, so the commi
 
 ## Scheduling rehearsals
 
-1. Open Schedule.
+1. Open Events.
 2. Fill in the form below the list: project, type, date and time, place.
 3. Save. Every singer gets an RSVP for it straight away.
 
@@ -79,7 +79,7 @@ Deleting an event also deletes its RSVPs, and asks first. Events in archived pro
 
 ## Putting a performance on the public Events page
 
-1. Open Schedule and click Edit on the performance.
+1. Open Events and click Edit on the performance.
 2. Under Public Listing, tick "Show on the public Events page".
 3. Give it a public title and a short description. Add a ticket link and an end time if there are any.
 4. Save.
@@ -90,7 +90,7 @@ The performance appears on the Events page as the next event until it has happen
 
 Open RSVPs. Event Logistics shows each upcoming event's replies by status. You can change anyone's reply, for example when someone tells you in person. "Email Reminder" opens your own email program with everyone who has not replied in the BCC line.
 
-Member Overview shows each singer's attendance over time.
+Member Overview shows each singer's attendance over time, as the share of answered events they came to, lowest first. Singers who have not answered anything yet show "No replies yet" at the bottom of the list.
 
 ## Adding scores and practice tracks
 
@@ -140,7 +140,7 @@ Enquiries and audition applications from the Contact page arrive here, newest fi
 
 ## Duty of care
 
-Duty of Care lists every singer's emergency contact, medical and accessibility notes, and under-18 flag. Singers fill these in themselves under Settings. The roster is confidential: only the committee can open it. It works well on a phone, so it can be opened quickly at a rehearsal or concert.
+Duty of Care lists every singer's emergency contact, medical and accessibility notes, and under-18 flag. Singers fill these in themselves under Settings, and the roster says "None provided" for anyone who has not given an emergency contact. The roster is confidential: only the committee can open it. It works well on a phone, so it can be opened quickly at a rehearsal or concert.
 
 ## Documents
 

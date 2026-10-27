@@ -85,7 +85,7 @@ Two rules are enforced by tests that scan every template: no inline `style` attr
 
 ## CSS
 
-The CSS is my own system, written in plain CSS with no framework and no build step. It follows the CUBE CSS method (composition, utility, block, exception) and uses the composition patterns from Every Layout by Heydon Pickering and Andy Bell. Much of it is vendored from LooseLeaf UI, my own small library of the same patterns.
+The CSS is my own system, written in plain CSS with no framework or preprocessor. It follows the CUBE CSS method (composition, utility, block, exception) and uses the composition patterns from Every Layout by Heydon Pickering and Andy Bell. Much of it is vendored from LooseLeaf UI, my own small library of the same patterns.
 
 `choir/static/css/site/index.css` imports every file into native cascade layers, in this order:
 
@@ -107,15 +107,30 @@ The compositions do most of the responsive work without media queries. For examp
 
 ### Design tokens
 
-Colours, the type scale and the spacing scale are defined once in `design-tokens.json`. `node build-tokens.js` turns them into custom properties in `global/variables.css`, which is the only generated CSS file and the project's only build step. Type and space sizes are fluid, using `clamp()` between a phone minimum and a desktop maximum.
+Colours, the type scale and the spacing scale are defined once in `design-tokens.json`. `node build-tokens.js` turns them into custom properties in `global/variables.css`, the only generated source file, which is committed. Type and space sizes are fluid, using `clamp()` between a phone minimum and a desktop maximum.
 
 ```css
 --step-0: clamp(1.125rem, 1.0739rem + 0.2273vw, 1.25rem);
 ```
 
+Some colour tokens change inside dark cards. Any element with `data-variant="invert"` gets a second set of values for the same custom properties, so a component reads `--colors-text-muted` and gets the right grey on either background. Gold text works the same way: `--colors-text-accent` is the darker gold `#8a6d34` on light backgrounds, where the brand gold would fail contrast, and the brand gold inside dark cards.
+
 ### Vendored and project files
 
 Files copied from LooseLeaf UI are never edited in place; changes come from re-copying. The site's own additions sit beside them in the same folders, and the comments in `index.css` say which is which.
+
+### One file in production
+
+Locally, pages link `index.css`, and the browser fetches each imported file as it finds it. That is convenient while editing, because a change shows on the next reload. In production that chain of 52 files, each discovered only after the one before it loaded, held back every page's first paint by an estimated 1.9 seconds on a phone.
+
+So production pages link a single file, `site.min.css`, which `scripts/build_css.py` builds from the same sources during each deploy:
+
+- It reads `index.css` and keeps its `@layer` order statement.
+- It wraps each imported file in its layer, as `@layer blocks{...}`. The cascade treats that exactly as it treats `@import "x.css" layer(blocks)`.
+- It rewrites relative `url()`s so they resolve from the bundle's folder.
+- It minifies conservatively, removing comments and whitespace only and leaving quoted strings alone.
+
+The 113 KB of source becomes 54 KB, before WhiteNoise compresses it. The bundle is generated, like `staticfiles/`, and not committed. The `CSS_BUNDLE` setting chooses the file and is on whenever `DEBUG` is off. Before switching it on I checked in Chrome that the bundle and `index.css` produce the same 496 rules in the same layers and order, and that screenshots of eleven pages are identical.
 
 ## JavaScript
 

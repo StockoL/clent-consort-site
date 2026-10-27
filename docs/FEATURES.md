@@ -108,8 +108,8 @@ If the browser cannot read the audio file to draw a waveform, the player falls b
 | Member edit | Name, voice part, singer, under 18, exempt from subscriptions, committee, active. A committee member cannot remove their own committee access or deactivate themselves. |
 | Projects | Create and edit projects (planning, active, archived), their repertoire and their public summary. |
 | Music Library | Every piece with its tracks per voice part. Add a piece; upload several PDF, MP3, M4A or WAV files at once (50 MB each), or link to a recording elsewhere. Deleting a file removes it from storage too. |
-| Schedule | Coming events by project, with Edit and Delete, and a form for a new event. The edit page has a rich text rehearsal plan and, for performances, the public listing fields. |
-| RSVPs | Event Logistics: each event's replies by status, overridable, with an email reminder to everyone who has not answered. Member Overview: each singer's attendance over time. |
+| Events | Coming events by project, with Edit and Delete, and a form for a new event. The edit page has a rich text rehearsal plan and, for performances, the public listing fields. |
+| RSVPs | Event Logistics: each event's replies by status, overridable, with an email reminder to everyone who has not answered. Member Overview: each singer's attendance rate over time, lowest first, with "No replies yet" for singers who have not answered anything. |
 | Polling | Create, edit, close and reopen availability polls; results with each member's note and a reminder link for those who have not answered. |
 | Financials | The subscription ledger for the current term or any earlier one. Log, edit or delete a payment; mark a member exempt. |
 | Documents | Upload and delete documents for the Document Vault. |

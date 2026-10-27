@@ -58,9 +58,11 @@ Every logged-in page shares one layout: a page heading, the members' navigation,
 | Who | Navigation |
 | --- | --- |
 | Every member | Schedule (the dashboard), Repertoire (pieces and voice-part hubs), Looking Ahead (polls), Settings and the Document Vault |
-| The committee, in addition | Hub, Inbox, Members, Projects, Music Library, Schedule, RSVPs, Polling, Financials, Documents, Broadcast, Duty of Care and Choir Settings |
+| The committee, in addition | Hub, Inbox, Members, Projects, Music Library, Events, RSVPs, Polling, Financials, Documents, Broadcast, Duty of Care and Choir Settings |
 
 On a desktop the navigation is a left sidebar. On a phone it is a sideways-scrolling strip of the member links, ending in a Committee button that opens the committee tools as a grid. My first version put all 18 links in the strip, and swiping through thirteen committee pills to reach Financials was too slow.
+
+The committee's link for managing events is called Events, so that the only link called Schedule is the members' own dashboard.
 
 Sub-pages keep their parent marked as current, so editing a payment keeps Financials highlighted and a voice-part hub keeps Repertoire highlighted.
 

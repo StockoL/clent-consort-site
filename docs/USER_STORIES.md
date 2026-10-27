@@ -217,7 +217,7 @@ As the maintainer, I want credentials kept only in environment variables, and pr
 | K10 Public events | Should | Done |
 | K11 Duty of care | Must | Done |
 | K12 Committee documents | Should | Done |
-| M1 Safe changes | Must | Done: 186 automated tests, `scripts/dev.py` and seed data |
+| M1 Safe changes | Must | Done: 196 automated tests, `scripts/dev.py` and seed data |
 | M2 No secrets in the repository | Must | Done |
 
 ## Won't have, for now

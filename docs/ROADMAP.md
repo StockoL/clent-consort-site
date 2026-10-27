@@ -25,8 +25,8 @@ The public Events page has been built from the database since 27 October 2026. T
 
 ## Smaller improvements
 
-- The About page's mission banner is a large background image and holds the page's mobile performance score at 77. A smaller image, or preloading it, should fix that.
-- Re-run the W3C HTML and CSS validators over the rendered Django pages. They were last run on the static site in April 2026.
+- Re-run Lighthouse on the live site once the single CSS file is deployed, and record the change in [Testing](TESTING.md#lighthouse).
+- The About page's mission banner is a large background image, and is the main reason About scores 77 for performance where the other pages score 86 to 90. A smaller image, or preloading it, should close most of that gap.
 - A test that every form field has a label, to match the existing tests for tables and inline styles.
 - If spam starts reaching the inbox again, add a timing check (reject submissions sent faster than a person could type them) and a limit on links, still without a CAPTCHA.
 - Raise HSTS from one hour to a long-lived value once the HTTPS redirect has run without trouble for a while.
