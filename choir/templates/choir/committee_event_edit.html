@@ -21,6 +21,40 @@
         {{ form.additional_notes.errors }}
       </div>
 
+      {# Hidden while the event type is Rehearsal (forms.css); rehearsals are never public. #}
+      <fieldset class="form-fieldset flow flow--small public-listing">
+        <legend><h2 class="text-primary text-step-1 card-heading">Public Listing</h2></legend>
+        <p class="text-small settings-hint">For performances only. Once the Events page is built from scheduled events (Choir Settings), a performance marked public appears there.</p>
+
+        <div class="consent-row">
+          {{ form.is_public }}
+          <label for="{{ form.is_public.id_for_label }}">{{ form.is_public.label }}</label>
+        </div>
+
+        <div class="form-group flow flow--small">
+          <label for="{{ form.public_title.id_for_label }}" class="form-label form-label--heading">Public title</label>
+          {{ form.public_title }}
+        </div>
+
+        <div class="form-group flow flow--small">
+          <label for="{{ form.public_blurb.id_for_label }}" class="form-label form-label--heading">Description</label>
+          {{ form.public_blurb }}
+        </div>
+
+        <div class="switcher field-row">
+          <div class="form-group flow flow--small">
+            <label for="{{ form.ticket_url.id_for_label }}" class="form-label form-label--heading">Tickets link</label>
+            {{ form.ticket_url }}
+          </div>
+          <div class="form-group flow flow--small">
+            <label for="{{ form.end_time.id_for_label }}" class="form-label form-label--heading">Ends at (optional)</label>
+            {{ form.end_time }}
+            {{ form.end_time.errors }}
+          </div>
+        </div>
+        <p class="text-small settings-hint">To show "time TBC" publicly, set the start time to 00:00.</p>
+      </fieldset>
+
       <div class="cluster">
         <button type="submit" class="button" data-variant="primary">Save Changes</button>
         <a href="{% url 'committee_schedule' %}" class="button" data-variant="outline">Cancel</a>

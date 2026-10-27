@@ -56,8 +56,29 @@ def about_view(request):
 
 
 def events_view(request):
-    """Renders the public concert and events schedule."""
-    return render(request, "choir/events.html")
+    """
+    The public Events page. With ChoirSettings.events_page_from_db off (the
+    default), the original static page; with it on, built from public
+    residency/performance events (event_type RES, is_public): the next
+    one, the last three with their project's repertoire, and everything
+    earlier grouped by year. Rehearsals never appear.
+    """
+    if not ChoirSettings.load().events_page_from_db:
+        return render(request, "choir/events.html")
+
+    now = timezone.now()
+    public = Event.objects.filter(event_type="RES", is_public=True).select_related("project")
+    past = list(
+        public.filter(date_time__lt=now)
+        .prefetch_related("project__repertoire")
+        .order_by("-date_time")
+    )
+    context = {
+        "next_event": public.filter(date_time__gte=now).order_by("date_time").first(),
+        "recent_events": past[:3],
+        "archive_events": past[3:],
+    }
+    return render(request, "choir/events_db.html", context)
 
 
 def contact_view(request):
@@ -440,45 +461,66 @@ def update_rsvp_view(request, attendance_id):
     return JsonResponse({"success": False, "error": "Invalid status"}, status=400)
 
 
+def _ics_text(value):
+    """Escape text for an iCalendar property (RFC 5545 3.3.11)."""
+    return (
+        value.replace("\\", "\\\\")
+        .replace(";", "\\;")
+        .replace(",", "\\,")
+        .replace("\r\n", "\\n")
+        .replace("\n", "\\n")
+    )
+
+
+def _ics_vevent(event, stamp):
+    """One VEVENT. Uses the event's end_time when set, otherwise two hours."""
+    start_utc = event.date_time.astimezone(py_timezone.utc)
+    end = event.end_time or (event.date_time + timedelta(hours=2))
+    end_utc = end.astimezone(py_timezone.utc)
+    notes = strip_tags(event.additional_notes).strip() if event.additional_notes else ""
+    summary = event.public_title or event.get_event_type_display()
+    return [
+        "BEGIN:VEVENT",
+        f"UID:event-{event.id}@clentconsort.org",
+        f"DTSTAMP:{stamp}",
+        f"DTSTART:{start_utc:%Y%m%dT%H%M%SZ}",
+        f"DTEND:{end_utc:%Y%m%dT%H%M%SZ}",
+        f"SUMMARY:{_ics_text(f'Clent Consort: {summary}')}",
+        f"LOCATION:{_ics_text(event.location)}",
+        f"DESCRIPTION:{_ics_text(notes or 'Clent Consort Rehearsal/Event')}",
+        "END:VEVENT",
+    ]
+
+
+def _ics_response(events, filename, calendar_name=None):
+    stamp = timezone.now().astimezone(py_timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Clent Consort//Members Portal//EN"]
+    if calendar_name:
+        lines.append(f"X-WR-CALNAME:{_ics_text(calendar_name)}")
+    for event in events:
+        lines += _ics_vevent(event, stamp)
+    lines.append("END:VCALENDAR")
+
+    # iCalendar lines end with CRLF
+    response = HttpResponse("\r\n".join(lines) + "\r\n", content_type="text/calendar; charset=utf-8")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
+
+
 @login_required
 def download_ics(request, event_id):
     """Generates an iCalendar (.ics) file for one-click calendar syncing."""
     event = get_object_or_404(Event, id=event_id)
+    return _ics_response([event], f"clent_consort_{event.date_time:%b%d}.ics")
 
-    # Format timestamps strictly into UTC strings (YYYYMMDDThhmmssZ)
-    start_utc = event.date_time.astimezone(py_timezone.utc)
-    start_str = start_utc.strftime("%Y%m%dT%H%M%SZ")
 
-    end_utc = start_utc + timedelta(hours=2)
-    end_str = end_utc.strftime("%Y%m%dT%H%M%SZ")
-
-    clean_notes = (
-        strip_tags(event.additional_notes)
-        if event.additional_notes
-        else "Clent Consort Rehearsal/Event"
-    )
-
-    # ICS file strings cannot contain arbitrary indentation
-    ics_content = f"""BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//Clent Consort//Members Portal//EN
-BEGIN:VEVENT
-UID:event-{event.id}@clentconsort.org
-DTSTAMP:{start_str}
-DTSTART:{start_str}
-DTEND:{end_str}
-SUMMARY:Clent Consort: {event.get_event_type_display()}
-LOCATION:{event.location}
-DESCRIPTION:{clean_notes}
-END:VEVENT
-END:VCALENDAR"""
-
-    response = HttpResponse(ics_content, content_type="text/calendar")
-    response["Content-Disposition"] = (
-        f'attachment; filename="clent_consort_{start_utc.strftime("%b%d")}.ics"'
-    )
-
-    return response
+@login_required
+def project_calendar_ics(request, project_id):
+    """Every event of one project as a calendar file, so members can add a
+    whole project's rehearsals and performances in one go."""
+    project = get_object_or_404(Project, id=project_id)
+    events = project.events.order_by("date_time")
+    return _ics_response(events, f"clent_consort_project_{project.id}.ics", calendar_name=f"Clent Consort: {project.name}")
 
 
 # ==============================================================================

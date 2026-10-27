@@ -1,0 +1,74 @@
+{% extends 'choir/base.html' %}
+
+{% comment %}
+    The public Events page built from public residency/performance events
+    (Build Order Phase 9; events_view, used when ChoirSettings.
+    events_page_from_db is on). Same structure and classes as the static
+    events.html it replaces. An event scheduled at exactly midnight is
+    shown as "time TBC".
+{% endcomment %}
+
+{% block title %}Events - Clent Consort{% endblock title %}
+
+{% block content %}
+<section class="featured-event wrapper mt-m">
+  <div class="card sidebar" data-variant="invert">
+    <div class="event-details flow">
+      <span class="label">Next Event</span>
+      {% if next_event %}
+        <h1>{{ next_event.public_title|default:next_event.get_event_type_display }} <br> {{ next_event.location }}</h1>
+        {% if next_event.public_blurb %}<p>{{ next_event.public_blurb|linebreaksbr }}</p>{% elif next_event.project.public_summary %}<p>{{ next_event.project.public_summary|linebreaksbr }}</p>{% endif %}
+        <ul class="flow flow--small">
+          <li class="location"><strong>Where:</strong> {{ next_event.location }}</li>
+          <li><strong>When:</strong> {{ next_event.date_time|date:"jS F, Y" }} | {% if next_event.date_time|date:"Hi" == "0000" %}time TBC{% else %}{{ next_event.date_time|date:"g:i A" }}{% endif %}</li>
+        </ul>
+        {% if next_event.ticket_url %}
+          <a href="{{ next_event.ticket_url }}" class="button" data-variant="primary" target="_blank" rel="noopener noreferrer">Tickets &amp; Booking</a>
+        {% else %}
+          <a href="{% url 'contact' %}" class="button" data-variant="primary">Enquire for More Information</a>
+        {% endif %}
+      {% else %}
+        <h1>Our next performance</h1>
+        <p>Dates for our next residency are being confirmed. Get in touch to hear about it first, or to invite us to sing.</p>
+        <a href="{% url 'contact' %}" class="button" data-variant="primary">Get in Touch</a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+{% if recent_events %}
+<section class="recent-reel flow wrapper section-padding">
+  <h2>Recent Performances</h2>
+  <div class="reel">
+    {% for event in recent_events %}
+    <div class="card event-card">
+      <h3>{{ event.public_title|default:event.get_event_type_display }}</h3>
+      <p class="location">{{ event.location }}</p>
+      <time datetime="{{ event.date_time|date:'Y-m' }}">{{ event.date_time|date:"F Y" }}</time>
+      {% for piece in event.project.repertoire.all %}
+        <p>{{ piece.composer }}: {{ piece.title }}</p>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if archive_events %}
+<section class="event-archive flow flow--small wrapper section-padding">
+  <h2>Past Events Archive</h2>
+  {% regroup archive_events by date_time.year as years %}
+  <div class="archive-list flow">
+    {% for year in years %}
+      <h3 class="archive-year">{{ year.grouper }}</h3>
+      {% for event in year.list %}
+      <div class="archive-item">
+        <time datetime="{{ event.date_time|date:'Y-m' }}">{{ event.date_time|date:"F Y" }}</time>
+        <span class="location">{{ event.public_title|default:event.get_event_type_display }}, {{ event.location }}</span>
+      </div>
+      {% endfor %}
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock content %}

@@ -159,13 +159,14 @@ class ProjectForm(forms.ModelForm):
 
     class Meta:
         model = Project
-        fields = ["name", "status", "description", "start_date", "end_date", "repertoire"]
+        fields = ["name", "status", "description", "public_summary", "start_date", "end_date", "repertoire"]
         widgets = {
             "name": forms.TextInput(
                 attrs={"class": "form-control", "placeholder": "e.g., Christmas 2026"}
             ),
             "status": forms.Select(attrs={"class": "form-control"}),
             "description": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "public_summary": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
             "start_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
             "end_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
         }
@@ -326,8 +327,9 @@ class AvailabilityPollForm(forms.ModelForm):
 
 
 class ChoirSettingsForm(forms.ModelForm):
-    """The committee Settings page. events_page_from_db is left out until
-    Build Order Phase 9 builds the page it switches on."""
+    """The committee Settings page, including the switch (Build Order
+    Phase 9) between the old static Events page and the one built from
+    public events."""
 
     class Meta:
         model = ChoirSettings
@@ -341,11 +343,13 @@ class ChoirSettingsForm(forms.ModelForm):
             "youtube_url",
             "instagram_url",
             "facebook_url",
+            "events_page_from_db",
         ]
         labels = {
             "youtube_url": "YouTube",
             "instagram_url": "Instagram",
             "facebook_url": "Facebook",
+            "events_page_from_db": "Build the public Events page from scheduled events",
         }
         widgets = {
             "current_term": forms.TextInput(attrs={"class": "form-control"}),
@@ -540,7 +544,32 @@ class EventEditForm(QuickEventScheduleForm):
     TinyMCE widget - the template must include {{ form.media }})."""
 
     class Meta(QuickEventScheduleForm.Meta):
-        fields = QuickEventScheduleForm.Meta.fields + ["additional_notes"]
+        fields = QuickEventScheduleForm.Meta.fields + [
+            "additional_notes",
+            # Public listing (Build Order Phase 9); only used for RES events
+            "is_public",
+            "public_title",
+            "public_blurb",
+            "ticket_url",
+            "end_time",
+        ]
+        widgets = {
+            **QuickEventScheduleForm.Meta.widgets,
+            "public_title": forms.TextInput(attrs={"class": "form-control", "placeholder": "e.g., Choral Evensong"}),
+            "public_blurb": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "ticket_url": forms.URLInput(attrs={"class": "form-control", "placeholder": "https://"}),
+            "end_time": forms.DateTimeInput(
+                attrs={"type": "datetime-local", "class": "form-control"}, format="%Y-%m-%dT%H:%M"
+            ),
+        }
+        labels = {"is_public": "Show on the public Events page"}
+
+    def clean(self):
+        cleaned = super().clean()
+        start, end = cleaned.get("date_time"), cleaned.get("end_time")
+        if start and end and end <= start:
+            self.add_error("end_time", "The end time must be after the start.")
+        return cleaned
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

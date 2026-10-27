@@ -1,5 +1,5 @@
 /* ==========================================================================
-   BLOCK: EVENTS PAGE LISTING (decanted from style.css "v1", unchanged)
+   BLOCK: EVENTS PAGE LISTING (decanted from style.css "v1", plus archive year headings)
    ========================================================================== */
 
 .featured-event .invert {
@@ -121,4 +121,11 @@
   font-weight: 500;
   flex-basis: 15rem;
   flex-grow: 999;
+}
+
+/* Year headings in the database-built archive (events_db.html) */
+.archive-year {
+  margin-top: var(--space-s);
+  font-size: var(--step-1);
+  color: #c9a45e;
 }

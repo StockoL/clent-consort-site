@@ -306,3 +306,10 @@
 .form-fieldset > legend:has(> h2) {
   width: 100%;
 }
+
+/* Event edit: the Public Listing section only applies to performances,
+   so it hides while Rehearsal is the chosen type. Browsers without :has()
+   simply always show it. */
+form:has(select[name="event_type"] option[value="REH"]:checked) .public-listing {
+  display: none;
+}

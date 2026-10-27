@@ -39,8 +39,14 @@
         </div>
 
         <div class="form-group flow flow--small">
-          <label for="{{ form.description.id_for_label }}" class="form-label text-small">{{ form.description.label }}</label>
+          <label for="{{ form.description.id_for_label }}" class="form-label text-small">{{ form.description.label }} (committee only)</label>
           {{ form.description }}
+        </div>
+
+        <div class="form-group flow flow--small">
+          <label for="{{ form.public_summary.id_for_label }}" class="form-label text-small">Public summary</label>
+          {{ form.public_summary }}
+          <p class="text-small text-muted">Shown on the public Events page for this project's next performance when the performance itself has no description.</p>
         </div>
 
         <fieldset class="form-group form-fieldset flow flow--small">

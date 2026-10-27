@@ -71,6 +71,15 @@
         {% endif %}{% endfor %}
       </fieldset>
 
+      <fieldset class="form-fieldset flow flow--small">
+        <legend><h2 class="text-primary text-step-1 card-heading">Events page</h2></legend>
+        <div class="consent-row">
+          {{ form.events_page_from_db }}
+          <label for="{{ form.events_page_from_db.id_for_label }}">{{ form.events_page_from_db.label }}</label>
+        </div>
+        <p class="text-small settings-hint">When ticked, the public Events page shows the next performance, recent performances and the archive from events marked public on the Schedule. When unticked, it shows the original fixed page.</p>
+      </fieldset>
+
       <button type="submit" class="button align-start" data-variant="primary">Save Settings</button>
     </form>
   </section>
