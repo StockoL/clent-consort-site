@@ -214,6 +214,12 @@ else:
 # Add so views.py can find it
 CHOIR_CONTACT_EMAIL = "hello@clentconsort.org"
 
+# Production pages link the single minified stylesheet that
+# scripts/build_css.py builds from index.css and its imports (build.sh runs
+# it before collectstatic). Locally they link index.css, which loads the
+# source files directly, so CSS edits show without a rebuild.
+CSS_BUNDLE = not DEBUG
+
 # The current subscription term lives in the ChoirSettings row, edited on
 # the committee's Choir Settings page (Build Order Phase 4).
 

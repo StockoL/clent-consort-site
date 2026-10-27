@@ -46,7 +46,8 @@
 
     {% block extra_head %}{% endblock extra_head %}
 
-    <link rel="stylesheet" href="{% static 'css/site/index.css' %}" />
+    {# One minified file in production (scripts/build_css.py); the source files locally #}
+    <link rel="stylesheet" href="{% if css_bundle %}{% static 'css/site/site.min.css' %}{% else %}{% static 'css/site/index.css' %}{% endif %}" />
   </head>
 
   <body id="top" class="{% block body_class %}{% endblock body_class %}">

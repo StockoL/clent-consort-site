@@ -2776,3 +2776,59 @@ class HelpTextReferenceTests(TestCase):
             for target in re.findall(r'aria-describedby="([^"]+)"', html):
                 missing += [f"{url}: {t}" for t in target.split() if t not in ids]
         self.assertEqual(missing, [])
+
+
+def load_build_css():
+    from importlib.util import module_from_spec, spec_from_file_location
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parent.parent / "scripts" / "build_css.py"
+    spec = spec_from_file_location("build_css", path)
+    module = module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+class CssBundleTests(TestCase):
+    """scripts/build_css.py joins index.css's imports into one minified file
+    with the same layers, and production pages link it."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.build_css = load_build_css()
+
+    def test_bundle_has_every_import_in_its_layer_in_order(self):
+        with tempfile.TemporaryDirectory() as folder:
+            from pathlib import Path
+
+            imports, bundle = self.build_css.build(Path(folder) / "site.min.css")
+        lines = bundle.splitlines()
+        self.assertEqual(lines[0], "@layer reset, global, compositions, blocks, utilities;")
+        self.assertEqual([re.match(r"@layer (\w+)\{", line).group(1) for line in lines[1:]], [layer for _, layer in imports])
+        self.assertGreater(len(imports), 40)
+
+    def test_relative_urls_point_at_real_files_from_the_bundle(self):
+        from pathlib import Path
+
+        _, bundle = self.build_css.build(Path(tempfile.mkdtemp()) / "site.min.css")
+        urls = [u for u in re.findall(r'url\("([^"]+)"\)', bundle) if not u.startswith("data:")]
+        self.assertTrue(urls)
+        for url in urls:
+            self.assertTrue((self.build_css.SITE / url).resolve().exists(), url)
+
+    def test_minify_keeps_strings_and_meaningful_spaces(self):
+        minify = self.build_css.minify
+        # An apostrophe in a comment once swallowed the CSS up to the next one
+        self.assertEqual(minify("/* it's */ a { color: red; } /* don't */ b { color: blue; }"), "a{color:red}b{color:blue}")
+        self.assertEqual(minify('.x { width: calc(100% - 2rem); content: "a ; b"; }'), '.x{width:calc(100% - 2rem);content:"a ; b"}')
+        self.assertEqual(minify(".a .b,\n.c > .d { margin: 0 auto }"), ".a .b,.c > .d{margin:0 auto}")
+
+    def test_pages_link_the_bundle_only_when_enabled(self):
+        with override_settings(CSS_BUNDLE=True):
+            html = self.client.get(reverse("home")).content.decode()
+            self.assertIn("css/site/site.min.", html)
+            self.assertNotIn("css/site/index.", html)
+        with override_settings(CSS_BUNDLE=False):
+            html = self.client.get(reverse("home")).content.decode()
+            self.assertIn("css/site/index.", html)

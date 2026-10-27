@@ -28,7 +28,11 @@ def manage(*args, env=None):
 
 def test():
     # Templates resolve {% static %} through the manifest storage, so the
-    # manifest must list every static file before the tests render pages.
+    # manifest must list every static file before the tests render pages,
+    # including the built CSS bundle.
+    status = subprocess.run([sys.executable, "scripts/build_css.py"], cwd=ROOT).returncode
+    if status:
+        return status
     status = manage("collectstatic", "--noinput", "--verbosity", "0")
     if status:
         return status

@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.utils.functional import SimpleLazyObject
 
 from .models import AuditionApplication, ChoirSettings, Enquiry
@@ -16,8 +17,13 @@ def choir_context(request):
       - inbox_unhandled_count: unhandled enquiries plus audition
         applications, for the badge on the committee Inbox nav item.
         Only computed for committee users, and only when a template uses it.
+      - css_bundle: link the built site.min.css rather than index.css
+        (settings.CSS_BUNDLE, on in production).
     """
-    context = {"choir_settings": SimpleLazyObject(ChoirSettings.load)}
+    context = {
+        "choir_settings": SimpleLazyObject(ChoirSettings.load),
+        "css_bundle": settings.CSS_BUNDLE,
+    }
 
     user = getattr(request, "user", None)
     committee = user is not None and is_committee(user)
