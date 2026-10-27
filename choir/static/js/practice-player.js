@@ -11,8 +11,9 @@
  * - The waveform needs the file fetched by the page, which S3 only allows
  *   with a CORS rule on the bucket. Without one, the player falls back to a
  *   flat bar of the right length: everything else works the same.
- * - Looping is checked every animation frame (timeupdate is too coarse):
- *   at B, jump back to A minus the lead-in.
+ * - Playback never leaves the loop range (checked every animation frame;
+ *   timeupdate is too coarse): at the loop end it goes back to the loop
+ *   start minus the lead-in, or stops there with loop off.
  * - Each track remembers position, speed, loop and lead-in in localStorage.
  * - Presigned track URLs expire; on a load error the player fetches fresh
  *   ones from the page's refreshUrl once and resumes.
@@ -146,13 +147,44 @@
     saveState();
   }
 
-  // Jump back to A (minus the lead-in) when playback reaches B.
-  function watchLoop() {
-    if (loopOn && loopRegion && !audio.paused && audio.currentTime >= loopRegion.end) {
-      audio.currentTime = Math.max(0, loopRegion.start - leadIn);
+  // Playback never leaves the loop range (plus its lead-in): at the loop
+  // end it goes back to the start (loop on) or stops there, rewound and
+  // ready to play the section again (loop off). Anywhere outside the range
+  // - after a seek, or the range being moved past the playhead - it jumps
+  // to the start. Checked every frame; timeupdate is too coarse.
+  const rangeStart = () => Math.max(0, loopRegion.start - leadIn);
+
+  function keepInRange() {
+    if (loopRegion && !audio.paused) {
+      const time = audio.currentTime;
+      if (time >= loopRegion.end - 0.02) {
+        if (!loopOn) wavesurfer.pause();
+        audio.currentTime = rangeStart();
+      } else if (time < rangeStart() - 0.05) {
+        audio.currentTime = rangeStart();
+      }
     }
-    requestAnimationFrame(watchLoop);
+    requestAnimationFrame(keepInRange);
   }
+
+  // A click on the waveform outside the range while playing goes straight
+  // to the range's start, rather than being corrected a frame later (which
+  // could let a few milliseconds of the wrong place be heard).
+  wavesurfer.on("interaction", (newTime) => {
+    if (!loopRegion || audio.paused) return;
+    if (newTime < rangeStart() - 0.05 || newTime >= loopRegion.end - 0.02) {
+      wavesurfer.setTime(rangeStart());
+    }
+  });
+
+  // Pressing play from outside the range starts at the range's start.
+  audio.addEventListener("play", () => {
+    if (!loopRegion) return;
+    const time = audio.currentTime;
+    if (time < rangeStart() - 0.05 || time >= loopRegion.end - 0.02) {
+      audio.currentTime = rangeStart();
+    }
+  });
 
   // ----------------------------------------------------------------- speed
   function setSpeed(percent) {
@@ -355,12 +387,25 @@
   }
 
   // --------------------------------------------------------------- controls
-  const setA = () => loopRegion && setLoopRegion(audio.currentTime, loopRegion.end);
-  const setB = () => loopRegion && setLoopRegion(loopRegion.start, audio.currentTime);
+  // Loop start/end at the playhead. A start after the current end keeps
+  // the rest of the track (not a half-second sliver); an end before the
+  // current start runs from the beginning.
+  const setStart = () => {
+    if (!loopRegion) return;
+    const time = audio.currentTime;
+    setLoopRegion(time, time < loopRegion.end - MIN_LOOP ? loopRegion.end : wavesurfer.getDuration());
+    saveState();
+  };
+  const setEnd = () => {
+    if (!loopRegion) return;
+    const time = audio.currentTime;
+    setLoopRegion(time > loopRegion.start + MIN_LOOP ? loopRegion.start : 0, time);
+    saveState();
+  };
 
   document.addEventListener("click", (event) => {
     const target = event.target.closest(
-      "[data-player-toggle], [data-player-loop], [data-player-set-a], [data-player-set-b], [data-player-whole], [data-player-load]",
+      "[data-player-toggle], [data-player-loop], [data-player-set-start], [data-player-set-end], [data-player-whole], [data-player-load]",
     );
     if (!target) return;
 
@@ -372,10 +417,10 @@
       wavesurfer.playPause().catch(() => {});
     } else if (target.matches("[data-player-loop]")) {
       setLoop(!loopOn);
-    } else if (target.matches("[data-player-set-a]")) {
-      setA();
-    } else if (target.matches("[data-player-set-b]")) {
-      setB();
+    } else if (target.matches("[data-player-set-start]")) {
+      setStart();
+    } else if (target.matches("[data-player-set-end]")) {
+      setEnd();
     } else if (target.matches("[data-player-whole]")) {
       setLoopRegion(0, wavesurfer.getDuration());
       saveState();
@@ -392,12 +437,12 @@
     saveState();
   });
 
-  // [ and ] set A and B on a keyboard; never while typing in a field
+  // [ and ] set the loop start and end on a keyboard; never while typing
   document.addEventListener("keydown", (event) => {
     const target = event.target instanceof Element ? event.target : null;
     if (target && target.closest("input, select, textarea, [contenteditable]")) return;
-    if (event.key === "[") setA();
-    if (event.key === "]") setB();
+    if (event.key === "[") setStart();
+    if (event.key === "]") setEnd();
   });
 
   window.addEventListener("pagehide", saveState);
@@ -415,5 +460,5 @@
 
   const lastId = store.get(LAST_TRACK_KEY);
   loadTrack(tracks.some((t) => t.id === lastId) ? lastId : tracks[0].id);
-  requestAnimationFrame(watchLoop);
+  requestAnimationFrame(keepInRange);
 })();

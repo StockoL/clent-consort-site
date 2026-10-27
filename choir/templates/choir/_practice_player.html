@@ -24,13 +24,13 @@
         <legend class="form-label text-small">Loop</legend>
         <div class="cluster">
             <button type="button" class="button btn-small" data-variant="outline" data-player-loop aria-pressed="false">Loop off</button>
-            <button type="button" class="button btn-small" data-variant="outline" data-player-set-a>Set A</button>
-            <button type="button" class="button btn-small" data-variant="outline" data-player-set-b>Set B</button>
+            <button type="button" class="button btn-small" data-variant="outline" data-player-set-start>Loop start</button>
+            <button type="button" class="button btn-small" data-variant="outline" data-player-set-end>Loop end</button>
             <button type="button" class="button btn-small" data-variant="outline" data-player-whole>Whole track</button>
         </div>
-        <p class="text-small text-muted"><span data-player-range>Whole track</span>. Drag the shaded band's edges to change the loop, or its middle to move it. Keys: <kbd>[</kbd> sets A, <kbd>]</kbd> sets B.</p>
+        <p class="text-small text-muted"><span data-player-range>Whole track</span>. Playback stays inside the loop: with loop off it stops at the loop end. Press Loop start and Loop end as the music reaches each point, or drag the shaded band's edges (or its middle to move it). Keys: <kbd>[</kbd> loop start, <kbd>]</kbd> loop end.</p>
         <div class="practice-player__inline">
-            <label for="player-lead-in" class="text-small">Lead-in before A</label>
+            <label for="player-lead-in" class="text-small">Lead-in before the loop start</label>
             <select id="player-lead-in" data-player-lead-in>
                 <option value="2">2 seconds</option>
                 <option value="0">Off</option>
