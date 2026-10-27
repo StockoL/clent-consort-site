@@ -46,8 +46,17 @@ from .permissions import is_committee, is_singer
 
 
 def home_view(request):
-    """Renders the public-facing landing page."""
-    return render(request, "choir/index.html")
+    """Renders the public-facing landing page. On phones a short section
+    follows the hero, with the next public performance when the Events
+    page is built from scheduled events (see events_view)."""
+    next_event = None
+    if ChoirSettings.load().events_page_from_db:
+        next_event = (
+            Event.objects.filter(event_type="RES", is_public=True, date_time__gte=timezone.now())
+            .order_by("date_time")
+            .first()
+        )
+    return render(request, "choir/index.html", {"next_event": next_event})
 
 
 def about_view(request):

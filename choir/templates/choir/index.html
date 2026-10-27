@@ -20,4 +20,25 @@
     <a href="{% url 'events' %}" class="button" data-variant="primary">Our Next Project</a>
   </div>
 </section>
+
+{# Phones only (blocks/hero.css): something after the hero besides the footer. #}
+<section class="home-intro wrapper flow section-padding">
+  {% if next_event %}
+  <div class="home-intro__next flow flow--small">
+    <span class="home-intro__label">Next performance</span>
+    <h2>{{ next_event.public_title|default:next_event.get_event_type_display }}</h2>
+    <p>{{ next_event.location }} · {{ next_event.date_time|date:"j F Y" }}</p>
+    <a href="{% url 'events' %}" class="button" data-variant="primary">Event Details</a>
+  </div>
+  {% endif %}
+  <p>
+    Clent Consort is a project-led choir singing services and concerts in
+    cathedrals and historic churches across Britain, from Tudor polyphony to
+    music written this century.
+  </p>
+  <p class="cluster">
+    <a href="{% url 'about' %}" class="home-intro__link">About the choir</a>
+    <a href="{% url 'events' %}" class="home-intro__link">Performances</a>
+  </p>
+</section>
 {% endblock content %}
