@@ -37,8 +37,10 @@ from .models import (
     LearningAsset,
     Project,
     Repertoire,
+    Section,
     SubscriptionPayment,  # <-- Added for the new financial logic
 )
+from .parts import voice_part_for
 from .permissions import is_committee, is_singer
 
 # ==============================================================================
@@ -366,22 +368,67 @@ def _hub_assets(project, voice_part):
     ).select_related("repertoire")
 
 
+def _plays_in_player(asset):
+    return (
+        asset.use_player
+        and bool(asset.file_upload)
+        and asset.file_upload.name.lower().endswith(PLAYER_AUDIO_EXTENSIONS)
+    )
+
+
 def _player_tracks(assets):
     """The practice player's track list: uploaded audio only (PDFs and
-    external links keep their own buttons on the hub). URLs are presigned
-    and expire (AWS_QUERYSTRING_EXPIRE), which is why hub_tracks_view
-    exists to hand the player fresh ones."""
+    external links keep their own buttons on the hub), less any track the
+    committee has taken out of the player. URLs are presigned and expire
+    (AWS_QUERYSTRING_EXPIRE), which is why hub_tracks_view exists to hand
+    the player fresh ones. part is what "My note" matches notes on."""
     return [
         {
             "id": asset.id,
             "name": asset.asset_name,
             "piece": asset.repertoire.title,
+            "pieceId": asset.repertoire_id,
             "composer": asset.repertoire.composer,
+            "part": asset.player_part,
+            "voicePart": asset.voice_part,
             "url": asset.file_upload.url,
         }
         for asset in assets
-        if asset.file_upload and asset.file_upload.name.lower().endswith(PLAYER_AUDIO_EXTENSIONS)
+        if _plays_in_player(asset)
     ]
+
+
+def _player_sections(pieces, voice_part=None, members=True):
+    """Each piece's sections for the practice player, keyed by piece id.
+    Only sections with start and end times can be looped, so only those
+    are included. For members (members=True) only published sections,
+    with only the starting notes of their own voice part (voice_part,
+    e.g. "ALT": "Alto", "Alto 1" and "Alto 2" all belong to it)."""
+    sections = Section.objects.filter(
+        repertoire__in=pieces, start_seconds__isnull=False, end_seconds__isnull=False
+    ).prefetch_related("notes")
+    if members:
+        sections = sections.filter(published=True)
+
+    data = {}
+    for section in sections:
+        notes = {
+            note.part_name: note.pitches
+            for note in section.notes.all()
+            if not members or voice_part_for(note.part_name) == voice_part
+        }
+        data.setdefault(str(section.repertoire_id), []).append(
+            {
+                "id": section.id,
+                "label": section.label,
+                "bars": section.bars,
+                "start": float(section.start_seconds),
+                "end": float(section.end_seconds),
+                "published": section.published,
+                "notes": notes,
+            }
+        )
+    return data
 
 
 @login_required
@@ -390,9 +437,11 @@ def hub_view(request, voice_part, project_id):
     part, scoped to one project's repertoire - a member picking a voice
     part from Project A's tab shouldn't see Project B's assets mixed in.
     Audio tracks open in the practice player (js/practice-player.js),
-    whose track list is embedded in the page as JSON."""
+    whose track list and the pieces' sections are embedded in the page
+    as JSON."""
     project = get_object_or_404(Project, id=project_id, status="ACTIVE")
     assets = _hub_assets(project, voice_part)
+    db_part = HUB_PARTS.get(voice_part.lower())
 
     context = {
         "voice_part_name": voice_part.title(),
@@ -400,6 +449,9 @@ def hub_view(request, voice_part, project_id):
         "project": project,
         "player_data": {
             "tracks": _player_tracks(assets),
+            "sections": _player_sections(project.repertoire.all(), voice_part=db_part),
+            # Whose note "My note" falls back to on a full-choir track
+            "voicePart": dict(LearningAsset.PART_CHOICES).get(db_part, ""),
             "refreshUrl": reverse("hub_tracks", args=[voice_part, project.id]),
             "storageKey": f"{project.id}:{voice_part.lower()}",
         },
@@ -656,13 +708,25 @@ def committee_repertoire_view(request):
 @login_required
 @user_passes_test(is_committee)
 def committee_repertoire_detail_view(request, piece_id):
-    """One piece: rename it, see its assets by voice part, delete any, and
-    upload more (several files at once, or one external link)."""
-    from .forms import AssetUploadForm, RepertoireForm
+    """One piece: rename it, see its assets by voice part, correct or
+    delete any, upload more (several files at once, or one external
+    link), and mark its sections for the practice player (Learning Hub
+    P2), with the player on the page to set times by ear. ?section=<id>
+    opens that section in the form for editing."""
+    from .forms import AssetEditForm, AssetUploadForm, RepertoireForm, SectionForm
 
     piece = get_object_or_404(Repertoire, id=piece_id)
+    assets = list(piece.assets.order_by("voice_part", "part_name", "asset_name"))
+    part_names = _piece_part_names(assets)
+
+    editing = None
+    section_id = request.POST.get("section_id") or request.GET.get("section")
+    if section_id and str(section_id).isdigit():
+        editing = piece.sections.filter(id=section_id).first()
+
     piece_form = RepertoireForm(instance=piece)
     upload_form = AssetUploadForm()
+    section_form = SectionForm(instance=editing, part_names=part_names)
 
     if request.method == "POST":
         if "upload" in request.POST:
@@ -673,6 +737,16 @@ def committee_repertoire_detail_view(request, piece_id):
                     request, f"{len(added)} asset{'s' if len(added) != 1 else ''} added to '{piece.title}'."
                 )
                 return redirect("committee_repertoire_detail", piece_id=piece.id)
+        elif "section" in request.POST:
+            section_form = SectionForm(request.POST, instance=editing, part_names=part_names)
+            if section_form.is_valid():
+                if not editing:
+                    last = piece.sections.order_by("-order").first()
+                    section_form.instance.repertoire = piece
+                    section_form.instance.order = last.order + 1 if last else 0
+                section = section_form.save()
+                messages.success(request, f"Section '{section.label}' saved.")
+                return redirect(reverse("committee_repertoire_detail", args=[piece.id]) + "#sections")
         else:
             piece_form = RepertoireForm(request.POST, instance=piece)
             if piece_form.is_valid():
@@ -680,15 +754,90 @@ def committee_repertoire_detail_view(request, piece_id):
                 messages.success(request, "Piece details saved.")
                 return redirect("committee_repertoire_detail", piece_id=piece.id)
 
-    assets = piece.assets.order_by("voice_part", "asset_name")
+    tracks = _player_tracks(assets)
     context = {
         "piece": piece,
         "piece_form": piece_form,
         "upload_form": upload_form,
-        "assets": assets,
+        "section_form": section_form,
+        "editing": editing,
+        "sections": piece.sections.prefetch_related("notes"),
+        "assets": [(asset, AssetEditForm(instance=asset, prefix=f"asset-{asset.id}")) for asset in assets],
+        "playable_ids": {track["id"] for track in tracks},
         "projects": piece.projects.all(),
+        "player_data": {
+            "tracks": tracks,
+            "sections": _player_sections([piece], members=False),
+            "storageKey": f"piece:{piece.id}",
+        },
     }
     return render(request, "choir/committee_repertoire_detail.html", context)
+
+
+VOICE_ORDER = [code for code, _ in LearningAsset.PART_CHOICES]
+
+
+def _piece_part_names(assets):
+    """The parts a section can have a starting note for: one per part the
+    piece's player tracks cover ("Soprano", "Alto 1", "Alto 2", ...), in
+    voice order; the four voice parts when it has no tracks yet."""
+    names = {
+        (VOICE_ORDER.index(asset.voice_part), asset.player_part)
+        for asset in assets
+        if asset.voice_part != "ALL" and _plays_in_player(asset)
+    }
+    if not names:
+        return [label for code, label in LearningAsset.PART_CHOICES if code != "ALL"]
+    return [name for _, name in sorted(names)]
+
+
+@login_required
+@user_passes_test(is_committee)
+@require_POST
+def committee_asset_edit_view(request, asset_id):
+    """Saves one asset's corrections from the piece page (its name, voice
+    part, part name, and whether it opens in the practice player)."""
+    from .forms import AssetEditForm
+
+    asset = get_object_or_404(LearningAsset, id=asset_id)
+    form = AssetEditForm(request.POST, instance=asset, prefix=f"asset-{asset.id}")
+    if form.is_valid():
+        form.save()
+        messages.success(request, f"'{asset.asset_name}' saved.")
+    else:
+        errors = " ".join(error for field_errors in form.errors.values() for error in field_errors)
+        messages.error(request, f"'{asset.asset_name}' wasn't saved. {errors}")
+    return redirect("committee_repertoire_detail", piece_id=asset.repertoire_id)
+
+
+@login_required
+@user_passes_test(is_committee)
+@require_POST
+def committee_section_delete_view(request, section_id):
+    """Deletes a section and its starting notes."""
+    section = get_object_or_404(Section, id=section_id)
+    section.delete()
+    messages.success(request, f"Section '{section.label}' deleted.")
+    return redirect(reverse("committee_repertoire_detail", args=[section.repertoire_id]) + "#sections")
+
+
+@login_required
+@user_passes_test(is_committee)
+@require_POST
+def committee_section_move_view(request, section_id):
+    """Moves a section one place up or down (POST direction=up|down) in
+    the order members see them."""
+    section = get_object_or_404(Section, id=section_id)
+    siblings = list(Section.objects.filter(repertoire_id=section.repertoire_id))
+    index = siblings.index(section)
+    target = index - 1 if request.POST.get("direction") == "up" else index + 1
+    if 0 <= target < len(siblings):
+        siblings[index], siblings[target] = siblings[target], siblings[index]
+        for order, sibling in enumerate(siblings):
+            if sibling.order != order:
+                sibling.order = order
+                sibling.save(update_fields=["order"])
+    return redirect(reverse("committee_repertoire_detail", args=[section.repertoire_id]) + "#sections")
 
 
 @login_required

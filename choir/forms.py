@@ -1,3 +1,6 @@
+import re
+from decimal import Decimal
+
 from django import forms
 from django.contrib.auth.models import User
 from django.db import models
@@ -14,8 +17,12 @@ from .models import (
     MemberProfile,
     Project,
     Repertoire,
+    Section,
+    SectionNote,
     SubscriptionPayment,
+    format_seconds,
 )
+from .parts import normalise_part_name, normalise_pitches, part_from_filename, voice_part_for
 from .permissions import COMMITTEE_GROUP
 
 
@@ -233,6 +240,12 @@ class AssetUploadForm(forms.Form):
     several files, each asset is named after its file (minus the
     extension); asset_name is used when exactly one file or a link is
     added, and falls back to the filename when left blank.
+
+    Each file's part is read from the end of its name, as Dorico writes it
+    ("Ave verum - Alto 2.mp3", choir.parts). With "From each file's name"
+    that sets the voice part too, so a whole set of part tracks uploads in
+    one go; a chosen voice part wins, and keeps the part name only where
+    the file's agrees with it.
     """
 
     asset_name = forms.CharField(
@@ -241,7 +254,8 @@ class AssetUploadForm(forms.Form):
         widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "e.g., Soprano practice track"}),
     )
     voice_part = forms.ChoiceField(
-        choices=LearningAsset.PART_CHOICES,
+        choices=[("", "From each file's name")] + LearningAsset.PART_CHOICES,
+        required=False,
         widget=forms.Select(attrs={"class": "form-control"}),
     )
     files = MultipleFileField(
@@ -276,36 +290,204 @@ class AssetUploadForm(forms.Form):
             raise forms.ValidationError("Choose at least one file to upload, or give a link.")
         if url and not cleaned.get("asset_name"):
             self.add_error("asset_name", "Give the link a name, e.g. 'YouTube recording'.")
+        if not cleaned.get("voice_part"):
+            if url:
+                self.add_error("voice_part", "Choose the voice part this link is for.")
+            unknown = [upload.name for upload in files if not part_from_filename(upload.name)]
+            if unknown:
+                self.add_error(
+                    "voice_part",
+                    f"I can't tell the voice part from {', '.join(unknown)}. Choose one above, "
+                    "or rename the file to end with its part (e.g. '... Alto 2.mp3').",
+                )
         return cleaned
 
     def save(self, repertoire):
         """Creates and returns the new LearningAsset rows for repertoire."""
         name = self.cleaned_data.get("asset_name", "").strip()
-        part = self.cleaned_data["voice_part"]
+        chosen = self.cleaned_data["voice_part"]
         files = self.cleaned_data.get("files") or []
 
         if not files:
             return [
                 LearningAsset.objects.create(
                     repertoire=repertoire,
-                    voice_part=part,
+                    voice_part=chosen,
                     asset_name=name,
                     external_url=self.cleaned_data["external_url"],
+                    use_player=False,
                 )
             ]
 
         assets = []
         for upload in files:
             file_name = upload.name.rsplit(".", 1)[0][:150]
+            detected_part, detected_name = part_from_filename(upload.name) or (None, "")
+            part = chosen or detected_part
             assets.append(
                 LearningAsset.objects.create(
                     repertoire=repertoire,
                     voice_part=part,
+                    part_name=detected_name if detected_part == part else "",
                     asset_name=name if (name and len(files) == 1) else file_name,
                     file_upload=upload,
                 )
             )
         return assets
+
+
+class AssetEditForm(forms.ModelForm):
+    """Corrects one asset on the piece page: its name, voice part, part
+    name ("Alto 2", for a divisi line) and whether it opens in the
+    practice player. Rendered once per asset, so each has a prefix."""
+
+    class Meta:
+        model = LearningAsset
+        fields = ["asset_name", "voice_part", "part_name", "use_player"]
+        labels = {"asset_name": "Name", "use_player": "Open in the practice player"}
+        help_texts = {"asset_name": ""}
+        widgets = {
+            "asset_name": forms.TextInput(attrs={"class": "form-control"}),
+            "voice_part": forms.Select(attrs={"class": "form-control"}),
+            "part_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "e.g., Alto 2"}),
+        }
+
+    def clean_part_name(self):
+        text = self.cleaned_data["part_name"].strip()
+        if not text:
+            return ""
+        part_name = normalise_part_name(text)
+        if not part_name:
+            raise forms.ValidationError("Use a part name like 'Alto' or 'Alto 2'.")
+        return part_name
+
+    def clean(self):
+        cleaned = super().clean()
+        part_name = cleaned.get("part_name")
+        voice_part = cleaned.get("voice_part")
+        if part_name and voice_part and voice_part_for(part_name) != voice_part:
+            self.add_error(
+                "part_name",
+                f"'{part_name}' doesn't belong to {dict(LearningAsset.PART_CHOICES)[voice_part]}. "
+                "Change the voice part, or clear the part name.",
+            )
+        return cleaned
+
+
+class SecondsField(forms.CharField):
+    """A time in a track, typed as m:ss ("1:04.2") or plain seconds
+    ("64.2"); cleans to a Decimal of seconds, or None when blank."""
+
+    TIME = re.compile(r"^(?:(\d+):)?(\d+(?:\.\d+)?)$")
+
+    def __init__(self, **kwargs):
+        kwargs.setdefault("required", False)
+        kwargs.setdefault(
+            "widget",
+            forms.TextInput(attrs={"class": "form-control", "inputmode": "decimal", "placeholder": "m:ss"}),
+        )
+        super().__init__(**kwargs)
+
+    def prepare_value(self, value):
+        return value if isinstance(value, str) else format_seconds(value)
+
+    def to_python(self, value):
+        value = super().to_python(value).strip()
+        if not value:
+            return None
+        match = self.TIME.match(value)
+        if not match:
+            raise forms.ValidationError("Give a time like 1:04.2, or in seconds.")
+        minutes, seconds = match.groups()
+        seconds = Decimal(seconds)
+        if minutes is not None and seconds >= 60:
+            raise forms.ValidationError("Seconds after the colon must be under 60.")
+        return (Decimal(minutes or 0) * 60 + seconds).quantize(Decimal("0.001"))
+
+
+class SectionForm(forms.ModelForm):
+    """
+    Adds or edits one section of a piece (Learning Hub P2): its label,
+    bars, start and end times, and a starting note per part. part_names
+    are the piece's parts ("Soprano", "Alto 1", ...), one note field each;
+    a part left blank has no "My note" for that section.
+    """
+
+    start_seconds = SecondsField(label="Start")
+    end_seconds = SecondsField(label="End")
+
+    class Meta:
+        model = Section
+        fields = ["label", "bar_start", "bar_end", "start_seconds", "end_seconds", "published"]
+        labels = {
+            "bar_start": "First bar",
+            "bar_end": "Last bar",
+            "published": "Show to members",
+        }
+        widgets = {
+            "label": forms.TextInput(attrs={"class": "form-control", "placeholder": "e.g., Fugue entry"}),
+            "bar_start": forms.NumberInput(attrs={"class": "form-control", "min": 1}),
+            "bar_end": forms.NumberInput(attrs={"class": "form-control", "min": 1}),
+        }
+
+    def __init__(self, *args, part_names=(), **kwargs):
+        kwargs.setdefault("auto_id", "section_%s")
+        super().__init__(*args, **kwargs)
+        existing = {}
+        if self.instance.pk:
+            existing = {note.part_name: note.pitches for note in self.instance.notes.all()}
+        # Parts the piece has, then any a note already exists for
+        names = list(part_names) + [name for name in existing if name not in part_names]
+        self.note_fields = []
+        for index, part_name in enumerate(names):
+            field_name = f"note_{index}"
+            self.fields[field_name] = forms.CharField(
+                label=part_name,
+                required=False,
+                max_length=50,
+                initial=existing.get(part_name, "").replace(",", ", "),
+                widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "e.g., E4"}),
+            )
+            self.note_fields.append((field_name, part_name))
+
+    def notes(self):
+        """The note fields as bound fields, for the template."""
+        return [self[field_name] for field_name, _ in self.note_fields]
+
+    def clean(self):
+        cleaned = super().clean()
+        bar_start, bar_end = cleaned.get("bar_start"), cleaned.get("bar_end")
+        if bar_end is not None and bar_start is None:
+            self.add_error("bar_start", "Give the first bar too.")
+        elif bar_start is not None and bar_end is not None and bar_end < bar_start:
+            self.add_error("bar_end", "The last bar can't come before the first.")
+        start, end = cleaned.get("start_seconds"), cleaned.get("end_seconds")
+        if start is not None and end is not None and end <= start:
+            self.add_error("end_seconds", "The end must come after the start.")
+        for field_name, _ in self.note_fields:
+            try:
+                cleaned[field_name] = normalise_pitches(cleaned.get(field_name))
+            except ValueError as error:
+                self.add_error(field_name, f"'{error}' isn't a note. Use names like E4, F#4 or Bb3.")
+        return cleaned
+
+    def save(self, commit=True):
+        # Times set by hand are never overwritten by a score import (P3)
+        if {"start_seconds", "end_seconds"} & set(self.changed_data):
+            self.instance.timing_source = "MANUAL"
+        section = super().save(commit=commit)
+        if commit:
+            for field_name, part_name in self.note_fields:
+                pitches = self.cleaned_data.get(field_name)
+                if pitches:
+                    SectionNote.objects.update_or_create(
+                        section=section,
+                        part_name=part_name,
+                        defaults={"pitches": pitches, "source": "MANUAL"},
+                    )
+                else:
+                    SectionNote.objects.filter(section=section, part_name=part_name).delete()
+        return section
 
 
 class AvailabilityPollForm(forms.ModelForm):

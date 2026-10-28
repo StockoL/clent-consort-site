@@ -15,6 +15,7 @@ from .models import (
     MemberProfile,
     Project,
     Repertoire,
+    Section,
     SubscriptionPayment,
 )
 
@@ -189,13 +190,19 @@ class AuditionApplicationAdmin(admin.ModelAdmin):
 class LearningAssetInline(admin.TabularInline):
     model = LearningAsset
     extra = 2
-    fields = ["asset_name", "voice_part", "file_upload", "external_url"]
+    fields = ["asset_name", "voice_part", "part_name", "use_player", "file_upload", "external_url"]
+
+
+class SectionInline(admin.TabularInline):
+    model = Section
+    extra = 0
+    fields = ["order", "label", "bar_start", "bar_end", "start_seconds", "end_seconds", "published"]
 
 
 @admin.register(Repertoire)
 class RepertoireAdmin(admin.ModelAdmin):
     list_display = ("composer", "title")
-    inlines = [LearningAssetInline]
+    inlines = [LearningAssetInline, SectionInline]
 
 
 # ==============================================================================

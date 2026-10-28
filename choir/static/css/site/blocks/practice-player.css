@@ -176,7 +176,7 @@
   white-space: nowrap;
 }
 
-.player-bar__loop {
+.player-bar__pill {
   flex: 0 0 auto;
   min-height: 2.75rem;
   padding: 0 0.8rem;
@@ -187,9 +187,55 @@
   cursor: pointer;
 }
 
-.player-bar__loop[aria-pressed="true"] {
+.player-bar__pill[aria-pressed="true"] {
   background: #c9a45e;
   color: #1a1a1a;
+}
+
+/* --- Sections (Learning Hub P2): one button per marked passage --- */
+.practice-player__sections {
+  display: grid;
+  gap: var(--space-3xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.practice-player__sections > li {
+  max-width: none; /* global-styles.css caps every li at a reading measure */
+}
+
+.practice-player__section {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 0.5rem;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.practice-player__section[aria-pressed="true"] {
+  border-color: #c9a45e;
+  background: rgba(201, 164, 94, 0.15);
+}
+
+.practice-player__section-meta {
+  color: var(--colors-text-muted);
+  font-size: var(--step--1);
+  font-variant-numeric: tabular-nums;
+}
+
+.practice-player__section-edited {
+  color: #c9a45e;
+  font-size: var(--step--1);
 }
 
 /* Room for the bar at the end of the page, and no back-to-top button

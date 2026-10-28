@@ -1,8 +1,10 @@
 {% comment %}
-    The practice player (Build Order Phase 7 / Learning Hub P1). Driven by
-    js/practice-player.js from the #player-data JSON block; hidden until
-    the script has started, so without JavaScript the hub's plain audio
-    players are all there is.
+    The practice player (Build Order Phase 7 / Learning Hub P1, sections
+    and "My note" from P2). Driven by js/practice-player.js from the
+    #player-data JSON block; hidden until the script has started, so
+    without JavaScript the hub's plain audio players are all there is.
+    Sections, the part toggle and "My note" show only when the loaded
+    track's piece has them.
 {% endcomment %}
 <section class="card flow practice-player" data-variant="invert" id="practice-player" aria-labelledby="practice-player-title" data-player hidden>
     <div class="practice-player__head">
@@ -10,15 +12,26 @@
         <p class="text-small"><strong data-player-name>Choose a track</strong> <span class="text-muted" data-player-piece></span></p>
     </div>
 
+    <div class="cluster" data-player-parts role="group" aria-label="Part" hidden></div>
+
     <div class="practice-player__wave" data-player-wave aria-hidden="true"></div>
     <p class="text-small text-muted" data-player-fallback hidden>The waveform isn't available for this track, but playing, looping and speed all work.</p>
 
     <div class="practice-player__row">
-        <button type="button" class="button btn-small" data-variant="primary" data-player-toggle aria-label="Play">
-            <span aria-hidden="true" data-player-toggle-icon>▶</span><span data-player-toggle-text> Play</span>
-        </button>
+        <div class="cluster">
+            <button type="button" class="button btn-small" data-variant="primary" data-player-toggle aria-label="Play">
+                <span aria-hidden="true" data-player-toggle-icon>▶</span><span data-player-toggle-text> Play</span>
+            </button>
+            <button type="button" class="button btn-small" data-variant="outline" data-player-note hidden>My note</button>
+        </div>
         <p class="practice-player__time text-small" aria-live="off"><span data-player-time>0:00</span> / <span data-player-duration>0:00</span></p>
     </div>
+
+    <fieldset class="practice-player__group" data-player-sections hidden>
+        <legend class="form-label text-small">Sections</legend>
+        <ul class="practice-player__sections" role="list" data-player-section-list></ul>
+        <p class="text-small text-muted">Tap a section to loop it from its lead-in. If you then move the loop, the section shows as edited; tap it again to go back to its marked bars.</p>
+    </fieldset>
 
     <fieldset class="practice-player__group">
         <legend class="form-label text-small">Loop</legend>
@@ -56,5 +69,6 @@
         <span aria-hidden="true" data-player-toggle-icon>▶</span>
     </button>
     <a href="#practice-player" class="player-bar__title text-small"><span data-player-name>Choose a track</span></a>
-    <button type="button" class="player-bar__loop text-small" data-player-loop aria-pressed="false">Loop off</button>
+    <button type="button" class="player-bar__pill text-small" data-player-note hidden>My note</button>
+    <button type="button" class="player-bar__pill text-small" data-player-loop aria-pressed="false">Loop off</button>
 </div>

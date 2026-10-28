@@ -16,10 +16,21 @@
  *   start minus the lead-in, or stops there with loop off.
  * - Each track remembers position, speed, loop and lead-in in localStorage.
  * - Presigned track URLs expire; on a load error the player fetches fresh
- *   ones from the page's refreshUrl once and resumes.
+ *   ones from the page's refreshUrl (if it has one) once and resumes.
+ * - Sections (Learning Hub P2) belong to the piece, so every part's track
+ *   shares them: tapping one sets the loop to it. "My note" plays the
+ *   loaded track's starting note for the chosen section (or the piece's
+ *   first). Divisi tracks of one piece and part ("Alto 1", "Alto 2") get a
+ *   toggle that swaps track, keeping the place, loop and speed.
+ * - On the committee's piece page, [data-player-section] buttons loop a
+ *   section, and [data-player-capture] buttons copy the playhead's time
+ *   into the input named by data-player-capture. Both start hidden with
+ *   data-player-show, and appear once the player has started.
  *
  * Data comes from the #player-data JSON block:
- *   { tracks: [{id, name, piece, composer, url}], refreshUrl, storageKey }
+ *   { tracks: [{id, name, piece, pieceId, composer, part, voicePart, url}],
+ *     sections: {pieceId: [{id, label, bars, start, end, published, notes: {part: "E4,G4"}}]},
+ *     voicePart, refreshUrl, storageKey }
  */
 (() => {
   const dataBlock = document.getElementById("player-data");
@@ -29,6 +40,7 @@
   const data = JSON.parse(dataBlock.textContent);
   let tracks = data.tracks;
   if (!tracks.length) return;
+  const sectionsByPiece = data.sections || {};
 
   const $ = (selector) => panel.querySelector(selector);
   const $$ = (selector) => document.querySelectorAll(selector);
@@ -65,6 +77,12 @@
     return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, "0")}`;
   };
 
+  // To the millisecond, as the section form takes it: 64.2 -> "1:04.200"
+  const formatPrecise = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    return `${minutes}:${(seconds - minutes * 60).toFixed(3).padStart(6, "0")}`;
+  };
+
   // ------------------------------------------------------------ the player
   const audio = document.createElement("audio");
   audio.preload = "metadata";
@@ -88,6 +106,7 @@
   const regions = wavesurfer.registerPlugin(WaveSurfer.Regions.create());
 
   let current = null; // the loaded track
+  let activeSection = null; // id of the section last tapped, if any
   let loopRegion = null;
   let loopOn = false;
   let leadIn = DEFAULT_LEAD_IN;
@@ -97,16 +116,21 @@
   let lastSaved = 0;
 
   // ----------------------------------------------------------- persistence
-  function saveState() {
-    if (!current) return;
-    store.set(trackKey(current.id), {
+  function currentState() {
+    return {
       t: audio.currentTime,
       rate: audio.playbackRate,
       a: loopRegion ? loopRegion.start : null,
       b: loopRegion ? loopRegion.end : null,
       loop: loopOn,
       lead: leadIn,
-    });
+      sec: activeSection,
+    };
+  }
+
+  function saveState() {
+    if (!current) return;
+    store.set(trackKey(current.id), currentState());
   }
 
   // ------------------------------------------------------------- loop region
@@ -135,6 +159,7 @@
     label.textContent = whole
       ? "Whole track"
       : `Loop ${formatTime(loopRegion.start)}–${formatTime(loopRegion.end)}`;
+    markSections();
   }
 
   function setLoop(on) {
@@ -198,7 +223,10 @@
   }
 
   // ------------------------------------------------------------- loading
-  function loadTrack(id, { autoplay = false, force = false } = {}) {
+  // carry: a state to start from instead of the track's saved one (a
+  // divisi switch keeps the place, loop and speed, since the tracks share
+  // a timeline).
+  function loadTrack(id, { autoplay = false, force = false, carry = null } = {}) {
     const track = tracks.find((t) => t.id === id);
     if (!track) return;
 
@@ -216,7 +244,8 @@
     triedRefresh = false;
     loopRegion = null;
     regions.clearRegions();
-    pendingState = { ...(store.get(trackKey(id)) || {}), autoplay };
+    pendingState = { ...(carry || store.get(trackKey(id)) || {}), autoplay };
+    activeSection = pieceSections().some((s) => s.id === pendingState.sec) ? pendingState.sec : null;
     store.set(LAST_TRACK_KEY, id);
 
     document.querySelectorAll("[data-player-name]").forEach((el) => {
@@ -227,6 +256,9 @@
     $$("[data-player-load]").forEach((button) => {
       button.setAttribute("aria-pressed", String(Number(button.dataset.playerLoad) === id));
     });
+    renderParts();
+    renderSections();
+    showNoteButton();
 
     wavesurfer.load(track.url).catch(() => {
       // Reported through the "error" event below
@@ -255,7 +287,7 @@
   // Presigned URLs expire: fetch fresh ones once, then reload this track
   // where it was.
   async function refreshUrls() {
-    if (triedRefresh || !current) return;
+    if (triedRefresh || !current || !data.refreshUrl) return;
     triedRefresh = true;
     const resumeAt = audio.currentTime || (store.get(trackKey(current.id)) || {}).t || 0;
     try {
@@ -386,6 +418,131 @@
     });
   }
 
+  // "F#4" -> 66; null for anything that isn't a pitch
+  const PITCH_CLASSES = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+  function midiFor(pitch) {
+    const match = /^([A-G])(#|b)?(\d)$/.exec(pitch.trim());
+    if (!match) return null;
+    const shift = match[2] === "#" ? 1 : match[2] === "b" ? -1 : 0;
+    return 12 * (Number(match[3]) + 1) + PITCH_CLASSES[match[1]] + shift;
+  }
+
+  // -------------------------------------------------------------- sections
+  const pieceSections = () => (current && sectionsByPiece[String(current.pieceId)]) || [];
+  const findSection = (id) => pieceSections().find((s) => s.id === id);
+
+  // The loaded track's starting pitches for the chosen section, or the
+  // piece's first: matched on the track's part ("Alto 2"), or for a
+  // full-choir track the hub's voice part ("Alto").
+  function notePitches() {
+    const list = pieceSections();
+    const section = findSection(activeSection) || [...list].sort((x, y) => x.start - y.start)[0];
+    if (!section) return [];
+    const pitches = section.notes[current.part] || section.notes[data.voicePart] || "";
+    return pitches.split(",").map(midiFor).filter((midi) => midi !== null);
+  }
+
+  function showNoteButton() {
+    const hasNote = current && notePitches().length > 0;
+    $$("[data-player-note]").forEach((button) => {
+      button.hidden = !hasNote;
+    });
+  }
+
+  function playSection(id) {
+    const section = findSection(id);
+    if (!section) return;
+    activeSection = id;
+    setLoopRegion(section.start, section.end);
+    wavesurfer.setTime(rangeStart());
+    wavesurfer.play().catch(() => {});
+    showNoteButton();
+    saveState();
+  }
+
+  // Built with textContent: labels are the committee's own text
+  function renderSections() {
+    const fieldset = $("[data-player-sections]");
+    const list = $("[data-player-section-list]");
+    list.replaceChildren();
+    const sections = pieceSections();
+    fieldset.hidden = sections.length === 0;
+    sections.forEach((section) => {
+      const item = document.createElement("li");
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "practice-player__section";
+      button.dataset.playerSection = section.id;
+
+      const label = document.createElement("strong");
+      label.textContent = section.label;
+      const meta = document.createElement("span");
+      meta.className = "practice-player__section-meta";
+      meta.textContent = [
+        section.bars ? `bars ${section.bars}` : "",
+        formatTime(section.end - section.start),
+        section.published === false ? "hidden from members" : "",
+      ]
+        .filter(Boolean)
+        .join(" · ");
+      const edited = document.createElement("span");
+      edited.className = "practice-player__section-edited";
+      edited.dataset.sectionEdited = "";
+      edited.textContent = "edited";
+      edited.hidden = true;
+
+      button.append(label, meta, edited);
+      item.append(button);
+      list.append(item);
+    });
+    markSections();
+  }
+
+  // The chosen section is highlighted, and marked "edited" once the loop
+  // no longer matches its bounds (tapping it again restores them).
+  function markSections() {
+    const section = findSection(activeSection);
+    const edited =
+      section && loopRegion
+        ? Math.abs(loopRegion.start - section.start) > 0.05 || Math.abs(loopRegion.end - section.end) > 0.05
+        : false;
+    panel.querySelectorAll("[data-player-section]").forEach((button) => {
+      const isActive = Number(button.dataset.playerSection) === activeSection;
+      button.setAttribute("aria-pressed", String(isActive));
+      button.querySelector("[data-section-edited]").hidden = !(isActive && edited);
+    });
+  }
+
+  // ----------------------------------------------------------- divisi parts
+  // Other tracks of the same piece and voice part, e.g. Alto 1 and Alto 2
+  const divisiTracks = () =>
+    current && current.voicePart !== "ALL"
+      ? tracks.filter((t) => t.pieceId === current.pieceId && t.voicePart === current.voicePart && t.part)
+      : [];
+
+  function renderParts() {
+    const group = $("[data-player-parts]");
+    group.replaceChildren();
+    const siblings = divisiTracks();
+    group.hidden = siblings.length < 2;
+    if (group.hidden) return;
+    siblings.forEach((track) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "button btn-small";
+      button.dataset.variant = track.id === current.id ? "primary" : "outline";
+      button.dataset.playerPart = track.id;
+      button.setAttribute("aria-pressed", String(track.id === current.id));
+      button.textContent = track.part;
+      group.append(button);
+    });
+  }
+
+  function switchPart(id) {
+    if (!current || id === current.id) return;
+    loadTrack(id, { carry: currentState(), autoplay: !audio.paused });
+  }
+
   // --------------------------------------------------------------- controls
   // Loop start/end at the playhead. A start after the current end keeps
   // the rest of the track (not a half-second sliver); an end before the
@@ -405,11 +562,20 @@
 
   document.addEventListener("click", (event) => {
     const target = event.target.closest(
-      "[data-player-toggle], [data-player-loop], [data-player-set-start], [data-player-set-end], [data-player-whole], [data-player-load]",
+      "[data-player-toggle], [data-player-loop], [data-player-set-start], [data-player-set-end], [data-player-whole], [data-player-load], [data-player-section], [data-player-part], [data-player-note], [data-player-capture]",
     );
     if (!target) return;
 
-    if (target.matches("[data-player-load]")) {
+    if (target.matches("[data-player-section]")) {
+      playSection(Number(target.dataset.playerSection));
+    } else if (target.matches("[data-player-part]")) {
+      switchPart(Number(target.dataset.playerPart));
+    } else if (target.matches("[data-player-note]")) {
+      notePitches().forEach(playNote);
+    } else if (target.matches("[data-player-capture]")) {
+      const input = document.getElementById(target.dataset.playerCapture);
+      if (input) input.value = formatPrecise(audio.currentTime);
+    } else if (target.matches("[data-player-load]")) {
       loadTrack(Number(target.dataset.playerLoad), { autoplay: true });
       const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       panel.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
@@ -454,7 +620,9 @@
   document.querySelectorAll(".player-fallback").forEach((el) => {
     el.hidden = true;
   });
-  $$("[data-player-load]").forEach((button) => {
+  // Buttons elsewhere on the page that need the player (Practise, and on
+  // the committee's piece page, Play and Set from player)
+  $$("[data-player-load], [data-player-show]").forEach((button) => {
     button.hidden = false;
   });
 

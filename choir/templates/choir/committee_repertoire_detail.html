@@ -3,20 +3,139 @@
 
 {% block title %}{{ piece.title }} - Music Library - Clent Consort{% endblock title %}
 
+{% block body_class %}{% if player_data.tracks %}has-player{% endif %}{% endblock body_class %}
+
 {% block page_title %}{{ piece.title }}{% endblock page_title %}
 {% block page_lede %}{{ piece.composer }}{% if projects %} · in {% for p in projects %}{{ p.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}{% endblock page_lede %}
 
 {% block members_content %}
+  {% if player_data.tracks %}
+    {% include 'choir/_practice_player.html' %}
+  {% endif %}
+
+  <section class="card flow" data-variant="invert" id="sections" aria-labelledby="sections-title">
+    <h2 class="text-primary text-step-1 card-heading" id="sections-title">Sections</h2>
+    <p class="text-small settings-hint">Passages members can loop in the practice player, shared by every part's track. Members see a section once it has a start and end time and is set to show.{% if player_data.tracks %} Play a track above and use "Set from player" to take the times by ear.{% endif %}</p>
+
+    {% if sections %}
+    <ul class="list-unstyled flow flow--small" role="list">
+      {% for section in sections %}
+      <li class="item-row">
+        <div>
+          <strong>{{ section.label }}</strong>
+          {% if not section.published %}<span class="badge">Hidden</span>{% elif not section.has_times %}<span class="badge" data-status="warning">Needs times</span>{% endif %}
+          <br>
+          <span class="text-small text-muted">
+            {% if section.bars %}Bars {{ section.bars }} · {% endif %}{% if section.has_times %}{{ section.times }}{% else %}No times yet{% endif %}
+            {% for note in section.notes.all %}{% if forloop.first %} · {% endif %}{{ note.part_name }} {{ note.pitches_display }}{% if not forloop.last %}, {% endif %}{% endfor %}
+          </span>
+        </div>
+
+        <div class="item-row__actions">
+          {% if section.has_times and player_data.tracks %}
+          <button type="button" class="button btn-small" data-variant="outline" data-player-section="{{ section.id }}" data-player-show hidden>Play<span class="visually-hidden"> {{ section.label }}</span></button>
+          {% endif %}
+          <a href="?section={{ section.id }}#section-form" class="button btn-small" data-variant="outline">Edit<span class="visually-hidden"> {{ section.label }}</span></a>
+          {% if not forloop.first %}
+          <form method="POST" action="{% url 'committee_section_move' section.id %}" class="inline-form">
+            {% csrf_token %}
+            <input type="hidden" name="direction" value="up">
+            <button type="submit" class="button btn-small" data-variant="outline" aria-label="Move {{ section.label }} up"><span aria-hidden="true">↑</span></button>
+          </form>
+          {% endif %}
+          {% if not forloop.last %}
+          <form method="POST" action="{% url 'committee_section_move' section.id %}" class="inline-form">
+            {% csrf_token %}
+            <input type="hidden" name="direction" value="down">
+            <button type="submit" class="button btn-small" data-variant="outline" aria-label="Move {{ section.label }} down"><span aria-hidden="true">↓</span></button>
+          </form>
+          {% endif %}
+          <form method="POST" action="{% url 'committee_section_delete' section.id %}" class="inline-form" data-confirm="Delete the section '{{ section.label }}'? Members will no longer see it.">
+            {% csrf_token %}
+            <button type="submit" class="button btn-small" data-variant="outline">Delete<span class="visually-hidden"> {{ section.label }}</span></button>
+          </form>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-muted text-small">No sections yet.</p>
+    {% endif %}
+
+    <form method="POST" action="{% url 'committee_repertoire_detail' piece.id %}#sections" class="flow flow--small" id="section-form">
+      {% csrf_token %}
+      <input type="hidden" name="section" value="1">
+      {% if editing %}<input type="hidden" name="section_id" value="{{ editing.id }}">{% endif %}
+      <h3 class="text-step-0">{% if editing %}Edit "{{ editing.label }}"{% else %}Add a section{% endif %}</h3>
+
+      <div class="form-group flow flow--small">
+        <label for="{{ section_form.label.id_for_label }}" class="form-label text-small">{{ section_form.label.label }}</label>
+        {{ section_form.label }}
+        <div class="form-error">{{ section_form.label.errors }}</div>
+      </div>
+
+      <div class="switcher field-row">
+        <div class="form-group flow flow--small">
+          <label for="{{ section_form.bar_start.id_for_label }}" class="form-label text-small">{{ section_form.bar_start.label }}</label>
+          {{ section_form.bar_start }}
+          <div class="form-error">{{ section_form.bar_start.errors }}</div>
+        </div>
+        <div class="form-group flow flow--small">
+          <label for="{{ section_form.bar_end.id_for_label }}" class="form-label text-small">{{ section_form.bar_end.label }}</label>
+          {{ section_form.bar_end }}
+          <div class="form-error">{{ section_form.bar_end.errors }}</div>
+        </div>
+      </div>
+
+      <div class="switcher field-row">
+        {% for field in section_form %}{% if field.name == "start_seconds" or field.name == "end_seconds" %}
+        <div class="form-group flow flow--small">
+          <label for="{{ field.id_for_label }}" class="form-label text-small">{{ field.label }} (m:ss)</label>
+          {{ field }}
+          {% if player_data.tracks %}
+          <button type="button" class="button btn-small align-start" data-variant="outline" data-player-capture="{{ field.id_for_label }}" data-player-show hidden>Set from player<span class="visually-hidden">: {{ field.label|lower }}</span></button>
+          {% endif %}
+          <div class="form-error">{{ field.errors }}</div>
+        </div>
+        {% endif %}{% endfor %}
+      </div>
+
+      <fieldset class="form-group flow flow--small">
+        <legend class="form-label text-small">Starting notes</legend>
+        <p class="text-small settings-hint">The note each part starts the section on, played by "My note", e.g. E4, F#4 or Bb3. Two notes for a part that starts on a chord. Leave a part blank to have no note.</p>
+        <div class="switcher field-row">
+          {% for field in section_form.notes %}
+          <div class="form-group flow flow--small">
+            <label for="{{ field.id_for_label }}" class="form-label text-small">{{ field.label }}</label>
+            {{ field }}
+            <div class="form-error">{{ field.errors }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </fieldset>
+
+      <div class="consent-row">
+        {{ section_form.published }}
+        <label for="{{ section_form.published.id_for_label }}" class="form-label text-small">{{ section_form.published.label }}</label>
+      </div>
+
+      <div class="cluster">
+        <button type="submit" class="button" data-variant="primary">{% if editing %}Save Section{% else %}Add Section{% endif %}</button>
+        {% if editing %}<a href="{% url 'committee_repertoire_detail' piece.id %}#sections" class="button" data-variant="outline">Cancel</a>{% endif %}
+      </div>
+    </form>
+  </section>
+
   <section class="card flow" data-variant="invert">
     <h2 class="text-primary text-step-1 card-heading">Scores &amp; Tracks</h2>
 
     {% if assets %}
     <ul class="list-unstyled flow flow--small" role="list">
-      {% for asset in assets %}
+      {% for asset, form in assets %}
       <li class="item-row">
         <div>
           <strong>{{ asset.asset_name }}</strong>
-          <span class="badge">{{ asset.get_voice_part_display }}</span>
+          <span class="badge">{% if asset.part_name %}{{ asset.part_name }}{% else %}{{ asset.get_voice_part_display }}{% endif %}</span>
           <br>
           <span class="text-small text-muted">
             {% if asset.file_upload %}<a href="{{ asset.file_upload.url }}" target="_blank" rel="noopener noreferrer" class="text-link">{{ asset.file_upload.name|cut:"learning_assets/" }}</a>{% elif asset.external_url %}<a href="{{ asset.external_url }}" target="_blank" rel="noopener noreferrer" class="text-link">External link</a>{% else %}No file{% endif %}
@@ -24,10 +143,41 @@
           </span>
         </div>
 
-        <form method="POST" action="{% url 'committee_asset_delete' asset.id %}" class="inline-form" data-confirm="Delete '{{ asset.asset_name }}'? Members will no longer see it, and the file is removed.">
-          {% csrf_token %}
-          <button type="submit" class="button btn-small" data-variant="outline">Delete<span class="visually-hidden"> {{ asset.asset_name }}</span></button>
-        </form>
+        <div class="item-row__actions">
+          {% if asset.id in playable_ids %}
+          <button type="button" class="button btn-small" data-variant="outline" data-player-load="{{ asset.id }}" aria-pressed="false" hidden>Practise<span class="visually-hidden"> {{ asset.asset_name }}</span></button>
+          {% endif %}
+          <form method="POST" action="{% url 'committee_asset_delete' asset.id %}" class="inline-form" data-confirm="Delete '{{ asset.asset_name }}'? Members will no longer see it, and the file is removed.">
+            {% csrf_token %}
+            <button type="submit" class="button btn-small" data-variant="outline">Delete<span class="visually-hidden"> {{ asset.asset_name }}</span></button>
+          </form>
+        </div>
+
+        <details class="w-100">
+          <summary class="text-small">Edit<span class="visually-hidden"> {{ asset.asset_name }}</span></summary>
+          <form method="POST" action="{% url 'committee_asset_edit' asset.id %}" class="flow flow--small">
+            {% csrf_token %}
+            <div class="switcher field-row">
+              <div class="form-group flow flow--small">
+                <label for="{{ form.asset_name.id_for_label }}" class="form-label text-small">{{ form.asset_name.label }}</label>
+                {{ form.asset_name }}
+              </div>
+              <div class="form-group flow flow--small">
+                <label for="{{ form.voice_part.id_for_label }}" class="form-label text-small">{{ form.voice_part.label }}</label>
+                {{ form.voice_part }}
+              </div>
+              <div class="form-group flow flow--small">
+                <label for="{{ form.part_name.id_for_label }}" class="form-label text-small">Part name (for a divided part)</label>
+                {{ form.part_name }}
+              </div>
+            </div>
+            <div class="consent-row">
+              {{ form.use_player }}
+              <label for="{{ form.use_player.id_for_label }}" class="form-label text-small">{{ form.use_player.label }}</label>
+            </div>
+            <button type="submit" class="button btn-small align-start" data-variant="primary">Save<span class="visually-hidden"> {{ asset.asset_name }}</span></button>
+          </form>
+        </details>
       </li>
       {% endfor %}
     </ul>
@@ -39,6 +189,7 @@
   <section class="card flow" data-variant="invert">
     <h2 class="text-primary text-step-1 card-heading">Upload</h2>
     <p class="text-small settings-hint">PDF, MP3, M4A or WAV, up to 50 MB each. Choose several files at once and each becomes its own asset, named after its file. Very large WAVs are best converted to MP3 first: uploads that take too long can time out.</p>
+    <p class="text-small settings-hint">Files whose names end with their part, as Dorico names them ("Ave verum - Alto 2.mp3"), go to that voice part, so a whole set of tracks can go up in one go. Choose a voice part to put every file under it instead. Correct any asset afterwards with its Edit link.</p>
 
     <form method="POST" enctype="multipart/form-data" class="flow flow--small">
       {% csrf_token %}
@@ -48,6 +199,7 @@
       <div class="form-group flow flow--small">
         <label for="{{ upload_form.voice_part.id_for_label }}" class="form-label text-small">Voice part</label>
         {{ upload_form.voice_part }}
+        <div class="form-error">{{ upload_form.voice_part.errors }}</div>
       </div>
 
       <div class="form-group flow flow--small">
@@ -98,4 +250,10 @@
 
 {% block scripts %}
 <script src="{% static 'js/confirm-forms.js' %}" defer></script>
+{% if player_data.tracks %}
+{{ player_data|json_script:"player-data" }}
+<script src="{% static 'js/vendor/wavesurfer/wavesurfer-7.12.12.min.js' %}" defer></script>
+<script src="{% static 'js/vendor/wavesurfer/regions-7.12.12.min.js' %}" defer></script>
+<script src="{% static 'js/practice-player.js' %}" defer></script>
+{% endif %}
 {% endblock scripts %}

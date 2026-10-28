@@ -5,6 +5,7 @@ import tempfile
 from io import StringIO
 from unittest import mock
 from datetime import datetime, timedelta
+from decimal import Decimal
 
 from allauth.account.models import EmailAddress
 from anymail.message import AnymailRecipientStatus
@@ -33,8 +34,11 @@ from .models import (
     LearningAsset,
     Project,
     Repertoire,
+    Section,
+    SectionNote,
     SubscriptionPayment,
 )
+from .parts import normalise_part_name, normalise_pitches, part_from_filename, voice_part_for
 from .permissions import COMMITTEE_GROUP, is_committee
 
 Invitation = get_invitation_model()
@@ -2011,6 +2015,330 @@ class PracticePlayerTests(TestCase):
     def test_unknown_part_gets_no_tracks(self):
         response = self.client.get(reverse("hub_tracks", args=["kazoo", self.project.id]))
         self.assertEqual(response.json()["tracks"], [])
+
+
+class PartNameTests(TestCase):
+    """Learning Hub P2: reading parts from Dorico's file names, and
+    tidying typed part names and pitches (choir.parts)."""
+
+    def test_part_from_filename(self):
+        cases = {
+            "Ave verum - Alto 2.mp3": ("ALT", "Alto 2"),
+            "ave verum soprano.mp3": ("SOP", "Soprano"),
+            "Bass_1.m4a": ("BAS", "Bass 1"),
+            "Ave verum - Baritone.mp3": ("BAS", "Baritone"),
+            "TENOR.wav": ("TEN", "Tenor"),
+            "Full score.pdf": None,
+            "Contrabass.mp3": None,
+            "Tenor solo.mp3": None,
+        }
+        for filename, expected in cases.items():
+            with self.subTest(filename=filename):
+                self.assertEqual(part_from_filename(filename), expected)
+
+    def test_normalise_part_name(self):
+        self.assertEqual(normalise_part_name("alto  2"), "Alto 2")
+        self.assertEqual(normalise_part_name("Bass"), "Bass")
+        self.assertIsNone(normalise_part_name("Organ"))
+        self.assertEqual(voice_part_for("Baritone"), "BAS")
+        self.assertIsNone(voice_part_for("Organ"))
+
+    def test_normalise_pitches(self):
+        self.assertEqual(normalise_pitches("e4"), "E4")
+        self.assertEqual(normalise_pitches("F♯4 A4"), "F#4,A4")
+        self.assertEqual(normalise_pitches("bb3, D4"), "Bb3,D4")
+        self.assertEqual(normalise_pitches("  "), "")
+        with self.assertRaises(ValueError):
+            normalise_pitches("H4")
+
+
+class PracticePlayerSectionTests(TestCase):
+    """Learning Hub P2: the committee marks sections of a piece, with
+    starting notes per part, and members' hubs get the published ones and
+    only their own part's notes."""
+
+    def setUp(self):
+        create_committee_user(username="committee", password="pw")
+        User.objects.create_user(username="member", password="pw")
+        self.client.login(username="committee", password="pw")
+        self.project = Project.objects.create(name="Clent 2026", status="ACTIVE")
+        self.piece = Repertoire.objects.create(composer="Byrd", title="Ave verum")
+        self.project.repertoire.add(self.piece)
+        self.detail = reverse("committee_repertoire_detail", args=[self.piece.id])
+
+    def track(self, part, filename, part_name=""):
+        return LearningAsset.objects.create(
+            repertoire=self.piece,
+            voice_part=part,
+            part_name=part_name,
+            asset_name=filename,
+            file_upload=SimpleUploadedFile(filename, b"ID3"),
+        )
+
+    def section(self, label, start=None, end=None, published=True, order=0, **notes):
+        section = Section.objects.create(
+            repertoire=self.piece,
+            label=label,
+            start_seconds=start,
+            end_seconds=end,
+            published=published,
+            order=order,
+        )
+        for part_name, pitches in notes.items():
+            SectionNote.objects.create(section=section, part_name=part_name.replace("_", " "), pitches=pitches)
+        return section
+
+    def post_section(self, **data):
+        payload = {"section": "1", "label": "Opening", "published": "on"}
+        payload.update(data)
+        return self.client.post(self.detail, payload)
+
+    # --- committee: adding and editing ---
+
+    def test_add_section_with_times_and_notes(self):
+        self.track("SOP", "Ave verum - Soprano.mp3", "Soprano")
+        self.track("ALT", "Ave verum - Alto 1.mp3", "Alto 1")
+        self.track("ALT", "Ave verum - Alto 2.mp3", "Alto 2")
+        response = self.client.get(self.detail)
+        # One note field per part the tracks cover, in voice order
+        self.assertEqual(
+            [part for _, part in response.context["section_form"].note_fields], ["Soprano", "Alto 1", "Alto 2"]
+        )
+
+        response = self.post_section(
+            label="Fugue entry",
+            bar_start="23",
+            bar_end="31",
+            start_seconds="1:04.2",
+            end_seconds="88",
+            note_0="e4",
+            note_1="",
+            note_2="C4 E4",
+        )
+        self.assertRedirects(response, self.detail + "#sections", fetch_redirect_response=False)
+        section = Section.objects.get()
+        self.assertEqual(section.start_seconds, Decimal("64.200"))
+        self.assertEqual(section.end_seconds, Decimal("88.000"))
+        self.assertEqual(section.timing_source, "MANUAL")
+        self.assertEqual(section.bars, "23–31")
+        self.assertEqual(
+            dict(section.notes.values_list("part_name", "pitches")), {"Soprano": "E4", "Alto 2": "C4,E4"}
+        )
+
+    def test_without_tracks_the_four_voice_parts_get_note_fields(self):
+        response = self.client.get(self.detail)
+        self.assertEqual(
+            [part for _, part in response.context["section_form"].note_fields], ["Soprano", "Alto", "Tenor", "Bass"]
+        )
+
+    def test_section_form_rejects_bad_input(self):
+        cases = [
+            {"end_seconds": "0:30", "start_seconds": "0:40"},
+            {"start_seconds": "1:75"},
+            {"start_seconds": "soon"},
+            {"bar_start": "10", "bar_end": "4"},
+            {"bar_end": "4"},
+            {"note_0": "H4"},
+        ]
+        for data in cases:
+            with self.subTest(data=data):
+                response = self.post_section(**data)
+                self.assertEqual(response.status_code, 200)
+                self.assertFalse(Section.objects.exists())
+
+    def test_edit_shows_times_as_minutes_and_replaces_notes(self):
+        section = self.section("Opening", "64.2", "90", Soprano="E4", Alto="C4")
+        response = self.client.get(self.detail, {"section": section.id})
+        self.assertContains(response, 'value="1:04.2"')
+        self.assertContains(response, 'value="1:30"')
+
+        self.post_section(section_id=section.id, label="Opening", start_seconds="0", end_seconds="30", note_0="G4", note_1="")
+        section.refresh_from_db()
+        self.assertEqual(section.end_seconds, Decimal("30"))
+        self.assertEqual(dict(section.notes.values_list("part_name", "pitches")), {"Soprano": "G4"})
+        self.assertEqual(Section.objects.count(), 1)
+
+    def test_new_sections_go_last_and_move_up_and_down(self):
+        first = self.section("First", order=0)
+        self.section("Second", order=1)
+        self.post_section(label="Third")
+        self.assertEqual(list(self.piece.sections.values_list("label", flat=True)), ["First", "Second", "Third"])
+
+        third = Section.objects.get(label="Third")
+        self.client.post(reverse("committee_section_move", args=[third.id]), {"direction": "up"})
+        self.assertEqual(list(self.piece.sections.values_list("label", flat=True)), ["First", "Third", "Second"])
+
+        self.client.post(reverse("committee_section_move", args=[first.id]), {"direction": "up"})  # already first
+        self.client.post(reverse("committee_section_move", args=[first.id]), {"direction": "down"})
+        self.assertEqual(list(self.piece.sections.values_list("label", flat=True)), ["Third", "First", "Second"])
+
+    def test_delete_removes_the_section_and_its_notes(self):
+        section = self.section("Opening", Soprano="E4")
+        response = self.client.post(reverse("committee_section_delete", args=[section.id]))
+        self.assertRedirects(response, self.detail + "#sections", fetch_redirect_response=False)
+        self.assertFalse(Section.objects.exists())
+        self.assertFalse(SectionNote.objects.exists())
+
+    def test_section_urls_are_committee_only(self):
+        section = self.section("Opening", "0", "10")
+        self.client.login(username="member", password="pw")
+        for url, data in [
+            (self.detail, {"section": "1", "label": "Sneaky"}),
+            (reverse("committee_section_move", args=[section.id]), {"direction": "down"}),
+            (reverse("committee_section_delete", args=[section.id]), {}),
+        ]:
+            with self.subTest(url=url):
+                self.assertEqual(self.client.post(url, data).status_code, 302)
+        self.assertEqual(list(Section.objects.values_list("label", flat=True)), ["Opening"])
+
+    # --- committee: the player on the piece page ---
+
+    def test_piece_page_has_the_player_with_every_section_that_has_times(self):
+        self.track("SOP", "sop.mp3")
+        shown = self.section("Shown", "0", "10")
+        hidden = self.section("Hidden", "10", "20", published=False)
+        self.section("No times yet")
+        response = self.client.get(self.detail)
+        self.assertContains(response, 'id="player-data"')
+        sections = response.context["player_data"]["sections"][str(self.piece.id)]
+        self.assertEqual([s["id"] for s in sections], [shown.id, hidden.id])
+        self.assertContains(response, f'data-player-section="{shown.id}"')
+        self.assertContains(response, 'data-player-capture="section_start_seconds"')
+
+    # --- members ---
+
+    def hub_data(self, part="alto"):
+        self.client.login(username="member", password="pw")
+        response = self.client.get(reverse("hub", args=[part, self.project.id]))
+        return response.context["player_data"]
+
+    def test_hub_gets_published_sections_with_times_in_order(self):
+        self.track("ALT", "alto.mp3")
+        later = self.section("Later", "30", "40", order=1)
+        first = self.section("First", "0", "10", order=0)
+        self.section("Unpublished", "10", "20", published=False, order=2)
+        self.section("No times", order=3)
+        sections = self.hub_data()["sections"][str(self.piece.id)]
+        self.assertEqual([s["id"] for s in sections], [first.id, later.id])
+        self.assertEqual(sections[0]["start"], 0.0)
+        self.assertEqual(sections[0]["end"], 10.0)
+
+    def test_hub_gets_only_its_own_parts_notes(self):
+        self.track("ALT", "alto.mp3")
+        self.section("Opening", "0", "10", Soprano="E4", Alto_1="C4", Alto_2="A3", Bass="C3")
+        data = self.hub_data("alto")
+        notes = data["sections"][str(self.piece.id)][0]["notes"]
+        self.assertEqual(notes, {"Alto 1": "C4", "Alto 2": "A3"})
+        self.assertEqual(data["voicePart"], "Alto")
+
+        notes = self.hub_data("baritone")["sections"][str(self.piece.id)][0]["notes"]
+        self.assertEqual(notes, {"Bass": "C3"})
+
+    def test_tracks_carry_their_part_and_piece(self):
+        self.track("ALT", "Ave verum - Alto 2.mp3", "Alto 2")
+        self.track("ALT", "alto.mp3")
+        self.track("ALL", "full.mp3")
+        tracks = {t["name"]: t for t in self.hub_data()["tracks"]}
+        self.assertEqual(tracks["Ave verum - Alto 2.mp3"]["part"], "Alto 2")
+        self.assertEqual(tracks["alto.mp3"]["part"], "Alto")
+        self.assertEqual(tracks["full.mp3"]["part"], "")
+        self.assertEqual(tracks["alto.mp3"]["pieceId"], self.piece.id)
+
+    def test_tracks_taken_out_of_the_player_stay_on_the_page(self):
+        track = self.track("ALT", "alto.mp3")
+        LearningAsset.objects.filter(id=track.id).update(use_player=False)
+        self.client.login(username="member", password="pw")
+        response = self.client.get(reverse("hub", args=["alto", self.project.id]))
+        self.assertEqual(response.context["player_data"]["tracks"], [])
+        self.assertContains(response, f'id="audio-{track.id}"')
+
+
+class AssetPartUploadTests(TestCase):
+    """Learning Hub P2: uploads read each file's part from its name, and
+    the committee can correct an asset's part afterwards."""
+
+    def setUp(self):
+        create_committee_user(username="committee", password="pw")
+        User.objects.create_user(username="member", password="pw")
+        self.client.login(username="committee", password="pw")
+        self.piece = Repertoire.objects.create(composer="Byrd", title="Ave verum")
+        self.detail = reverse("committee_repertoire_detail", args=[self.piece.id])
+
+    def upload(self, files, voice_part="", **data):
+        payload = {"upload": "1", "voice_part": voice_part, "asset_name": "", "external_url": "", "files": files}
+        payload.update(data)
+        return self.client.post(self.detail, payload)
+
+    def mp3(self, name):
+        return SimpleUploadedFile(name, b"ID3", content_type="audio/mpeg")
+
+    def test_parts_come_from_the_file_names(self):
+        self.upload([self.mp3("Ave verum - Soprano.mp3"), self.mp3("Ave verum - Alto 1.mp3"), self.mp3("Ave verum - Baritone.mp3")])
+        self.assertEqual(
+            sorted(LearningAsset.objects.values_list("voice_part", "part_name")),
+            [("ALT", "Alto 1"), ("BAS", "Baritone"), ("SOP", "Soprano")],
+        )
+
+    def test_a_file_without_a_part_needs_a_chosen_voice_part(self):
+        response = self.upload([self.mp3("Ave verum - Alto.mp3"), SimpleUploadedFile("Score.pdf", b"%PDF")])
+        self.assertContains(response, "Score.pdf")
+        self.assertFalse(LearningAsset.objects.exists())
+
+        self.upload([SimpleUploadedFile("Score.pdf", b"%PDF")], voice_part="ALL")
+        self.assertEqual(list(LearningAsset.objects.values_list("voice_part", "part_name")), [("ALL", "")])
+
+    def test_a_chosen_voice_part_keeps_only_a_matching_part_name(self):
+        self.upload([self.mp3("Ave verum - Alto 2.mp3"), self.mp3("Ave verum - Tenor.mp3")], voice_part="ALT")
+        self.assertEqual(
+            sorted(LearningAsset.objects.values_list("asset_name", "voice_part", "part_name")),
+            [("Ave verum - Alto 2", "ALT", "Alto 2"), ("Ave verum - Tenor", "ALT", "")],
+        )
+
+    def test_a_link_needs_a_voice_part_and_stays_out_of_the_player(self):
+        response = self.client.post(
+            self.detail, {"upload": "1", "voice_part": "", "asset_name": "Recording", "external_url": "https://youtube.com/x"}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(LearningAsset.objects.exists())
+
+        self.client.post(
+            self.detail, {"upload": "1", "voice_part": "ALL", "asset_name": "Recording", "external_url": "https://youtube.com/x"}
+        )
+        self.assertFalse(LearningAsset.objects.get().use_player)
+
+    def edit(self, asset, **data):
+        payload = {"asset_name": asset.asset_name, "voice_part": asset.voice_part, "part_name": "", "use_player": "on"}
+        payload.update(data)
+        return self.client.post(
+            reverse("committee_asset_edit", args=[asset.id]),
+            {f"asset-{asset.id}-{key}": value for key, value in payload.items()},
+        )
+
+    def test_edit_corrects_the_part(self):
+        self.upload([self.mp3("Ave verum - Alto.mp3")])
+        asset = LearningAsset.objects.get()
+        response = self.edit(asset, part_name="alto 2", use_player="")
+        self.assertRedirects(response, self.detail, fetch_redirect_response=False)
+        asset.refresh_from_db()
+        self.assertEqual(asset.part_name, "Alto 2")
+        self.assertFalse(asset.use_player)
+
+    def test_edit_rejects_a_part_name_from_another_voice_part(self):
+        self.upload([self.mp3("Ave verum - Alto.mp3")])
+        asset = LearningAsset.objects.get()
+        for part_name in ["Tenor", "Organ"]:
+            with self.subTest(part_name=part_name):
+                self.edit(asset, part_name=part_name)
+                asset.refresh_from_db()
+                self.assertEqual(asset.part_name, "Alto")
+
+    def test_edit_is_committee_only(self):
+        self.upload([self.mp3("Ave verum - Alto.mp3")])
+        asset = LearningAsset.objects.get()
+        self.client.login(username="member", password="pw")
+        self.assertEqual(self.edit(asset, asset_name="Changed").status_code, 302)
+        asset.refresh_from_db()
+        self.assertEqual(asset.asset_name, "Ave verum - Alto")
 
 
 class MemberInvitationTests(TestCase):

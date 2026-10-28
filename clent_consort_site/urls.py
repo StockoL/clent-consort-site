@@ -10,6 +10,7 @@ from django.views.generic import RedirectView, TemplateView
 from choir.views import (
     about_view,
     committee_asset_delete_view,
+    committee_asset_edit_view,
     committee_broadcast,
     committee_broadcast_delete_view,
     committee_broadcast_preview_view,
@@ -40,6 +41,8 @@ from choir.views import (
     committee_repertoire_view,
     committee_rsvp_report,
     committee_schedule_event,  # <-- ADD THIS IMPORT LINE HERE
+    committee_section_delete_view,
+    committee_section_move_view,
     committee_settings_view,
     committee_toggle_exempt_view,
     committee_update_rsvp_override,
@@ -110,6 +113,21 @@ urlpatterns = [
         "members/committee/repertoire/assets/<int:asset_id>/delete/",
         committee_asset_delete_view,
         name="committee_asset_delete",
+    ),
+    path(
+        "members/committee/repertoire/assets/<int:asset_id>/edit/",
+        committee_asset_edit_view,
+        name="committee_asset_edit",
+    ),
+    path(
+        "members/committee/repertoire/sections/<int:section_id>/delete/",
+        committee_section_delete_view,
+        name="committee_section_delete",
+    ),
+    path(
+        "members/committee/repertoire/sections/<int:section_id>/move/",
+        committee_section_move_view,
+        name="committee_section_move",
     ),
     path("members/committee/polling/", committee_poll_manage_view, name="committee_polling"),
     path(

@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.conf import settings
 from django.contrib.auth.models import User  # Django's built-in secure login model
 from django.core.mail import EmailMultiAlternatives
@@ -327,6 +329,13 @@ class LearningAsset(models.Model):
     # stamp every existing row with the migration's run time).
     uploaded_at = models.DateTimeField(null=True, blank=True, editable=False)
 
+    # Practice player (Learning Hub P2). part_name is the Dorico part this
+    # track is ("Alto 2"), read from the file name on upload; blank means
+    # the whole voice part. use_player is off for tracks that don't share
+    # the piece's timeline, so sections wouldn't fit them.
+    part_name = models.CharField(max_length=40, blank=True)
+    use_player = models.BooleanField(default=True)
+
     def __str__(self):
         return f"{self.repertoire.title} - {self.get_voice_part_display()} Asset"
 
@@ -334,6 +343,99 @@ class LearningAsset(models.Model):
         if self._state.adding and self.uploaded_at is None:
             self.uploaded_at = timezone.now()
         super().save(*args, **kwargs)
+
+    @property
+    def player_part(self):
+        """The part name starting notes are matched on: part_name, or the
+        voice part's own name ("Alto"); blank for full-choir assets."""
+        if self.part_name:
+            return self.part_name
+        return "" if self.voice_part == "ALL" else self.get_voice_part_display()
+
+
+def format_seconds(value):
+    """64.2 -> "1:04.2"; how section times are shown and edited."""
+    if value is None or value == "":
+        return ""
+    total = Decimal(value)
+    minutes = int(total // 60)
+    seconds = f"{total - minutes * 60:06.3f}".rstrip("0").rstrip(".")
+    return f"{minutes}:{seconds}"
+
+
+class Section(models.Model):
+    """
+    A passage of a piece the committee marks for members to loop ("Fugue
+    entry, bars 23-31"). Sections belong to the piece, not a track: every
+    part's track comes from one Dorico export and shares its timeline.
+    Members see a section once it's published and has start and end times.
+    """
+
+    SOURCE_CHOICES = [("IMPORT", "From the score import"), ("MANUAL", "Set by hand")]
+
+    repertoire = models.ForeignKey(Repertoire, on_delete=models.CASCADE, related_name="sections")
+    label = models.CharField(max_length=100)
+    bar_start = models.PositiveIntegerField(null=True, blank=True)
+    bar_end = models.PositiveIntegerField(null=True, blank=True)
+    # Which time through, for bars inside repeats (used by the P3 import)
+    pass_number = models.PositiveSmallIntegerField(default=1)
+    start_seconds = models.DecimalField(max_digits=8, decimal_places=3, null=True, blank=True)
+    end_seconds = models.DecimalField(max_digits=8, decimal_places=3, null=True, blank=True)
+    # Null means the player's own lead-in setting
+    lead_in_seconds = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True)
+    timing_source = models.CharField(max_length=6, choices=SOURCE_CHOICES, default="MANUAL")
+    order = models.PositiveIntegerField(default=0)
+    published = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["order", "id"]
+
+    def __str__(self):
+        return f"{self.repertoire.title}: {self.label}"
+
+    @property
+    def has_times(self):
+        return self.start_seconds is not None and self.end_seconds is not None
+
+    @property
+    def times(self):
+        """"1:04.2 to 1:28" for display, or "" without both times."""
+        if not self.has_times:
+            return ""
+        return f"{format_seconds(self.start_seconds)} to {format_seconds(self.end_seconds)}"
+
+    @property
+    def bars(self):
+        """"23–31", "23" or "" for display."""
+        if self.bar_start is None:
+            return ""
+        if self.bar_end is None or self.bar_end == self.bar_start:
+            return str(self.bar_start)
+        return f"{self.bar_start}–{self.bar_end}"
+
+
+class SectionNote(models.Model):
+    """One part's starting note(s) for a section, played by "My note".
+    part_name matches a track's player_part ("Alto", "Alto 2")."""
+
+    section = models.ForeignKey(Section, on_delete=models.CASCADE, related_name="notes")
+    part_name = models.CharField(max_length=40)
+    # Scientific pitch names, comma-separated for a chord: "E4" or "E4,G4"
+    pitches = models.CharField(max_length=50)
+    source = models.CharField(max_length=6, choices=Section.SOURCE_CHOICES, default="MANUAL")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["section", "part_name"], name="one_note_per_part_per_section"),
+        ]
+
+    def __str__(self):
+        return f"{self.section}: {self.part_name} {self.pitches}"
+
+    @property
+    def pitches_display(self):
+        """"E4,G4" -> "E4 and G4"."""
+        return " and ".join(self.pitches.split(","))
 
 
 # ==============================================================================
