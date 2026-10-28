@@ -117,6 +117,12 @@ Sections are passages singers can loop with one tap, such as "Fugue entry, bars 
 
 Singers see a section once it has both times and "Show to members" is ticked, so untick it while a section is unfinished. Play loops a section in the player on the same page; Edit, the arrows and Delete change, reorder and remove it.
 
+### Sections for one track
+
+A section can also belong to just one track, for a passage only that part needs, such as an alto descant. Under Scores & Tracks, press Sections on the track. The page then shows that track's own sections, loads the track in the player, and asks for a starting note for its part only. Add sections the same way as above; "Back to the sections for every track" returns to the piece's.
+
+Singers playing that track see the piece's sections followed by the track's own. For a track with different timing from the others, such as a live recording, open its Edit and untick "Use the piece's sections", so it shows only its own.
+
 ## Asking about availability
 
 1. Open Polling.

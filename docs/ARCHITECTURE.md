@@ -50,8 +50,8 @@ How the site is built. It is a single Django project with one app, `choir`, serv
 | `InvitationProfile` | The name and voice part entered when an invitation was sent, copied to the profile on sign-up |
 | `SubscriptionPayment` | A payment against a term, with amount, date, method and an optional transaction ID |
 | `Repertoire` | A piece: composer and title |
-| `LearningAsset` | A score, track or external link for one piece and one voice part (or the full choir), with a part name for a divided part ("Alto 2") and whether it opens in the practice player |
-| `Section`, `SectionNote` | A passage of a piece singers can loop (label, bars, start and end times, shown or hidden), and each part's starting note for it. Sections belong to the piece, because every part's track comes from one Dorico export and shares its timeline. |
+| `LearningAsset` | A score, track or external link for one piece and one voice part (or the full choir), with a part name for a divided part ("Alto 2"), whether it opens in the practice player, and whether the piece's sections apply to it |
+| `Section`, `SectionNote` | A passage singers can loop (label, bars, start and end times, shown or hidden), and each part's starting note for it. Most sections belong to the piece, because every part's track comes from one Dorico export and shares its timeline; a section with an asset belongs to that one track. |
 | `AvailabilityPoll`, `AvailabilityResponse` | A poll for a planning project, and each member's answer and note |
 | `Enquiry`, `AuditionApplication` | Contact form submissions, with handled and handled-by |
 | `ChoirCommunication` | A broadcast: audience, subject, message, status (draft or sent) and sent time |
