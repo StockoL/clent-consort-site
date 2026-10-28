@@ -26,6 +26,7 @@ How the site is built. It is a single Django project with one app, `choir`, serv
 | `choir/views.py`, `choir/urls.py` | Every page and endpoint |
 | `choir/forms.py` | Forms, with their widget classes set here rather than in templates |
 | `choir/permissions.py` | Who counts as committee and who counts as a singer |
+| `choir/parts.py` | Reading a part ("Alto 2") from a track's file name, and tidying typed part names and pitches |
 | `choir/signals.py` | Automatic profiles and RSVPs |
 | `choir/context_processors.py` | Choir settings, committee flag and inbox count for every template |
 | `choir/management/commands/` | `seed_dev_data` and `import_event_archive` |
@@ -49,7 +50,8 @@ How the site is built. It is a single Django project with one app, `choir`, serv
 | `InvitationProfile` | The name and voice part entered when an invitation was sent, copied to the profile on sign-up |
 | `SubscriptionPayment` | A payment against a term, with amount, date, method and an optional transaction ID |
 | `Repertoire` | A piece: composer and title |
-| `LearningAsset` | A score, track or external link for one piece and one voice part (or the full choir) |
+| `LearningAsset` | A score, track or external link for one piece and one voice part (or the full choir), with a part name for a divided part ("Alto 2") and whether it opens in the practice player |
+| `Section`, `SectionNote` | A passage of a piece singers can loop (label, bars, start and end times, shown or hidden), and each part's starting note for it. Sections belong to the piece, because every part's track comes from one Dorico export and shares its timeline. |
 | `AvailabilityPoll`, `AvailabilityResponse` | A poll for a planning project, and each member's answer and note |
 | `Enquiry`, `AuditionApplication` | Contact form submissions, with handled and handled-by |
 | `ChoirCommunication` | A broadcast: audience, subject, message, status (draft or sent) and sent time |

@@ -17,7 +17,7 @@ How I test the site: an automated suite that runs before every change ships, bro
 
 ## Automated tests
 
-The suite has 196 tests in 51 classes, in `choir/tests.py`. On 27 October 2026 all 196 pass.
+The suite has 218 tests in 54 classes, in `choir/tests.py`. On 28 October 2026 all 218 pass.
 
 ```bash
 python scripts/dev.py test     # build the CSS bundle, collectstatic, then the whole suite
@@ -37,8 +37,8 @@ Tests never touch real services. Email uses Django's in-memory outbox, or Anymai
 | RSVPs | `AttendanceAutoCreationTests`, `DashboardPastEventsTests`, `CommitteeRsvpProjectScopingTests`, `RsvpReportQueryCountTests`, `RsvpOverviewNoRepliesTests` | Every singer gets an RSVP for a new event; past events leave the upcoming list; the RSVP report runs a fixed number of queries however much data there is; a singer with no replies has no rate rather than 0% |
 | Access | `CommitteePermissionModelTests`, `CommitteeAccessModelTests`, `CommitteeNewUrlPermissionTests`, `NonSingerTests` | Only the Committee group reaches committee pages; `is_staff` alone does not; non-singers get no RSVPs and are left out of the ledger |
 | Public pages | `ContactFormTests`, `ContactHoneypotTests`, `PublicEventsPageTests`, `PublicMobilePassTests`, `EventPublicFieldsAndCalendarTests` | Both forms save and email; a filled honeypot is refused; rehearsals and non-public events never reach the Events page; calendar files are valid |
-| Members | `MemberRepertoireViewTests`, `HubViewTests`, `PracticePlayerTests`, `AvailabilityPollingTests`, `MemberPollNotesTests`, `DashboardSubnavTests`, `MembersShellTests` | Hubs show only their part's files; the player's JSON lists the right tracks; poll notes save and clear |
-| Committee | `CommitteeEventManagementTests`, `CommitteePollEditingTests`, `CommitteeFinancialsTests`, `ChoirSettingsTests`, `CommitteeInboxTests`, `CommitteeInboxBulkTests`, `RepertoireLibraryTests`, `MemberManagementTests`, `MemberInvitationTests`, `CommitteeDocumentDeleteTests`, `CommitteeNavPanelTests`, `CommitteeEventsNavLabelTests` | Payments log against the right term; uploads are checked for type and size; deleting an asset deletes its file; a member cannot remove their own committee access; an invitation can be accepted end to end through allauth |
+| Members | `MemberRepertoireViewTests`, `HubViewTests`, `PracticePlayerTests`, `PracticePlayerSectionTests`, `AvailabilityPollingTests`, `MemberPollNotesTests`, `DashboardSubnavTests`, `MembersShellTests` | Hubs show only their part's files; the player's JSON lists the right tracks; a hub gets only shown sections that have times, in order, with only its own part's starting notes; poll notes save and clear |
+| Committee | `CommitteeEventManagementTests`, `CommitteePollEditingTests`, `CommitteeFinancialsTests`, `ChoirSettingsTests`, `CommitteeInboxTests`, `CommitteeInboxBulkTests`, `RepertoireLibraryTests`, `MemberManagementTests`, `MemberInvitationTests`, `CommitteeDocumentDeleteTests`, `CommitteeNavPanelTests`, `CommitteeEventsNavLabelTests`, `AssetPartUploadTests`, `PartNameTests` | Payments log against the right term; uploads are checked for type and size; each uploaded track's part is read from its file name; sections reject impossible times, bars and notes; deleting an asset deletes its file; a member cannot remove their own committee access; an invitation can be accepted end to end through allauth |
 | Email | `ChoirCommunicationSendTests`, `CommitteeBroadcastTests`, `BroadcastWorkflowTests`, `EmailManagementTests` | A broadcast is sent once only; it goes as one batch so recipients cannot see each other; a test send records nothing; failures are recorded per recipient |
 | Site rules | `NoInlineStylesTests`, `TemplateAccessibilityRulesTests`, `PageScriptsTests`, `SiteMessagesTests`, `LoginErrorTests`, `ValidatorFindingsTests`, `HelpTextReferenceTests` | No template has an inline style; every data table has a caption and column scope; every `target="_blank"` link has `rel="noopener"`; public pages load only their own scripts; date fields render in the format browsers accept; the contact page's ids are unique and its labels point at real fields; every `aria-describedby` points at an element on the page |
 | Tooling | `SeedDevDataCommandTests`, `EventArchiveImportTests`, `ProjectModelTests`, `CssBundleTests` | The seed command refuses to run in production; the archive import can be run twice without duplicating anything; the CSS bundle keeps every file in its layer and order, its image paths resolve, and production pages link it |
@@ -55,6 +55,7 @@ Headless Chrome will not make a window narrower than 500 pixels, so for true 375
 | Phone menu and About videos | The menu opens and closes, a tap on the backdrop cannot reach a link beneath it, and no video downloads on a phone page load |
 | Practice player | The waveform draws, speed changes, `[` and `]` set a loop that playback stays inside, and settings return after a reload. Repeated with the audio on a second origin sending no CORS headers, which showed the fallback bar working. |
 | Player loop range | Setting a loop while playing, clicking before or after the loop, and pressing Play from outside it all keep playback inside the loop |
+| Player sections | On an alto hub at 375 pixels: only shown sections are listed; tapping one loops it from its lead-in; moving the loop marks it edited and tapping it restores it; My note plays the right pitches for Alto 1, Alto 2 and a two-note chord; switching from Alto 1 to Alto 2 mid-loop keeps the place, section and loop; a reload restores them. On the committee's piece page: Play loops a hidden section, and Set from player copies the playhead's time into the form. No script errors. |
 | Committee drop-down | The drop-down opens, closes on Escape and outside taps, and shrank the nav strip's overflow from about 1,900 pixels to about 335 |
 | User journeys | Every route in [User journeys](USER_JOURNEYS.md), with real form submissions, captured as screenshots |
 
@@ -86,10 +87,24 @@ I only trust performance scores from the live site, because my local server does
 
 What holds performance back:
 
-- Render-blocking CSS, on every page. The stylesheet was 52 files joined with `@import`, and the browser only finds each file after loading the one that imports it. Lighthouse estimated that one file would save about 1.9 seconds before the first paint. Production now serves one minified file (see [Architecture](ARCHITECTURE.md#one-file-in-production)); the figures above were measured before that change, and I will re-measure once it is live.
+- Render-blocking CSS, on every page. The stylesheet was 52 files joined with `@import`, and the browser only finds each file after loading the one that imports it. Lighthouse estimated that one file would save about 1.9 seconds before the first paint. Production now serves one minified file (see [Architecture](ARCHITECTURE.md#one-file-in-production)), measured below.
 - On About, the mission banner's background image, which is the largest element on the page.
 
 About's best-practices score of 77 comes from the embedded YouTube and Spotify players, which set third-party cookies and log browser warnings. I accept that, as I did in April, because the recordings are the best evidence of how the choir sounds.
+
+### After the single CSS file
+
+I ran the same audits on 28 October 2026, once the single file was live, three runs per page with the median shown.
+
+| Page | Performance before | Performance after | Largest paint before | Largest paint after |
+| --- | --- | --- | --- | --- |
+| Home | 86 | 89 | 3.4 s | 3.0 s |
+| About | 77 | 78 | 4.9 s | 4.7 s |
+| Events | 90 | 90 | 2.9 s | 2.9 s |
+| Contact | 90 | 90 | 2.9 s | 2.9 s |
+| Login | 90 | 90 | 2.9 s | 2.9 s |
+
+Accessibility, best practices and SEO are unchanged. The scores moved less than Lighthouse's 1.9-second estimate suggested, and the reason is in the detail. The first paint Lighthouse measured on the actual page load did fall, from 0.73 seconds to 0.45 on Contact. But the score comes from a simulation of a slow phone, and in that simulation the next thing in the way is the Google Fonts stylesheet: before it can arrive, the phone has to connect to two more servers, one for the stylesheet and one for the font files. So the simulated first paint stays at 2.9 seconds. Serving the fonts from the site itself is the next step, and is on the [roadmap](ROADMAP.md#smaller-improvements).
 
 ### Members' and committee pages
 

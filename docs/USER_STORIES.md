@@ -101,6 +101,8 @@ As a singer learning a hard passage, I want to loop it, slow it down without cha
 
 Given a practice track on my hub, when I open it in the practice player, then I can set a loop start and end, play at 50 to 110 per cent speed, and play any note on an on-screen keyboard. The player remembers where I was.
 
+Given the committee has marked sections of a piece, when I tap one, then it loops from its lead-in, and "My note" plays my part's starting note for it. If my part is divided, I can switch to the other line's track without losing my place.
+
 #### S4. Help plan future projects
 
 As a singer, I want to say whether I am free for a proposed date, with a note if it is complicated.
@@ -148,6 +150,8 @@ As a committee member, I want to invite new singers by email, edit members' deta
 #### K5. Music library
 
 As a committee member, I want to add pieces and upload scores and tracks for each voice part, several files at a time.
+
+Given a set of part tracks exported from Dorico, when I upload them together, then each goes to the part its file name ends with. Given a piece with tracks, when I mark a section with its times and each part's starting note, then singers can loop it and hear their note once I show it to them.
 
 #### K6. Email the choir safely
 
@@ -200,7 +204,7 @@ As the maintainer, I want credentials kept only in environment variables, and pr
 | P5 Accessible | Must | Done: Lighthouse accessibility 100 on all public pages |
 | S1 My schedule | Must | Done: dashboard with RSVPs and rehearsal plans; past events folded away |
 | S2 My music | Must | Done: voice-part hubs per project |
-| S3 Practise properly | Should | Done for loop, speed and note finder. Conductor-marked sections and "My note" are planned ([roadmap](ROADMAP.md)) |
+| S3 Practise properly | Should | Done: loop, speed, note finder, marked sections, "My note" and the divided-part toggle. Filling sections in from Dorico's files is planned ([roadmap](ROADMAP.md)) |
 | S4 Help plan future projects | Should | Done: Looking Ahead with notes |
 | S5 Subscriptions | Should | Done: amount, deadline and bank details from the committee's settings |
 | S6 My details | Must | Done |
@@ -209,7 +213,7 @@ As the maintainer, I want credentials kept only in environment variables, and pr
 | K2 See who's coming | Must | Done |
 | K3 Track subscriptions | Must | Done, with a term selector |
 | K4 Members and invitations | Must | Done |
-| K5 Music library | Must | Done |
+| K5 Music library | Must | Done, with parts read from file names and sections for the practice player |
 | K6 Email the choir safely | Must | Done: draft, preview, test, send once, per-recipient record |
 | K7 The contact inbox | Should | Done, with bulk mark-handled and delete-as-spam |
 | K8 Settings without a developer | Should | Done |
@@ -217,7 +221,7 @@ As the maintainer, I want credentials kept only in environment variables, and pr
 | K10 Public events | Should | Done |
 | K11 Duty of care | Must | Done |
 | K12 Committee documents | Should | Done |
-| M1 Safe changes | Must | Done: 196 automated tests, `scripts/dev.py` and seed data |
+| M1 Safe changes | Must | Done: 218 automated tests, `scripts/dev.py` and seed data |
 | M2 No secrets in the repository | Must | Done |
 
 ## Won't have, for now

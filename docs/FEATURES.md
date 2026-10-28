@@ -93,8 +93,11 @@ The player sits at the top of each voice-part hub. It uses wavesurfer.js, vendor
 - An optional lead-in of a few seconds before the loop start.
 - Speed from 50% to 110% without changing the pitch.
 - A note finder: an on-screen keyboard that plays any note, for checking a starting note.
-- A bar fixed to the bottom of the screen keeps Play and Loop in reach while scrolling the hub.
-- It remembers each track's position, speed, loop and lead-in in the browser's local storage, so a singer picks up where they left off on that device.
+- Sections the committee has marked, listed under the waveform with their bars and length. Tapping one loops it from its lead-in. If the singer then moves the loop, the section shows as edited, and tapping it again goes back to its marked bars.
+- "My note" plays the singer's starting note for the chosen section, or for the piece's first section if none is chosen. It plays the note for the track loaded, so Alto 2 hears Alto 2's note.
+- Where a part is divided, a toggle switches between the lines' tracks (Alto 1 and Alto 2, say) without losing the place, the loop or the speed, since the tracks share a timeline.
+- A bar fixed to the bottom of the screen keeps Play, My note and Loop in reach while scrolling the hub.
+- It remembers each track's position, speed, loop, lead-in and chosen section in the browser's local storage, so a singer picks up where they left off on that device.
 
 If the browser cannot read the audio file to draw a waveform, the player falls back to a plain progress bar and everything else still works.
 
@@ -107,7 +110,7 @@ If the browser cannot read the audio file to draw a waveform, the player falls b
 | Members | Everyone with an account, filterable by voice part and status. Invite by email with optional name and voice part, which are filled in when the invitee signs up. Resend pending invitations. |
 | Member edit | Name, voice part, singer, under 18, exempt from subscriptions, committee, active. A committee member cannot remove their own committee access or deactivate themselves. |
 | Projects | Create and edit projects (planning, active, archived), their repertoire and their public summary. |
-| Music Library | Every piece with its tracks per voice part. Add a piece; upload several PDF, MP3, M4A or WAV files at once (50 MB each), or link to a recording elsewhere. Deleting a file removes it from storage too. |
+| Music Library | Every piece with its tracks per voice part. Add a piece; upload several PDF, MP3, M4A or WAV files at once (50 MB each), each going to the part its file name ends with, or link to a recording elsewhere. Correct a file's part, or take it out of the practice player. Mark the piece's sections, with times set by ear from the player on the page and a starting note per part. Deleting a file removes it from storage too. |
 | Events | Coming events by project, with Edit and Delete, and a form for a new event. The edit page has a rich text rehearsal plan and, for performances, the public listing fields. |
 | RSVPs | Event Logistics: each event's replies by status, overridable, with an email reminder to everyone who has not answered. Member Overview: each singer's attendance rate over time, lowest first, with "No replies yet" for singers who have not answered anything. |
 | Polling | Create, edit, close and reopen availability polls; results with each member's note and a reminder link for those who have not answered. |

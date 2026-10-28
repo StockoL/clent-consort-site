@@ -15,6 +15,7 @@ How to run the choir through the site, task by task. Everything here is done fro
 - [Putting a performance on the public Events page](#putting-a-performance-on-the-public-events-page)
 - [Checking who is coming](#checking-who-is-coming)
 - [Adding scores and practice tracks](#adding-scores-and-practice-tracks)
+- [Marking sections for the practice player](#marking-sections-for-the-practice-player)
 - [Asking about availability](#asking-about-availability)
 - [Subscriptions](#subscriptions)
 - [Emailing the choir](#emailing-the-choir)
@@ -96,11 +97,25 @@ Member Overview shows each singer's attendance over time, as the share of answer
 
 1. Open Music Library. If the piece is new, add it with its composer and title.
 2. Click the piece.
-3. Choose the voice part (or Full Choir for scores everyone uses).
-4. Choose one or more files: PDF, MP3, M4A or WAV, up to 50 MB each. Each file becomes its own item, named after the file. Alternatively, paste a link to a recording elsewhere, such as YouTube, and give it a name.
+3. Leave the voice part as "From each file's name", or choose one (Full Choir for scores everyone uses).
+4. Choose one or more files: PDF, MP3, M4A or WAV, up to 50 MB each. Each file becomes its own item, named after the file. Alternatively, paste a link to a recording elsewhere, such as YouTube, give it a name and choose its voice part.
 5. Upload.
 
 The files appear straight away on that voice part's hub. Very large WAV files can time out while uploading; convert them to MP3 first. Deleting an item deletes the file too.
+
+With "From each file's name", each file goes to the part its name ends with, which is how Dorico names part tracks: "Ave verum - Alto 2.mp3" becomes an Alto track for the Alto 2 line. That lets a whole set of tracks go up in one go. A file whose name doesn't end with a part (a full score, say) needs a voice part chosen. To correct a file afterwards, open Edit under it: you can change its name, voice part and part name, or take it out of the practice player, for example a recording that doesn't follow the same timing as the part tracks.
+
+## Marking sections for the practice player
+
+Sections are passages singers can loop with one tap, such as "Fugue entry, bars 23 to 31". A section belongs to the piece, so it works on every part's track.
+
+1. Open the piece in Music Library. If it has practice tracks, the practice player is at the top of the page.
+2. Under Sections, give the section a label and, if you like, its first and last bars.
+3. Set its start and end times. Either type them (1:04.2, or 64.2 seconds), or play a track, pause where the section starts, and press "Set from player" under Start, then do the same for End.
+4. Give each part its starting note if you want singers to have "My note" for this section: E4, F#4 or Bb3, or two notes for a part that starts on a chord. Leave a part blank for no note.
+5. Add Section.
+
+Singers see a section once it has both times and "Show to members" is ticked, so untick it while a section is unfinished. Play loops a section in the player on the same page; Edit, the arrows and Delete change, reorder and remove it.
 
 ## Asking about availability
 

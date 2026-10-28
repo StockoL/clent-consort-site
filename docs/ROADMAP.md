@@ -6,18 +6,17 @@ What I plan to do next, roughly in order. Each item ships the way the October 20
 
 ## Contents
 
-- [Practice player: sections and Dorico import](#practice-player-sections-and-dorico-import)
+- [Practice player: Dorico import and offline practice](#practice-player-dorico-import-and-offline-practice)
 - [After the Ewelme project](#after-the-ewelme-project)
 - [Smaller improvements](#smaller-improvements)
 - [Could have](#could-have)
 
-## Practice player: sections and Dorico import
+## Practice player: Dorico import and offline practice
 
-This is Phase 12 of the rebuild, in three parts that each deploy separately.
+This is Phase 12 of the rebuild, in three parts that each deploy separately. The first, sections with "My note" and the divided-part toggle, was built on 28 October 2026 (see [Features](FEATURES.md#practice-player)). Two parts remain.
 
-1. Sections. The conductor marks named sections of a piece ("Fugue entry, bars 23 to 31"), and singers jump straight to one as a loop. "My note" plays the singer's starting pitch for the section. Sections belong to the piece rather than the track, because every part's track comes from the same Dorico export and shares one timeline. Divided parts (Alto 1 and Alto 2) get a toggle.
-2. Dorico import. Uploading the MIDI and MusicXML files exported from Dorico alongside the tracks fills in each bar's timing and each part's starting notes, so sections can be marked by bar number and the lead-in can be a whole bar. The site plays the stored pitch; it never tries to detect notes from the audio.
-3. Polish and offline practice, so a singer can keep practising with a weak signal.
+1. Dorico import. Uploading the MIDI and MusicXML files exported from Dorico alongside the tracks fills in each bar's timing and each part's starting notes, so sections can be marked by bar number alone and the lead-in can be a whole bar. Times and notes set by hand are never overwritten. The site plays the stored pitch; it never tries to detect notes from the audio.
+2. Polish and offline practice, so a singer can keep practising with a weak signal.
 
 ## After the Ewelme project
 
@@ -25,7 +24,7 @@ The public Events page has been built from the database since 27 October 2026. T
 
 ## Smaller improvements
 
-- Re-run Lighthouse on the live site once the single CSS file is deployed, and record the change in [Testing](TESTING.md#lighthouse).
+- Serve the Cinzel and Inter fonts from the site instead of Google Fonts. Since the CSS became one file, Lighthouse's estimate of the first paint on a slow phone is held back by the Google Fonts stylesheet, which needs connections to two more servers before anything shows (see [Testing](TESTING.md#after-the-single-css-file)).
 - The About page's mission banner is a large background image, and is the main reason About scores 77 for performance where the other pages score 86 to 90. A smaller image, or preloading it, should close most of that gap.
 - A test that every form field has a label, to match the existing tests for tables and inline styles.
 - If spam starts reaching the inbox again, add a timing check (reject submissions sent faster than a person could type them) and a limit on links, still without a CAPTCHA.

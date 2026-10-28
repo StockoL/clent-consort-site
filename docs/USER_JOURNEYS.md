@@ -25,6 +25,7 @@ I took the screenshots on 27 October 2026 from a local copy of the current code,
   - [Checking who is coming](#checking-who-is-coming)
   - [Logging a subscription payment](#logging-a-subscription-payment)
   - [Adding music](#adding-music)
+  - [Marking sections](#marking-sections)
   - [Polling availability](#polling-availability)
   - [Emailing the choir](#emailing-the-choir)
   - [Working through the inbox](#working-through-the-inbox)
@@ -114,6 +115,10 @@ Here Sam has clicked the waveform at two points and pressed Loop start and Loop 
 | --- | --- |
 | ![Practice player looping](images/journeys/singer/player-loop-phone.jpg) | ![Note finder keyboard](images/journeys/singer/player-note-finder-phone.jpg) |
 
+When the committee has marked sections of a piece, they are listed under the waveform. Here Alex, an alto, has tapped "Esse immolatum", which loops bars 5 to 8 from a two-second lead-in. "My note" plays Alex's starting note for that section, and is also on the bar at the bottom of the screen. The alto part is divided in this piece, so the Alto 1 and Alto 2 buttons swap between the two lines' tracks without losing the place or the loop.
+
+![Practice player with sections](images/journeys/singer/player-sections-phone.jpg)
+
 ![Hub on a desktop](images/journeys/singer/hub-desktop.jpg)
 
 ### Answering an availability poll
@@ -182,11 +187,17 @@ The ledger shows who has paid this term. Clara logs a payment for Alex Alto with
 
 ### Adding music
 
-The Music Library lists every piece with its tracks per voice part. On a piece's page Clara uploads an alto practice track. It appears in the list straight away, and on the alto hub.
+The Music Library lists every piece with its tracks per voice part. On a piece's page Clara uploads an alto practice track, leaving the voice part as "From each file's name": the file is called `tallis-if-ye-love-me-alto.wav`, so it goes to the altos. It appears in the list straight away, and on the alto hub.
 
 | Music Library | Track uploaded |
 | --- | --- |
 | ![Music Library](images/journeys/committee/music-library-desktop.jpg) | ![Track uploaded](images/journeys/committee/piece-uploaded-desktop.jpg) |
+
+### Marking sections
+
+A piece's page also holds its sections, with the practice player above them. Clara is editing "Esse immolatum": bars 5 to 8, from 0:08 to 0:16, with starting notes for the two alto lines. Play loops a section in the player; "Set from player" copies the playhead's time into Start or End, so times can be taken by ear. "Draft: Miserere" is hidden, so singers don't see it yet.
+
+![Sections on a piece's page](images/journeys/committee/piece-sections-desktop.jpg)
 
 ### Polling availability
 

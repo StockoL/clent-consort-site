@@ -90,7 +90,15 @@ Each got a fix and, where it could recur, a test; the [testing page](TESTING.md#
 
 Lighthouse also showed that every page's first paint waited for the stylesheet, which the browser loaded as 52 files, one after another. Production now serves them as one minified file built during each deploy, while the source files stay the ones I edit. Before switching it on I had Chrome compare the two and confirm they produce the same 496 rules in the same layers. My first attempt at the bundle had quietly lost a fifth of the CSS, because an apostrophe in a comment was read as the start of a string, and that comparison is what caught it. The suite is now at 196 tests.
 
-Phase 12, the rest of the practice player, is on the [roadmap](ROADMAP.md).
+Once the single file was live, Lighthouse's scores moved less than its estimate had promised: home went from 86 to 89, and the other pages barely changed. The real first paint did fall, but Lighthouse scores a simulated slow phone, and there the Google Fonts stylesheet is now what holds the page back. Self-hosting the fonts is on the [roadmap](ROADMAP.md).
+
+### Phase 12, part one: sections
+
+The first part of Phase 12 gave the practice player sections. On a piece's Music Library page the committee marks passages such as "Fugue entry, bars 23 to 31", with a start and end time and each part's starting note. The player sits on the same page, so the times can be set by ear: play the track, pause where the passage starts, and press "Set from player". On a singer's hub, tapping a section loops it from its lead-in, and "My note" plays their starting note for it. Where a part is divided, a toggle swaps between the Alto 1 and Alto 2 tracks without losing the place, because both come from the same Dorico export and share a timeline.
+
+Uploads now read each track's part from its file name, which is how Dorico names them ("Ave verum - Alto 2.mp3"), so a whole set of part tracks goes up in one go. The brief had the form show its guesses and ask for confirmation before saving. Instead it saves straight away and each file has an Edit link for corrections, which is one step fewer when the guesses are right, as they will be for Dorico's names. I also made bar numbers optional on a section, since times alone are enough to loop it, and used up and down buttons rather than drag-to-reorder, which is hard to do accessibly. The suite is now at 218 tests.
+
+The remaining two parts of Phase 12, the Dorico import and offline practice, are on the [roadmap](ROADMAP.md).
 
 ### Things I learned in the rebuild
 
