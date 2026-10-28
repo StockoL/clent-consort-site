@@ -335,6 +335,9 @@ class LearningAsset(models.Model):
     # the piece's timeline, so sections wouldn't fit them.
     part_name = models.CharField(max_length=40, blank=True)
     use_player = models.BooleanField(default=True)
+    # Whether the piece's sections apply to this track as well as its own
+    # (off for a track with different timing, such as a live recording)
+    piece_sections = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.repertoire.title} - {self.get_voice_part_display()} Asset"
@@ -366,14 +369,18 @@ def format_seconds(value):
 class Section(models.Model):
     """
     A passage of a piece the committee marks for members to loop ("Fugue
-    entry, bars 23-31"). Sections belong to the piece, not a track: every
-    part's track comes from one Dorico export and shares its timeline.
-    Members see a section once it's published and has start and end times.
+    entry, bars 23-31"). Most sections belong to the whole piece: every
+    part's track comes from one Dorico export and shares its timeline. A
+    section with an asset belongs to that one track only. Members see a
+    section once it's published and has start and end times.
     """
 
     SOURCE_CHOICES = [("IMPORT", "From the score import"), ("MANUAL", "Set by hand")]
 
     repertoire = models.ForeignKey(Repertoire, on_delete=models.CASCADE, related_name="sections")
+    asset = models.ForeignKey(
+        LearningAsset, on_delete=models.CASCADE, null=True, blank=True, related_name="own_sections"
+    )
     label = models.CharField(max_length=100)
     bar_start = models.PositiveIntegerField(null=True, blank=True)
     bar_end = models.PositiveIntegerField(null=True, blank=True)

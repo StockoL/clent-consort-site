@@ -14,8 +14,14 @@
   {% endif %}
 
   <section class="card flow" data-variant="invert" id="sections" aria-labelledby="sections-title">
+    {% if track %}
+    <h2 class="text-primary text-step-1 card-heading" id="sections-title">Sections: {{ track.asset_name }}</h2>
+    <p class="text-small settings-hint">Passages of this track only, which members see when they play it{% if track.piece_sections %}, alongside the piece's sections{% else %}. The piece's sections don't apply to it (see its Edit under Scores &amp; Tracks){% endif %}. Members see a section once it has a start and end time and is set to show. The track is loaded in the player above, so "Set from player" takes its times by ear.</p>
+    <p class="text-small"><a href="{% url 'committee_repertoire_detail' piece.id %}#sections" class="text-link">Back to the sections for every track</a></p>
+    {% else %}
     <h2 class="text-primary text-step-1 card-heading" id="sections-title">Sections</h2>
-    <p class="text-small settings-hint">Passages members can loop in the practice player, shared by every part's track. Members see a section once it has a start and end time and is set to show.{% if player_data.tracks %} Play a track above and use "Set from player" to take the times by ear.{% endif %}</p>
+    <p class="text-small settings-hint">Passages members can loop in the practice player, shared by every part's track. Members see a section once it has a start and end time and is set to show.{% if player_data.tracks %} Play a track above and use "Set from player" to take the times by ear. For sections of one track only, use the Sections link on that track under Scores &amp; Tracks.{% endif %}</p>
+    {% endif %}
 
     {% if sections %}
     <ul class="list-unstyled flow flow--small" role="list">
@@ -62,11 +68,11 @@
     <p class="text-muted text-small">No sections yet.</p>
     {% endif %}
 
-    <form method="POST" action="{% url 'committee_repertoire_detail' piece.id %}#sections" class="flow flow--small" id="section-form">
+    <form method="POST" action="{{ sections_url }}" class="flow flow--small" id="section-form">
       {% csrf_token %}
       <input type="hidden" name="section" value="1">
-      {% if editing %}<input type="hidden" name="section_id" value="{{ editing.id }}">{% endif %}
-      <h3 class="text-step-0">{% if editing %}Edit "{{ editing.label }}"{% else %}Add a section{% endif %}</h3>
+      {% if editing %}<input type="hidden" name="section_id" value="{{ editing.id }}">{% elif track %}<input type="hidden" name="track_id" value="{{ track.id }}">{% endif %}
+      <h3 class="text-step-0">{% if editing %}Edit "{{ editing.label }}"{% elif track %}Add a section to this track{% else %}Add a section{% endif %}</h3>
 
       <div class="form-group flow flow--small">
         <label for="{{ section_form.label.id_for_label }}" class="form-label text-small">{{ section_form.label.label }}</label>
@@ -121,7 +127,7 @@
 
       <div class="cluster">
         <button type="submit" class="button" data-variant="primary">{% if editing %}Save Section{% else %}Add Section{% endif %}</button>
-        {% if editing %}<a href="{% url 'committee_repertoire_detail' piece.id %}#sections" class="button" data-variant="outline">Cancel</a>{% endif %}
+        {% if editing %}<a href="{{ sections_url }}" class="button" data-variant="outline">Cancel</a>{% endif %}
       </div>
     </form>
   </section>
@@ -131,7 +137,7 @@
 
     {% if assets %}
     <ul class="list-unstyled flow flow--small" role="list">
-      {% for asset, form in assets %}
+      {% for asset, form, own_sections in assets %}
       <li class="item-row">
         <div>
           <strong>{{ asset.asset_name }}</strong>
@@ -140,12 +146,14 @@
           <span class="text-small text-muted">
             {% if asset.file_upload %}<a href="{{ asset.file_upload.url }}" target="_blank" rel="noopener noreferrer" class="text-link">{{ asset.file_upload.name|cut:"learning_assets/" }}</a>{% elif asset.external_url %}<a href="{{ asset.external_url }}" target="_blank" rel="noopener noreferrer" class="text-link">External link</a>{% else %}No file{% endif %}
             {% if asset.uploaded_at %} · added {{ asset.uploaded_at|date:"j M Y" }}{% endif %}
+            {% if asset.id in playable_ids %} · {% if own_sections %}{{ own_sections }} section{{ own_sections|pluralize }} of its own{% else %}no sections of its own{% endif %}{% if not asset.piece_sections %}, not using the piece's{% endif %}{% endif %}
           </span>
         </div>
 
         <div class="item-row__actions">
           {% if asset.id in playable_ids %}
           <button type="button" class="button btn-small" data-variant="outline" data-player-load="{{ asset.id }}" aria-pressed="false" hidden>Practise<span class="visually-hidden"> {{ asset.asset_name }}</span></button>
+          <a href="{% url 'committee_repertoire_detail' piece.id %}?track={{ asset.id }}#sections" class="button btn-small" data-variant="outline">Sections<span class="visually-hidden"> of {{ asset.asset_name }}</span></a>
           {% endif %}
           <form method="POST" action="{% url 'committee_asset_delete' asset.id %}" class="inline-form" data-confirm="Delete '{{ asset.asset_name }}'? Members will no longer see it, and the file is removed.">
             {% csrf_token %}
@@ -174,6 +182,10 @@
             <div class="consent-row">
               {{ form.use_player }}
               <label for="{{ form.use_player.id_for_label }}" class="form-label text-small">{{ form.use_player.label }}</label>
+            </div>
+            <div class="consent-row">
+              {{ form.piece_sections }}
+              <label for="{{ form.piece_sections.id_for_label }}" class="form-label text-small">{{ form.piece_sections.label }}</label>
             </div>
             <button type="submit" class="button btn-small align-start" data-variant="primary">Save<span class="visually-hidden"> {{ asset.asset_name }}</span></button>
           </form>

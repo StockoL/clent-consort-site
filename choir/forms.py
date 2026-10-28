@@ -338,13 +338,18 @@ class AssetUploadForm(forms.Form):
 
 class AssetEditForm(forms.ModelForm):
     """Corrects one asset on the piece page: its name, voice part, part
-    name ("Alto 2", for a divisi line) and whether it opens in the
-    practice player. Rendered once per asset, so each has a prefix."""
+    name ("Alto 2", for a divisi line), whether it opens in the practice
+    player, and whether the piece's sections apply to it as well as its
+    own. Rendered once per asset, so each has a prefix."""
 
     class Meta:
         model = LearningAsset
-        fields = ["asset_name", "voice_part", "part_name", "use_player"]
-        labels = {"asset_name": "Name", "use_player": "Open in the practice player"}
+        fields = ["asset_name", "voice_part", "part_name", "use_player", "piece_sections"]
+        labels = {
+            "asset_name": "Name",
+            "use_player": "Open in the practice player",
+            "piece_sections": "Use the piece's sections (untick for a track with different timing)",
+        }
         help_texts = {"asset_name": ""}
         widgets = {
             "asset_name": forms.TextInput(attrs={"class": "form-control"}),

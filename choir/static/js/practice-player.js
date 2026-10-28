@@ -17,8 +17,10 @@
  * - Each track remembers position, speed, loop and lead-in in localStorage.
  * - Presigned track URLs expire; on a load error the player fetches fresh
  *   ones from the page's refreshUrl (if it has one) once and resumes.
- * - Sections (Learning Hub P2) belong to the piece, so every part's track
- *   shares them: tapping one sets the loop to it. "My note" plays the
+ * - Sections (Learning Hub P2) mostly belong to the piece, so every part's
+ *   track shares them; a track can also have its own, and can opt out of
+ *   the piece's (pieceSections: false). Tapping one sets the loop to it.
+ *   "My note" plays the
  *   loaded track's starting note for the chosen section (or the piece's
  *   first). Divisi tracks of one piece and part ("Alto 1", "Alto 2") get a
  *   toggle that swaps track, keeping the place, loop and speed.
@@ -28,9 +30,9 @@
  *   data-player-show, and appear once the player has started.
  *
  * Data comes from the #player-data JSON block:
- *   { tracks: [{id, name, piece, pieceId, composer, part, voicePart, url}],
- *     sections: {pieceId: [{id, label, bars, start, end, published, notes: {part: "E4,G4"}}]},
- *     voicePart, refreshUrl, storageKey }
+ *   { tracks: [{id, name, piece, pieceId, composer, part, voicePart, pieceSections, url}],
+ *     sections: {pieceId or "track:<id>": [{id, label, bars, start, end, published, notes: {part: "E4,G4"}}]},
+ *     voicePart, refreshUrl, storageKey, startTrack }
  */
 (() => {
   const dataBlock = document.getElementById("player-data");
@@ -40,7 +42,7 @@
   const data = JSON.parse(dataBlock.textContent);
   let tracks = data.tracks;
   if (!tracks.length) return;
-  const sectionsByPiece = data.sections || {};
+  const sectionsByPiece = data.sections || {}; // by piece id, and 	rack:<id> for one track's own
 
   const $ = (selector) => panel.querySelector(selector);
   const $$ = (selector) => document.querySelectorAll(selector);
@@ -245,7 +247,7 @@
     loopRegion = null;
     regions.clearRegions();
     pendingState = { ...(carry || store.get(trackKey(id)) || {}), autoplay };
-    activeSection = pieceSections().some((s) => s.id === pendingState.sec) ? pendingState.sec : null;
+    activeSection = trackSections().some((s) => s.id === pendingState.sec) ? pendingState.sec : null;
     store.set(LAST_TRACK_KEY, id);
 
     document.querySelectorAll("[data-player-name]").forEach((el) => {
@@ -428,14 +430,20 @@
   }
 
   // -------------------------------------------------------------- sections
-  const pieceSections = () => (current && sectionsByPiece[String(current.pieceId)]) || [];
-  const findSection = (id) => pieceSections().find((s) => s.id === id);
+  // The loaded track's sections: the piece's (unless the track has its
+  // own timing) followed by the track's own
+  const trackSections = () => {
+    if (!current) return [];
+    const piece = current.pieceSections === false ? [] : sectionsByPiece[String(current.pieceId)] || [];
+    return [...piece, ...(sectionsByPiece[`track:${current.id}`] || [])];
+  };
+  const findSection = (id) => trackSections().find((s) => s.id === id);
 
   // The loaded track's starting pitches for the chosen section, or the
   // piece's first: matched on the track's part ("Alto 2"), or for a
   // full-choir track the hub's voice part ("Alto").
   function notePitches() {
-    const list = pieceSections();
+    const list = trackSections();
     const section = findSection(activeSection) || [...list].sort((x, y) => x.start - y.start)[0];
     if (!section) return [];
     const pitches = section.notes[current.part] || section.notes[data.voicePart] || "";
@@ -465,7 +473,7 @@
     const fieldset = $("[data-player-sections]");
     const list = $("[data-player-section-list]");
     list.replaceChildren();
-    const sections = pieceSections();
+    const sections = trackSections();
     fieldset.hidden = sections.length === 0;
     sections.forEach((section) => {
       const item = document.createElement("li");
@@ -626,7 +634,10 @@
     button.hidden = false;
   });
 
+  // A track the page asks for (one whose sections are being edited),
+  // else the last one played here, else the first
   const lastId = store.get(LAST_TRACK_KEY);
-  loadTrack(tracks.some((t) => t.id === lastId) ? lastId : tracks[0].id);
+  const firstId = [data.startTrack, lastId].find((id) => tracks.some((t) => t.id === id));
+  loadTrack(firstId === undefined ? tracks[0].id : firstId);
   requestAnimationFrame(keepInRange);
 })();

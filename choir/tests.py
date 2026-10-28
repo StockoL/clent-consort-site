@@ -2244,6 +2244,83 @@ class PracticePlayerSectionTests(TestCase):
         self.assertEqual(tracks["full.mp3"]["part"], "")
         self.assertEqual(tracks["alto.mp3"]["pieceId"], self.piece.id)
 
+    # --- one track's own sections ---
+
+    def test_add_a_section_to_one_track(self):
+        self.track("SOP", "sop.mp3", "Soprano")
+        alto = self.track("ALT", "Ave verum - Alto 2.mp3", "Alto 2")
+        response = self.client.get(self.detail, {"track": alto.id})
+        self.assertEqual(response.context["track"], alto)
+        self.assertEqual(response.context["player_data"]["startTrack"], alto.id)
+        # Only the track's own part gets a note field
+        self.assertEqual([part for _, part in response.context["section_form"].note_fields], ["Alto 2"])
+
+        response = self.post_section(track_id=alto.id, label="Alto 2 entry", start_seconds="5", end_seconds="9", note_0="A3")
+        self.assertRedirects(response, f"{self.detail}?track={alto.id}#sections", fetch_redirect_response=False)
+        section = Section.objects.get()
+        self.assertEqual(section.asset, alto)
+        self.assertEqual(dict(section.notes.values_list("part_name", "pitches")), {"Alto 2": "A3"})
+
+        # The piece's own list doesn't show it; the track's does
+        self.assertEqual(list(self.client.get(self.detail).context["sections"]), [])
+        self.assertEqual(list(self.client.get(self.detail, {"track": alto.id}).context["sections"]), [section])
+
+    def test_a_track_scope_needs_a_track_of_this_piece_in_the_player(self):
+        other = Repertoire.objects.create(composer="Tallis", title="If ye love me")
+        elsewhere = LearningAsset.objects.create(
+            repertoire=other, voice_part="ALT", asset_name="x", file_upload=SimpleUploadedFile("x.mp3", b"ID3")
+        )
+        score = self.track("ALL", "score.pdf")
+        for track_id in [elsewhere.id, score.id]:
+            with self.subTest(track_id=track_id):
+                self.post_section(track_id=track_id, label="Stray", start_seconds="0", end_seconds="5")
+                self.assertIsNone(Section.objects.get(label="Stray").asset)
+                Section.objects.all().delete()
+
+    def test_track_sections_reach_only_that_tracks_hub(self):
+        alto = self.track("ALT", "alto.mp3")
+        sop = self.track("SOP", "sop.mp3")
+        piece_wide = self.section("Opening", "0", "10")
+        own = Section.objects.create(repertoire=self.piece, asset=alto, label="Alto line", start_seconds="2", end_seconds="6")
+        Section.objects.create(repertoire=self.piece, asset=sop, label="Soprano line", start_seconds="2", end_seconds="6")
+
+        sections = self.hub_data("alto")["sections"]
+        self.assertEqual([s["id"] for s in sections[str(self.piece.id)]], [piece_wide.id])
+        self.assertEqual([s["id"] for s in sections[f"track:{alto.id}"]], [own.id])
+        self.assertNotIn(f"track:{sop.id}", sections)
+
+    def test_a_track_can_stop_using_the_piece_sections(self):
+        track = self.track("ALT", "Live recording - Alto.mp3", "Alto")
+        response = self.client.post(
+            reverse("committee_asset_edit", args=[track.id]),
+            {
+                f"asset-{track.id}-asset_name": "Live recording",
+                f"asset-{track.id}-voice_part": "ALT",
+                f"asset-{track.id}-part_name": "Alto",
+                f"asset-{track.id}-use_player": "on",
+            },
+        )
+        self.assertRedirects(response, self.detail, fetch_redirect_response=False)
+        track.refresh_from_db()
+        self.assertFalse(track.piece_sections)
+        self.assertIs(self.hub_data("alto")["tracks"][0]["pieceSections"], False)
+
+    def test_moving_stays_within_a_tracks_sections(self):
+        alto = self.track("ALT", "alto.mp3")
+        self.section("Piece-wide", order=0)
+        first = Section.objects.create(repertoire=self.piece, asset=alto, label="First", order=0)
+        Section.objects.create(repertoire=self.piece, asset=alto, label="Second", order=1)
+        response = self.client.post(reverse("committee_section_move", args=[first.id]), {"direction": "down"})
+        self.assertRedirects(response, f"{self.detail}?track={alto.id}#sections", fetch_redirect_response=False)
+        self.assertEqual(list(alto.own_sections.values_list("label", flat=True)), ["Second", "First"])
+        self.assertEqual(Section.objects.get(label="Piece-wide").order, 0)
+
+    def test_deleting_a_track_deletes_its_own_sections(self):
+        alto = self.track("ALT", "alto.mp3")
+        Section.objects.create(repertoire=self.piece, asset=alto, label="Alto line")
+        self.client.post(reverse("committee_asset_delete", args=[alto.id]))
+        self.assertFalse(Section.objects.exists())
+
     def test_tracks_taken_out_of_the_player_stay_on_the_page(self):
         track = self.track("ALT", "alto.mp3")
         LearningAsset.objects.filter(id=track.id).update(use_player=False)
