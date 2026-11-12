@@ -260,12 +260,15 @@ def dashboard_view(request):
 def member_repertoire_view(request):
     """"Repertoire & Learning" on the subnav - shown as one tab per
     currently-ACTIVE project. Each project's voice-part hub links (see
-    hub_view) are scoped to that project's own repertoire."""
+    hub_view) are scoped to that project's own repertoire. Each piece
+    links to its score (see _score_for)."""
     active_projects = list(Project.get_active_projects())
-    projects_data = [
-        {"project": project, "repertoire": project.repertoire.all().order_by("title")}
-        for project in active_projects
-    ]
+    projects_data = []
+    for project in active_projects:
+        pieces = list(project.repertoire.prefetch_related("assets").order_by("title"))
+        for piece in pieces:
+            piece.score = _score_for(piece)
+        projects_data.append({"project": project, "repertoire": pieces})
 
     context = {
         # Backward-compat aliases: the first (soonest) active project's data.
@@ -275,6 +278,21 @@ def member_repertoire_view(request):
         "projects_data": projects_data,
     }
     return render(request, "choir/member_repertoire.html", context)
+
+
+def _score_for(piece):
+    """The PDF a piece's title links to on the Repertoire page: its full
+    score. Pieces have one score and part tracks, so this is the piece's
+    PDF, preferring one filed under Full Choir in case a score was ever
+    uploaded under a voice part. None without one. Uses the piece's
+    prefetched assets."""
+    pdfs = [
+        asset
+        for asset in piece.assets.all()
+        if asset.file_upload and asset.file_upload.name.lower().endswith(".pdf")
+    ]
+    pdfs.sort(key=lambda asset: (asset.voice_part != "ALL", asset.asset_name.lower()))
+    return pdfs[0] if pdfs else None
 
 
 @login_required

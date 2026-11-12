@@ -154,6 +154,39 @@ class MemberRepertoireViewTests(TestCase):
         self.assertEqual(projects_data[project_a.id], [piece_a])
         self.assertEqual(projects_data[project_b.id], [piece_b])
 
+    def test_each_piece_links_to_its_score(self):
+        project = Project.objects.create(name="Christmas 2026", status="ACTIVE")
+        with_score = Repertoire.objects.create(composer="Byrd", title="Ave verum corpus")
+        without = Repertoire.objects.create(composer="Tallis", title="If ye love me")
+        project.repertoire.add(with_score, without)
+
+        def asset(piece, part, name, filename):
+            return LearningAsset.objects.create(
+                repertoire=piece, voice_part=part, asset_name=name, file_upload=SimpleUploadedFile(filename, b"x")
+            )
+
+        asset(with_score, "SOP", "Soprano track", "sop.mp3")
+        score = asset(with_score, "ALL", "Full score", "score.pdf")
+        asset(without, "ALT", "Alto track", "alto.mp3")
+
+        response = self.client.get(reverse("member_repertoire"))
+        pieces = {piece.title: piece for piece in response.context["projects_data"][0]["repertoire"]}
+        self.assertEqual(pieces["Ave verum corpus"].score, score)
+        self.assertIsNone(pieces["If ye love me"].score)
+        self.assertContains(response, f'href="{score.file_upload.url}"')
+        # The title without a score stays plain text
+        self.assertContains(response, "<strong>If ye love me</strong>", html=True)
+
+    def test_a_score_filed_under_a_voice_part_still_links(self):
+        project = Project.objects.create(name="Christmas 2026", status="ACTIVE")
+        piece = Repertoire.objects.create(composer="Byrd", title="Ave verum corpus")
+        project.repertoire.add(piece)
+        score = LearningAsset.objects.create(
+            repertoire=piece, voice_part="TEN", asset_name="Score", file_upload=SimpleUploadedFile("score.pdf", b"x")
+        )
+        response = self.client.get(reverse("member_repertoire"))
+        self.assertEqual(response.context["projects_data"][0]["repertoire"][0].score, score)
+
 
 class DashboardSubnavTests(TestCase):
     """Guards dashboard_view's Phase 5 project-scoping: the "Schedule &

@@ -69,7 +69,7 @@ Every singer gets an RSVP for every event automatically. Signals add new singers
 
 ### Repertoire and voice-part hubs
 
-Repertoire lists the current projects' pieces and links to each voice part's hub. A hub lists every score and track for that part and project, with the date each was added, and opens with the practice player.
+Repertoire lists the current projects' pieces and links to each voice part's hub. Each piece's title opens its full score (the PDF) in a new tab, where one has been uploaded. A hub lists every score and track for that part and project, with the date each was added, and opens with the practice player.
 
 ### Looking Ahead
 

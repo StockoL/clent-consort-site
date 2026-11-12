@@ -44,7 +44,11 @@
         <ul class="flow flow--small list-unstyled" role="list">
           {% for piece in item.repertoire %}
           <li class="repertoire-item">
+            {% if piece.score %}
+            <a href="{{ piece.score.file_upload.url }}" target="_blank" rel="noopener noreferrer" class="text-link"><strong>{{ piece.title }}</strong><span class="visually-hidden"> (score, PDF, opens in a new tab)</span></a><br />
+            {% else %}
             <strong>{{ piece.title }}</strong><br />
+            {% endif %}
             <span class="text-muted text-small">{{ piece.composer }}</span>
           </li>
           {% endfor %}
