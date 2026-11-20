@@ -375,6 +375,7 @@ def import_score(piece):
     report.append(f"Starting notes for: {', '.join(mapped) or 'no parts'}.")
     if ignored:
         report.append(f"Not voice parts, so no starting notes: {', '.join(ignored)}.")
+    report.extend(match_track_parts(piece))
     piece.import_log = "\n".join(report)
     piece.save(update_fields=["bar_map", "part_map", "import_log"])
 
@@ -391,6 +392,44 @@ def import_score(piece):
         )
     fill_sections(piece)
     return report
+
+
+AUDIO_EXTENSIONS = (".mp3", ".m4a", ".wav")
+
+
+def match_track_parts(piece):
+    """Makes the piece's part tracks match the score's parts, so each
+    gets its own starting notes. A track with no part name (uploaded
+    before names were read from files) gets one from its name, e.g.
+    "... Tenor 2", if that's one of the score's parts and in the track's
+    voice part. Returns report lines, naming any track that still has no
+    matching part (it would get no note, or a wrong one)."""
+    from .parts import part_from_filename
+
+    site_parts = {name for name in (piece.part_map or {}).values() if name}
+    filled, unmatched = [], []
+    for asset in piece.assets.all():
+        audio = asset.file_upload and asset.file_upload.name.lower().endswith(AUDIO_EXTENSIONS)
+        if not audio or not asset.use_player or asset.voice_part == "ALL":
+            continue
+        if not asset.part_name:
+            guess = part_from_filename(asset.asset_name) or part_from_filename(asset.file_upload.name)
+            if guess and guess[0] == asset.voice_part and guess[1] in site_parts:
+                asset.part_name = guess[1]
+                asset.save(update_fields=["part_name"])
+                filled.append(f"{asset.asset_name} as {asset.part_name}")
+        if asset.player_part not in site_parts:
+            unmatched.append(f"{asset.asset_name} ({asset.player_part})")
+
+    lines = []
+    if filled:
+        lines.append(f"Part names taken from track names: {', '.join(filled)}.")
+    if unmatched:
+        lines.append(
+            f"Warning: no part in the score matches these tracks, so they get no starting note: {', '.join(unmatched)}. "
+            "Set each one's part name with its Edit link under Scores & Tracks, then import again."
+        )
+    return lines
 
 
 def fill_sections(piece):

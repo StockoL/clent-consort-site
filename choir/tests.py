@@ -2681,6 +2681,51 @@ class ScoreDataTests(TestCase):
         self.piece.refresh_from_db()
         self.assertFalse(self.piece.score_midi)
 
+    def test_tracks_uploaded_without_part_names_are_matched_to_the_score(self):
+        # Tracks uploaded before part names were read from file names
+        xml = make_musicxml(
+            {
+                "Soprano 1": [[("G4", 4)]] * 4,
+                "Soprano 2": [[("E4", 4)]] * 4,
+                "Tenor": [[("C4", 4)]] * 4,
+                "Tenor 2": [[("A3", 4)]] * 4,
+            }
+        )
+
+        def track(part, name):
+            return LearningAsset.objects.create(
+                repertoire=self.piece, voice_part=part, asset_name=name,
+                file_upload=SimpleUploadedFile(name.replace(" ", "_") + ".mp3", b"ID3"),
+            )
+
+        sop2 = track("SOP", "Lotti - Crucifixus a 6 - Soprano 2")
+        ten2 = track("TEN", "Lotti - Crucifixus a 6 - Tenor 2")
+        ten = track("TEN", "Lotti - Crucifixus a 6 - Tenor")
+        mystery = track("SOP", "Top line")
+        score = LearningAsset.objects.create(
+            repertoire=self.piece, voice_part="ALL", asset_name="Score", file_upload=SimpleUploadedFile("score.pdf", b"%PDF")
+        )
+        self.upload(self.midi, xml)
+
+        for asset, expected in [(sop2, "Soprano 2"), (ten2, "Tenor 2"), (ten, "Tenor"), (mystery, ""), (score, "")]:
+            asset.refresh_from_db()
+            self.assertEqual(asset.part_name, expected)
+        self.piece.refresh_from_db()
+        self.assertIn("Part names taken from track names", self.piece.import_log)
+        # The track with no clue is named so it can be fixed by hand
+        self.assertIn("Warning: no part in the score matches these tracks", self.piece.import_log)
+        self.assertIn("Top line (Soprano)", self.piece.import_log)
+
+        # A Tenor 2 singer now hears Tenor 2's note, not Tenor 1's
+        project = Project.objects.create(name="Lent 2027", status="ACTIVE")
+        project.repertoire.add(self.piece)
+        self.client.login(username="member", password="pw")
+        data = self.client.get(reverse("hub", args=["tenor", project.id])).context["player_data"]
+        parts = {t["name"]: t["part"] for t in data["tracks"]}
+        self.assertEqual(parts["Lotti - Crucifixus a 6 - Tenor 2"], "Tenor 2")
+        notes = data["sections"][str(self.piece.id)][0]["notes"]
+        self.assertEqual(notes, {"Tenor": "C4", "Tenor 2": "A3"})
+
     def test_members_get_the_one_bar_lead_in(self):
         self.upload(self.midi, self.xml)
         self.section("Middle", (2, 3))
