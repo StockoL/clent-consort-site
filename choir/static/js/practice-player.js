@@ -20,10 +20,12 @@
  * - Sections (Learning Hub P2) mostly belong to the piece, so every part's
  *   track shares them; a track can also have its own, and can opt out of
  *   the piece's (pieceSections: false). Tapping one sets the loop to it.
- *   "My note" plays the
- *   loaded track's starting note for the chosen section (or the piece's
- *   first). Divisi tracks of one piece and part ("Alto 1", "Alto 2") get a
- *   toggle that swaps track, keeping the place, loop and speed.
+ *   Divisi tracks of one piece and part ("Alto 1", "Alto 2") get a toggle
+ *   that swaps track, keeping the place, loop and speed.
+ * - "My note" plays the loaded track's part's next note from the playhead,
+ *   playing or paused, from the score data's timeline (noteTimes). Without
+ *   score data it plays the starting note of the chosen section (or the
+ *   piece's first).
  * - On the committee's piece page, [data-player-section] buttons loop a
  *   section, and [data-player-capture] buttons copy the playhead's time
  *   into the input named by data-player-capture. Both start hidden with
@@ -32,7 +34,8 @@
  * Data comes from the #player-data JSON block:
  *   { tracks: [{id, name, piece, pieceId, composer, part, voicePart, pieceSections, url}],
  *     sections: {pieceId or "track:<id>": [{id, label, bars, start, end, published, notes: {part: "E4,G4"}}]},
- *     voicePart, refreshUrl, storageKey, startTrack }
+ *     noteTimes: {pieceId: {part: [[seconds, "E4,G4"]]}},
+ *     voicePart, refreshUrl, storageKey, startTrack, scoreStart, scoreSeconds, audioOffsetMs }
  */
 (() => {
   const dataBlock = document.getElementById("player-data");
@@ -42,7 +45,8 @@
   const data = JSON.parse(dataBlock.textContent);
   let tracks = data.tracks;
   if (!tracks.length) return;
-  const sectionsByPiece = data.sections || {}; // by piece id, and 	rack:<id> for one track's own
+  const sectionsByPiece = data.sections || {}; // by piece id, and "track:<id>" for one track's own
+  const noteTimes = data.noteTimes || {}; // by piece id, then part: [[seconds, pitches]]
 
   const $ = (selector) => panel.querySelector(selector);
   const $$ = (selector) => document.querySelectorAll(selector);
@@ -510,16 +514,36 @@
   // The loaded track's starting pitches for the chosen section, or the
   // piece's first: matched on the track's part ("Alto 2"), or for a
   // full-choir track the hub's voice part ("Alto").
+  // The loaded track's part's notes in time, from the score data: none
+  // for a track with its own timing, or a piece without score data
+  const partTimeline = () => {
+    if (!current || current.pieceSections === false) return null;
+    const parts = noteTimes[String(current.pieceId)] || {};
+    return parts[current.part] || parts[data.voicePart] || null;
+  };
+
+  const toMidi = (pitches) => pitches.split(",").map(midiFor).filter((midi) => midi !== null);
+
+  // With the score data's timeline: the part's next note from the
+  // playhead, playing or paused (in a section's lead-in, the note it
+  // enters the section on). Without: the chosen section's starting note,
+  // or the piece's first section's.
   function notePitches() {
+    const timeline = partTimeline();
+    if (timeline) {
+      let from = audio.currentTime;
+      if (loopRegion && from < loopRegion.start && from >= rangeStart() - 0.05) from = loopRegion.start;
+      const next = timeline.find(([seconds]) => seconds >= from - 0.05);
+      return next ? toMidi(next[1]) : [];
+    }
     const list = trackSections();
     const section = findSection(activeSection) || [...list].sort((x, y) => x.start - y.start)[0];
     if (!section) return [];
-    const pitches = section.notes[current.part] || section.notes[data.voicePart] || "";
-    return pitches.split(",").map(midiFor).filter((midi) => midi !== null);
+    return toMidi(section.notes[current.part] || section.notes[data.voicePart] || "");
   }
 
   function showNoteButton() {
-    const hasNote = current && notePitches().length > 0;
+    const hasNote = current && (Boolean(partTimeline()) || notePitches().length > 0);
     $$("[data-player-note]").forEach((button) => {
       button.hidden = !hasNote;
     });

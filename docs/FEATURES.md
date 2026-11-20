@@ -94,7 +94,7 @@ The player sits at the top of each voice-part hub. It uses wavesurfer.js, vendor
 - Speed from 50% to 110% without changing the pitch.
 - A note finder: an on-screen keyboard that plays any note, for checking a starting note.
 - Sections the committee has marked, listed under the waveform with their bars and length: the piece's, shared by every part's track, and any the track has of its own. Tapping one loops it from its lead-in. If the singer then moves the loop, the section shows as edited, and tapping it again goes back to its marked bars.
-- "My note" plays the singer's starting note for the chosen section, or for the piece's first section if none is chosen. It plays the note for the track loaded, so Alto 2 hears Alto 2's note.
+- "My note" plays the singer's next note from wherever the playhead is, playing or paused: after a few bars' rest it gives the note they come back in on, and in a section's lead-in the note they enter the section on. That needs the piece's score data; without it, "My note" plays the chosen section's starting note. It plays the note for the track loaded, so Alto 2 hears Alto 2's note.
 - Where a part is divided, a toggle switches between the lines' tracks (Alto 1 and Alto 2, say) without losing the place, the loop or the speed, since the tracks share a timeline.
 - A bar fixed to the bottom of the screen keeps Play, My note and Loop in reach while scrolling the hub.
 - It remembers each track's position, speed, loop, lead-in and chosen section in the browser's local storage, so a singer picks up where they left off on that device.

@@ -159,15 +159,16 @@ def _transpose(attributes, current):
 
 
 def read_musicxml(data):
-    """The bars and each part's starting pitches from a MusicXML file.
+    """The bars and each part's notes from a MusicXML file.
 
     Returns (measures, parts):
     - measures: one dict per <measure> of the first part, in score order:
       number, length (in quarter notes), and its repeat and ending marks.
-    - parts: {part name: [pitches per measure]}, where each entry is the
-      sounding pitches at the earliest onset in that measure of a note
-      that isn't continuing a tie ("E4", or "E4,G4" for a chord), or ""
-      if the part has nothing new there.
+    - parts: {part name: [notes per measure]}, where each measure's notes
+      are [(onset in quarter notes from the bar's start, pitches)] for
+      every note that isn't continuing a tie, in time order. pitches are
+      the sounding pitches starting together ("E4", or "E4,G4" for a
+      chord or two voices).
     """
     root = _musicxml_root(data)
     names = {sp.get("id"): (sp.findtext("part-name") or "").strip() for sp in root.iter("score-part")}
@@ -180,7 +181,7 @@ def read_musicxml(data):
     for part_index, part in enumerate(part_elements):
         name = names.get(part.get("id")) or part.get("id")
         divisions, time, transpose = 1, (4, 4), (0, 0)
-        starts = []
+        notes_by_measure = []
         for measure in part.findall("measure"):
             attributes = measure.find("attributes")
             if attributes is not None:
@@ -191,8 +192,8 @@ def read_musicxml(data):
                     time = (sum(int(b) for b in re.findall(r"\d+", beats)), int(attributes.findtext("time/beat-type")))
                 transpose = _transpose(attributes, transpose)
 
-            position, furthest, earliest, pitches = 0, 0, None, []
-            last_onset = 0
+            position, furthest, last_onset = 0, 0, 0
+            onsets = {}  # onset in divisions -> [(name, midi)] starting then
             for element in measure:
                 if element.tag == "attributes":
                     divisions = int(float(element.findtext("divisions") or divisions))
@@ -219,18 +220,21 @@ def read_musicxml(data):
                     if element.find("pitch") is None or continuing:
                         continue
                     pitch = _sounding(element, transpose)
-                    if earliest is None or onset < earliest:
-                        earliest, pitches = onset, [pitch]
-                    elif onset == earliest and pitch not in pitches:
-                        pitches.append(pitch)
+                    if pitch not in onsets.setdefault(onset, []):
+                        onsets[onset].append(pitch)
 
-            starts.append(",".join(name for name, _ in sorted(pitches, key=lambda p: p[1])))
+            notes_by_measure.append(
+                [
+                    (onset / divisions, ",".join(name for name, _ in sorted(pitches, key=lambda p: p[1])))
+                    for onset, pitches in sorted(onsets.items())
+                ]
+            )
             if part_index == 0:
                 content = furthest / divisions
                 signature = time[0] * 4 / time[1]
                 length = content if measure.get("implicit") == "yes" and content else max(signature, content)
                 measures.append({"number": measure.get("number", ""), "length": length, **_repeat_marks(measure)})
-        parts[name] = starts
+        parts[name] = notes_by_measure
     return measures, parts
 
 
@@ -299,15 +303,17 @@ def build_bar_map(midi_data, musicxml_data):
     """(bar_map, part_names, report lines) from the two files' bytes.
 
     bar_map is {"bars": [{"bar", "pass", "start", "notes": {part: pitches}}],
-    "end", "midiStart", "midiEnd"}: one entry per played bar, its start in
-    seconds from the MIDI's tempo, and each part's new pitches in it; then
-    where the last bar ends, and when the first note starts and the last
-    one finishes (for checking a track against the score data)."""
+    "timeline": {part: [[seconds, pitches]]}, "end", "midiStart", "midiEnd"}:
+    one entry per played bar, its start in seconds from the MIDI's tempo,
+    and each part's first new pitches in it; every note each part starts,
+    in playing order (for "My note" during playback); then where the last
+    bar ends, and when the first note starts and the last one finishes
+    (for checking a track against the score data)."""
     tempo = read_midi(midi_data)
     measures, parts = read_musicxml(musicxml_data)
     order = played_order(measures)
 
-    bars, quarters, seen = [], 0.0, {}
+    bars, timeline, quarters, seen = [], {name: [] for name in parts}, 0.0, {}
     for index in order:
         number = _bar_number(measures[index]["number"])
         seen[number] = seen.get(number, 0) + 1
@@ -316,9 +322,12 @@ def build_bar_map(midi_data, musicxml_data):
                 "bar": number,
                 "pass": seen[number],
                 "start": round(tempo.seconds_at(quarters), 3),
-                "notes": {name: starts[index] for name, starts in parts.items() if starts[index]},
+                "notes": {name: notes[index][0][1] for name, notes in parts.items() if notes[index]},
             }
         )
+        for name, notes in parts.items():
+            for onset, pitches in notes[index]:
+                timeline[name].append([round(tempo.seconds_at(quarters + onset), 3), pitches])
         quarters += measures[index]["length"]
     end = round(tempo.seconds_at(quarters), 3)
 
@@ -340,7 +349,13 @@ def build_bar_map(midi_data, musicxml_data):
             "Warning: the score has more bars than the MIDI has notes for. "
             "Check both files come from the same version of the piece."
         )
-    bar_map = {"bars": bars, "end": end, "midiStart": round(tempo.start, 3), "midiEnd": round(tempo.end, 3)}
+    bar_map = {
+        "bars": bars,
+        "timeline": timeline,
+        "end": end,
+        "midiStart": round(tempo.start, 3),
+        "midiEnd": round(tempo.end, 3),
+    }
     return bar_map, list(parts), report
 
 

@@ -2486,6 +2486,11 @@ class ScoreImportTests(TestCase):
         self.assertEqual(first["notes"], {"Tenor": "Eb4", "Tenor 2": "G3", "Alto": "C4,E4"})
         # A tied note isn't a new one; the part's next note is. A rest-only bar has none.
         self.assertEqual(second["notes"], {"Tenor": "D4", "Alto": "F4"})
+        # Every new note in time, for "My note" during playback (2 s a bar)
+        self.assertEqual(
+            bar_map["timeline"],
+            {"Tenor": [[1.0, "Eb4"], [2.0, "D4"]], "Tenor 2": [[0.0, "G3"]], "Alto": [[0.0, "C4,E4"], [3.0, "F4"]]},
+        )
 
     def test_repeats_and_first_and_second_time_bars(self):
         forward = '<barline location="left"><repeat direction="forward"/></barline>'
@@ -2505,6 +2510,8 @@ class ScoreImportTests(TestCase):
         self.assertEqual(played, [(1, 1), (2, 1), (3, 1), (2, 2), (4, 1), (5, 1), (6, 1), (5, 2), (6, 2)])
         self.assertEqual(bar_map["bars"][3]["start"], 6.0)
         self.assertIn("Repeats followed", "\n".join(report))
+        # Repeated bars' notes come round again in the timeline
+        self.assertEqual([seconds for seconds, _ in bar_map["timeline"]["Alto"]], [2.0 * i for i in range(9)])
 
     def test_a_pickup_bar_is_its_own_length(self):
         bar_map, _, _ = self.build({"Alto": [[("C4", 1)]] + whole_bars(2)}, implicit_first=True)
@@ -2529,7 +2536,7 @@ class ScoreImportTests(TestCase):
             archive.writestr("score.musicxml", make_musicxml({"Alto": whole_bars(2)}))
         measures, parts = read_musicxml(out.getvalue())
         self.assertEqual(len(measures), 2)
-        self.assertEqual(parts["Alto"], ["C4", "C4"])
+        self.assertEqual(parts["Alto"], [[(0.0, "C4")], [(0.0, "C4")]])
 
     def test_unreadable_files_raise_a_readable_error(self):
         from .score_import import ScoreImportError, build_bar_map
@@ -2743,6 +2750,29 @@ class ScoreDataTests(TestCase):
         self.assertEqual(parts["Lotti - Crucifixus a 6 - Tenor 2"], "Tenor 2")
         notes = data["sections"][str(self.piece.id)][0]["notes"]
         self.assertEqual(notes, {"Tenor": "C4", "Tenor 2": "A3"})
+
+    def test_players_get_each_parts_notes_in_time(self):
+        self.upload(self.midi, self.xml, offset="100")
+        project = Project.objects.create(name="Clent 2026", status="ACTIVE")
+        project.repertoire.add(self.piece)
+
+        # The committee's page has every voice part's, shifted by the offset
+        times = self.client.get(self.detail).context["player_data"]["noteTimes"][str(self.piece.id)]
+        self.assertEqual(sorted(times), ["Alto", "Soprano 1"])  # not the organ
+        # Alto: E4 on beat 3 of bar 1, F4 in bar 2, a tied bar, D4 in bar 4
+        self.assertEqual(times["Alto"], [[1.1, "E4"], [2.1, "F4"], [6.1, "D4"]])
+
+        # A member's hub has only their own voice part's
+        self.client.login(username="member", password="pw")
+        hub = self.client.get(reverse("hub", args=["alto", project.id])).context["player_data"]
+        self.assertEqual(list(hub["noteTimes"][str(self.piece.id)]), ["Alto"])
+
+    def test_pieces_without_a_timeline_send_none(self):
+        # Score data imported before timelines were kept
+        self.piece.bar_map = {"bars": [{"bar": 1, "pass": 1, "start": 0.0, "notes": {}}], "end": 2.0}
+        self.piece.part_map = {"Alto": "Alto"}
+        self.piece.save()
+        self.assertEqual(self.client.get(self.detail).context["player_data"]["noteTimes"], {})
 
     def test_members_get_the_one_bar_lead_in(self):
         self.upload(self.midi, self.xml)

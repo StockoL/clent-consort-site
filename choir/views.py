@@ -457,6 +457,29 @@ def _player_sections(pieces, tracks, voice_part=None, members=True):
     return data
 
 
+def _note_timelines(pieces, voice_part=None, members=True):
+    """Every note each part starts, for "My note" during playback, keyed by
+    piece id then site part name ("Tenor 2"): [[seconds, pitches]], from
+    the piece's score data and shifted by its audio offset. For members,
+    only their own voice part's (voice_part, e.g. "TEN")."""
+    data = {}
+    for piece in pieces:
+        timeline = (piece.bar_map or {}).get("timeline")
+        if not timeline:
+            continue  # no score data, or imported before timelines were kept
+        offset = piece.audio_offset_ms / 1000
+        parts = {}
+        for dorico_name, site_name in (piece.part_map or {}).items():
+            if not site_name or dorico_name not in timeline:
+                continue
+            if members and voice_part_for(site_name) != voice_part:
+                continue
+            parts[site_name] = [[round(seconds + offset, 3), pitches] for seconds, pitches in timeline[dorico_name]]
+        if parts:
+            data[str(piece.id)] = parts
+    return data
+
+
 @login_required
 def hub_view(request, voice_part, project_id):
     """Renders the learning hub dynamically based on the requested voice
@@ -477,6 +500,7 @@ def hub_view(request, voice_part, project_id):
         "player_data": {
             "tracks": tracks,
             "sections": _player_sections(project.repertoire.all(), tracks, voice_part=db_part),
+            "noteTimes": _note_timelines(project.repertoire.all(), voice_part=db_part),
             # Whose note "My note" falls back to on a full-choir track
             "voicePart": dict(LearningAsset.PART_CHOICES).get(db_part, ""),
             "refreshUrl": reverse("hub_tracks", args=[voice_part, project.id]),
@@ -862,6 +886,7 @@ def committee_repertoire_detail_view(request, piece_id):
         "player_data": {
             "tracks": tracks,
             "sections": _player_sections([piece], tracks, members=False),
+            "noteTimes": _note_timelines([piece], members=False),
             "storageKey": f"piece:{piece.id}",
             # The track whose sections are being edited loads first
             "startTrack": track.id if track else None,
