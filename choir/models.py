@@ -293,6 +293,20 @@ class Repertoire(models.Model):
     composer = models.CharField(max_length=100)
     title = models.CharField(max_length=200)
 
+    # Score data for the practice player (Learning Hub P3, choir/score_import.py):
+    # the MIDI and MusicXML files Dorico exports with the part tracks, and
+    # what the import read from them.
+    score_midi = models.FileField(upload_to="score_data/", blank=True)
+    score_musicxml = models.FileField(upload_to="score_data/", blank=True)
+    # Added to every imported time, if the audio starts earlier or later
+    # than the MIDI (e.g. a plugin's latency)
+    audio_offset_ms = models.IntegerField(default=0)
+    # {"bars": [{"bar", "pass", "start", "notes": {part: pitches}}], "end", "midiEnd"}
+    bar_map = models.JSONField(default=dict, blank=True)
+    # Dorico part name -> site part name ("Alto 2"), "" for a part ignored
+    part_map = models.JSONField(default=dict, blank=True)
+    import_log = models.TextField(blank=True)
+
     def __str__(self):
         return f"{self.composer}: {self.title}"
 

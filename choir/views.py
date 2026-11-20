@@ -42,6 +42,7 @@ from .models import (
 )
 from .parts import voice_part_for
 from .permissions import is_committee, is_singer
+from .score_import import ScoreImportError, fill_section, fill_sections, format_time, import_score
 
 # ==============================================================================
 # 1. PUBLIC VIEWS (No login required)
@@ -447,6 +448,8 @@ def _player_sections(pieces, tracks, voice_part=None, members=True):
                 "bars": section.bars,
                 "start": float(section.start_seconds),
                 "end": float(section.end_seconds),
+                # One bar before it, from the score data; null without
+                "leadIn": float(section.lead_in_seconds) if section.lead_in_seconds is not None else None,
                 "published": section.published,
                 "notes": notes,
             }
@@ -741,8 +744,13 @@ def committee_repertoire_detail_view(request, piece_id):
     Sections are the whole piece's unless ?track=<asset id> scopes the
     sections card to one audio track's own: then the list, the form and
     the player's first track are that track's, and a starting note is
-    asked for its part only."""
-    from .forms import AssetEditForm, AssetUploadForm, RepertoireForm, SectionForm
+    asked for its part only.
+
+    The Score Data card takes the piece's MIDI and MusicXML from Dorico
+    (Learning Hub P3, choir/score_import.py): saving them runs the import,
+    which fills sections' times and starting notes from their bars. A
+    section saved with bars and no times is filled straight away."""
+    from .forms import AssetEditForm, AssetUploadForm, PartMapForm, RepertoireForm, ScoreDataForm, SectionForm
 
     piece = get_object_or_404(Repertoire, id=piece_id)
     assets = list(piece.assets.order_by("voice_part", "part_name", "asset_name"))
@@ -767,10 +775,27 @@ def committee_repertoire_detail_view(request, piece_id):
     piece_form = RepertoireForm(instance=piece)
     upload_form = AssetUploadForm()
     section_form = SectionForm(instance=editing, part_names=part_names)
+    score_form = ScoreDataForm(instance=piece, prefix="score")
+    part_map_form = PartMapForm(part_map=piece.part_map)
     sections_url = _sections_url(piece.id, track)
+    score_url = reverse("committee_repertoire_detail", args=[piece.id]) + "#score-data"
 
     if request.method == "POST":
-        if "upload" in request.POST:
+        if "score" in request.POST:
+            score_form = ScoreDataForm(request.POST, request.FILES, instance=piece, prefix="score")
+            if score_form.is_valid():
+                score_form.save()
+                _run_score_import(request, piece)
+                return redirect(score_url)
+        elif "part_map" in request.POST:
+            part_map_form = PartMapForm(request.POST, part_map=piece.part_map)
+            if part_map_form.is_valid():
+                piece.part_map = part_map_form.part_map()
+                piece.save(update_fields=["part_map"])
+                fill_sections(piece)
+                messages.success(request, "Part names saved, and starting notes updated.")
+                return redirect(score_url)
+        elif "upload" in request.POST:
             upload_form = AssetUploadForm(request.POST, request.FILES)
             if upload_form.is_valid():
                 added = upload_form.save(piece)
@@ -787,7 +812,12 @@ def committee_repertoire_detail_view(request, piece_id):
                     section_form.instance.asset = track
                     section_form.instance.order = last.order + 1 if last else 0
                 section = section_form.save()
-                messages.success(request, f"Section '{section.label}' saved.")
+                filled = fill_section(section, piece)
+                messages.success(
+                    request,
+                    f"Section '{section.label}' saved"
+                    + (", with its times and starting notes from the score data." if filled else "."),
+                )
                 return redirect(sections_url)
         else:
             piece_form = RepertoireForm(request.POST, instance=piece)
@@ -797,6 +827,12 @@ def committee_repertoire_detail_view(request, piece_id):
                 return redirect("committee_repertoire_detail", piece_id=piece.id)
 
     tracks = _player_tracks(assets)
+    # How long the score data says the music lasts, shifted by the offset.
+    # The MIDI's last note, not the end of the last bar, which may hold a
+    # fermata's rest; the audio should match it to within a second or two.
+    score_seconds = None
+    if (piece.bar_map or {}).get("midiEnd") is not None:
+        score_seconds = round(piece.bar_map["midiEnd"] + piece.audio_offset_ms / 1000, 3)
     # How many sections of its own each track has, for its Sections link
     own_counts = dict(
         piece.sections.filter(asset__isnull=False).values("asset").annotate(n=Count("id")).values_list("asset", "n")
@@ -816,15 +852,36 @@ def committee_repertoire_detail_view(request, piece_id):
         ],
         "playable_ids": {t["id"] for t in tracks},
         "projects": piece.projects.all(),
+        "score_form": score_form,
+        "part_map_form": part_map_form,
+        "score_length": format_time(score_seconds) if score_seconds is not None else "",
         "player_data": {
             "tracks": tracks,
             "sections": _player_sections([piece], tracks, members=False),
             "storageKey": f"piece:{piece.id}",
             # The track whose sections are being edited loads first
             "startTrack": track.id if track else None,
+            # For the player's check that a track matches the score data
+            "scoreSeconds": score_seconds,
         },
     }
     return render(request, "choir/committee_repertoire_detail.html", context)
+
+
+def _run_score_import(request, piece):
+    """Imports a piece's score data if it has both files, with a message
+    either way. A failed import keeps the previous bar map."""
+    if not (piece.score_midi and piece.score_musicxml):
+        messages.success(request, "Score data saved. Upload the other file too to import it.")
+        return
+    try:
+        import_score(piece)
+    except ScoreImportError as error:
+        piece.import_log = f"Import failed: {error}"
+        piece.save(update_fields=["import_log"])
+        messages.error(request, f"The score data couldn't be imported. {error}")
+    else:
+        messages.success(request, "Score data imported, and sections with bars updated.")
 
 
 def _sections_url(piece_id, track=None):

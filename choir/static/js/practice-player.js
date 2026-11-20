@@ -48,7 +48,10 @@
   const $$ = (selector) => document.querySelectorAll(selector);
   const bar = document.querySelector("[data-player-bar]");
 
-  const DEFAULT_LEAD_IN = 2;
+  // Lead-in setting: "bar" (the bar before the chosen section, from the
+  // score data; 2 seconds without), or a number of seconds
+  const DEFAULT_LEAD_IN = "bar";
+  const FALLBACK_LEAD_IN = 2; // seconds
   const MIN_LOOP = 0.5; // seconds
   const LAST_TRACK_KEY = `cc-player:last:${data.storageKey}`;
 
@@ -179,7 +182,12 @@
   // ready to play the section again (loop off). Anywhere outside the range
   // - after a seek, or the range being moved past the playhead - it jumps
   // to the start. Checked every frame; timeupdate is too coarse.
-  const rangeStart = () => Math.max(0, loopRegion.start - leadIn);
+  const leadInSeconds = () => {
+    if (leadIn !== "bar") return Number(leadIn);
+    const section = findSection(activeSection);
+    return section && section.leadIn != null ? section.leadIn : FALLBACK_LEAD_IN;
+  };
+  const rangeStart = () => Math.max(0, loopRegion.start - leadInSeconds());
 
   function keepInRange() {
     if (loopRegion && !audio.paused) {
@@ -316,6 +324,24 @@
     }
   });
 
+  // On the committee's piece page: does the loaded track last as long as
+  // the score data says the music does? A different length usually means
+  // the files come from different exports, or the audio needs an offset.
+  function showAlignment(duration) {
+    const note = document.querySelector("[data-score-alignment]");
+    if (!note || !Number.isFinite(data.scoreSeconds) || !current) return;
+    const gap = duration - data.scoreSeconds;
+    const lengths = `"${current.name}" lasts ${formatTime(duration)}; the score data's music lasts ${formatTime(data.scoreSeconds)}`;
+    if (Math.abs(gap) < 0.5) {
+      note.textContent = `${lengths}. They match.`;
+    } else if (Math.abs(gap) <= 3) {
+      note.textContent = `${lengths}, ${Math.abs(gap).toFixed(1)} seconds apart. That's normal if the track has a reverb tail; play a section to check it lines up.`;
+    } else {
+      note.textContent = `${lengths}, ${Math.abs(gap).toFixed(1)} seconds apart. Check the track and the score data come from the same export.`;
+    }
+    note.hidden = false;
+  }
+
   wavesurfer.on("ready", (duration) => {
     const state = pendingState || {};
     pendingState = null;
@@ -324,12 +350,15 @@
       Number.isFinite(state.a) ? state.a : 0,
       Number.isFinite(state.b) ? state.b : duration,
     );
-    leadIn = Number.isFinite(state.lead) ? state.lead : DEFAULT_LEAD_IN;
-    $("[data-player-lead-in]").value = String(leadIn);
+    // Saved before "One bar" existed: 0 stays off; 2 seconds was simply
+    // the default then, so it becomes the new default
+    leadIn = state.lead === 0 || state.lead === "0" ? "0" : typeof state.lead === "string" ? state.lead : DEFAULT_LEAD_IN;
+    $("[data-player-lead-in]").value = leadIn;
     setSpeed(Number.isFinite(state.rate) ? state.rate * 100 : 100);
     setLoop(Boolean(state.loop));
     if (Number.isFinite(state.t) && state.t < duration) wavesurfer.setTime(state.t);
 
+    showAlignment(duration);
     $("[data-player-duration]").textContent = formatTime(duration);
     $("[data-player-time]").textContent = formatTime(audio.currentTime);
     if (state.autoplay) wavesurfer.play().catch(() => {});
@@ -607,7 +636,7 @@
   });
 
   $("[data-player-lead-in]").addEventListener("change", (event) => {
-    leadIn = Number(event.target.value);
+    leadIn = event.target.value;
     saveState();
   });
 

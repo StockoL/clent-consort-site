@@ -477,22 +477,108 @@ class SectionForm(forms.ModelForm):
         return cleaned
 
     def save(self, commit=True):
-        # Times set by hand are never overwritten by a score import (P3)
+        # Times set by hand are never overwritten by a score import (P3).
+        # Cleared times go back to the import, which refills them from
+        # the bars; changed bars on an imported section are recomputed.
         if {"start_seconds", "end_seconds"} & set(self.changed_data):
             self.instance.timing_source = "MANUAL"
         section = super().save(commit=commit)
         if commit:
+            existing = {note.part_name: note for note in section.notes.all()}
             for field_name, part_name in self.note_fields:
                 pitches = self.cleaned_data.get(field_name)
+                note = existing.get(part_name)
+                if note is not None and note.pitches == pitches:
+                    continue  # unchanged: keeps its source (an imported note stays imported)
                 if pitches:
                     SectionNote.objects.update_or_create(
                         section=section,
                         part_name=part_name,
                         defaults={"pitches": pitches, "source": "MANUAL"},
                     )
-                else:
-                    SectionNote.objects.filter(section=section, part_name=part_name).delete()
+                elif note is not None:
+                    note.delete()
         return section
+
+
+SCORE_MAX_BYTES = 5 * 1024 * 1024  # 5 MB; a long anthem's MusicXML is well under 1 MB
+
+
+class ScoreDataForm(forms.ModelForm):
+    """A piece's score data (Learning Hub P3): the MIDI and MusicXML files
+    Dorico exports with the part tracks, and the audio offset. Either file
+    can be replaced on its own; the import runs once both are there."""
+
+    class Meta:
+        model = Repertoire
+        fields = ["score_midi", "score_musicxml", "audio_offset_ms"]
+        labels = {
+            "score_midi": "MIDI file",
+            "score_musicxml": "MusicXML file",
+            "audio_offset_ms": "Audio offset (milliseconds)",
+        }
+        widgets = {
+            "score_midi": forms.FileInput(attrs={"accept": ".mid,.midi"}),
+            "score_musicxml": forms.FileInput(attrs={"accept": ".musicxml,.xml,.mxl"}),
+            "audio_offset_ms": forms.NumberInput(attrs={"class": "form-control", "step": 10}),
+        }
+
+    def _check(self, name, extensions, kind):
+        upload = self.cleaned_data.get(name)
+        if upload and hasattr(upload, "size"):  # a new file, not the stored one
+            if not upload.name.lower().endswith(extensions):
+                raise forms.ValidationError(f"{upload.name} isn't a {kind} file.")
+            if upload.size > SCORE_MAX_BYTES:
+                raise forms.ValidationError(f"{upload.name} is over 5 MB.")
+        return upload
+
+    def clean_score_midi(self):
+        return self._check("score_midi", (".mid", ".midi"), "MIDI")
+
+    def clean_score_musicxml(self):
+        return self._check("score_musicxml", (".musicxml", ".xml", ".mxl"), "MusicXML")
+
+
+class PartMapForm(forms.Form):
+    """Which site part each Dorico part's starting notes belong to. Filled
+    in by the import from the part names; a part left blank (an organ,
+    say) gets no starting notes."""
+
+    def __init__(self, *args, part_map=None, **kwargs):
+        kwargs.setdefault("auto_id", "partmap_%s")
+        super().__init__(*args, **kwargs)
+        self.parts = []
+        for index, (dorico_name, site_name) in enumerate((part_map or {}).items()):
+            field_name = f"part_{index}"
+            self.fields[field_name] = forms.CharField(
+                label=dorico_name,
+                required=False,
+                max_length=40,
+                initial=site_name,
+                widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Not a voice part"}),
+            )
+            self.parts.append((field_name, dorico_name))
+
+    def clean(self):
+        cleaned = super().clean()
+        for field_name, _ in self.parts:
+            text = (cleaned.get(field_name) or "").strip()
+            if text:
+                part_name = normalise_part_name(text)
+                if not part_name:
+                    self.add_error(field_name, "Use a part name like 'Alto' or 'Tenor 2', or leave it blank.")
+                else:
+                    cleaned[field_name] = part_name
+            else:
+                cleaned[field_name] = ""
+        return cleaned
+
+    def part_fields(self):
+        """The fields as bound fields, for the template."""
+        return [self[field_name] for field_name, _ in self.parts]
+
+    def part_map(self):
+        return {dorico_name: self.cleaned_data[field_name] for field_name, dorico_name in self.parts}
 
 
 class AvailabilityPollForm(forms.ModelForm):

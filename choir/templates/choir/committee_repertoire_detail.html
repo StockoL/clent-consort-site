@@ -30,6 +30,7 @@
         <div>
           <strong>{{ section.label }}</strong>
           {% if not section.published %}<span class="badge">Hidden</span>{% elif not section.has_times %}<span class="badge" data-status="warning">Needs times</span>{% endif %}
+          {% if section.has_times and section.timing_source == "IMPORT" %}<span class="badge" data-status="info">From score data</span>{% endif %}
           <br>
           <span class="text-small text-muted">
             {% if section.bars %}Bars {{ section.bars }} · {% endif %}{% if section.has_times %}{{ section.times }}{% else %}No times yet{% endif %}
@@ -93,6 +94,9 @@
         </div>
       </div>
 
+      {% if piece.bar_map.bars %}
+      <p class="text-small settings-hint">This piece has score data, so with the bars filled in you can leave Start and End blank: they're taken from the bars, along with each part's starting note. Times or notes you type yourself are kept, even if the score data is imported again. Clear both times to go back to the score data's.</p>
+      {% endif %}
       <div class="switcher field-row">
         {% for field in section_form %}{% if field.name == "start_seconds" or field.name == "end_seconds" %}
         <div class="form-group flow flow--small">
@@ -130,6 +134,62 @@
         {% if editing %}<a href="{{ sections_url }}" class="button" data-variant="outline">Cancel</a>{% endif %}
       </div>
     </form>
+  </section>
+
+  <section class="card flow" data-variant="invert" id="score-data" aria-labelledby="score-data-title">
+    <h2 class="text-primary text-step-1 card-heading" id="score-data-title">Score Data</h2>
+    <p class="text-small settings-hint">The MIDI and MusicXML files exported from Dorico with the part tracks, from the same version of the piece. With them, a section only needs its bars: its times, a one-bar lead-in and each part's starting note are worked out from the score.</p>
+
+    {% if piece.import_log %}
+    <div class="flow flow--small">
+      <h3 class="text-step-0">Last import</h3>
+      <p class="text-small">{{ piece.import_log|linebreaksbr }}</p>
+    </div>
+    {% endif %}
+    <p class="text-small" data-score-alignment hidden></p>
+
+    <form method="POST" enctype="multipart/form-data" action="{% url 'committee_repertoire_detail' piece.id %}#score-data" class="flow flow--small">
+      {% csrf_token %}
+      <input type="hidden" name="score" value="1">
+      <div class="switcher field-row">
+        {% for field in score_form %}{% if field.name != "audio_offset_ms" %}
+        <div class="form-group flow flow--small">
+          <label for="{{ field.id_for_label }}" class="form-label text-small">{{ field.label }}</label>
+          {% if field.value %}<p class="text-small text-muted">Current: {{ field.value.name|cut:"score_data/" }}</p>{% endif %}
+          {{ field }}
+          <div class="form-error">{{ field.errors }}</div>
+        </div>
+        {% endif %}{% endfor %}
+      </div>
+      <div class="form-group flow flow--small">
+        <label for="{{ score_form.audio_offset_ms.id_for_label }}" class="form-label text-small">{{ score_form.audio_offset_ms.label }}</label>
+        <p class="text-small settings-hint">Leave at 0 unless sections play early or late on every track: then a positive number moves them later, a negative one earlier (1000 is one second).</p>
+        {{ score_form.audio_offset_ms }}
+        <div class="form-error">{{ score_form.audio_offset_ms.errors }}</div>
+      </div>
+      <button type="submit" class="button align-start" data-variant="primary">Save and Import</button>
+    </form>
+
+    {% if part_map_form.parts %}
+    <form method="POST" action="{% url 'committee_repertoire_detail' piece.id %}#score-data" class="flow flow--small">
+      {% csrf_token %}
+      <input type="hidden" name="part_map" value="1">
+      <fieldset class="form-group flow flow--small">
+        <legend class="form-label text-small">Parts</legend>
+        <p class="text-small settings-hint">Each Dorico part's starting notes are stored under the site part on the right, which must match the part named at the end of its track's file name (e.g. "Tenor 2"). Leave a part blank if it isn't a voice part.</p>
+        <div class="switcher field-row">
+          {% for field in part_map_form.part_fields %}
+          <div class="form-group flow flow--small">
+            <label for="{{ field.id_for_label }}" class="form-label text-small">{{ field.label }}</label>
+            {{ field }}
+            <div class="form-error">{{ field.errors }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </fieldset>
+      <button type="submit" class="button align-start" data-variant="outline">Save Parts</button>
+    </form>
+    {% endif %}
   </section>
 
   <section class="card flow" data-variant="invert">

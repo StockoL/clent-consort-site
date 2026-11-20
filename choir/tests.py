@@ -2363,6 +2363,342 @@ class PracticePlayerSectionTests(TestCase):
         self.assertContains(response, f'id="audio-{track.id}"')
 
 
+def make_midi(tempos, notes, ticks_per_beat=480):
+    """A MIDI file's bytes: tempos [(tick, bpm)], notes [(tick, midi, ticks)]
+    on one track, as Dorico writes them (tempo on its own track)."""
+    import io
+
+    import mido
+
+    midi = mido.MidiFile(type=1, ticks_per_beat=ticks_per_beat)
+    conductor = mido.MidiTrack()
+    previous = 0
+    for tick, bpm in tempos:
+        conductor.append(mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(bpm), time=tick - previous))
+        previous = tick
+    midi.tracks.append(conductor)
+    events = sorted(
+        [(tick, 1, "note_on", pitch) for tick, pitch, _ in notes]
+        + [(tick + length, 0, "note_off", pitch) for tick, pitch, length in notes]
+    )
+    track, previous = mido.MidiTrack(), 0
+    for tick, _, kind, pitch in events:
+        track.append(mido.Message(kind, note=pitch, velocity=64, time=tick - previous))
+        previous = tick
+    midi.tracks.append(track)
+    out = io.BytesIO()
+    midi.save(file=out)
+    return out.getvalue()
+
+
+def make_musicxml(parts, time=(4, 4), barlines=None, implicit_first=False, transpose=None):
+    """A part-wise MusicXML file's bytes. parts is {part name: [measure]},
+    each measure a list of notes: ("C4", quarters), ("rest", quarters),
+    ("C4", quarters, "chord") for a chord member, ("C4", quarters, "tied")
+    for a note tied from the one before. Divisions are one per quarter.
+    barlines is {measure index: XML}; transpose is {part name: octave-change}."""
+    barlines = barlines or {}
+    transpose = transpose or {}
+    score_parts, part_xml = [], []
+    for number, (name, measures) in enumerate(parts.items(), start=1):
+        score_parts.append(f'<score-part id="P{number}"><part-name>{name}</part-name></score-part>')
+        bars = []
+        for index, notes in enumerate(measures):
+            attributes = ""
+            if index == 0:
+                shift = transpose.get(name)
+                attributes = (
+                    f"<attributes><divisions>1</divisions><time><beats>{time[0]}</beats><beat-type>{time[1]}</beat-type></time>"
+                    + (f"<transpose><diatonic>0</diatonic><chromatic>0</chromatic><octave-change>{shift}</octave-change></transpose>" if shift else "")
+                    + "</attributes>"
+                )
+            body = []
+            for note in notes:
+                pitch, quarters, *flags = note
+                if pitch == "rest":
+                    inner = "<rest/>"
+                else:
+                    step, alter, octave = pitch[0], {"#": 1, "b": -1}.get(pitch[1:-1], 0), pitch[-1]
+                    inner = f"<pitch><step>{step}</step><alter>{alter}</alter><octave>{octave}</octave></pitch>"
+                chord = "<chord/>" if "chord" in flags else ""
+                tie = '<tie type="stop"/>' if "tied" in flags else ""
+                body.append(f"<note>{chord}{inner}<duration>{quarters}</duration>{tie}<voice>1</voice></note>")
+            implicit = ' implicit="yes"' if implicit_first and index == 0 else ""
+            measure_number = index if implicit_first else index + 1
+            bars.append(f'<measure number="{measure_number}"{implicit}>{attributes}{"".join(body)}{barlines.get(index, "")}</measure>')
+        part_xml.append(f'<part id="P{number}">{"".join(bars)}</part>')
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?><score-partwise version="4.0">'
+        f'<part-list>{"".join(score_parts)}</part-list>{"".join(part_xml)}</score-partwise>'
+    ).encode()
+
+
+def whole_bars(count, pitch="C4", time=4):
+    return [[(pitch, time)] for _ in range(count)]
+
+
+class ScoreImportTests(TestCase):
+    """Learning Hub P3: reading Dorico's MIDI and MusicXML into a bar map
+    (choir.score_import)."""
+
+    def build(self, parts, tempos=((0, 120),), midi_quarters=None, **xml):
+        from .score_import import build_bar_map
+
+        quarters = midi_quarters if midi_quarters is not None else sum(
+            sum(n[1] for n in m if "chord" not in n[2:]) for m in next(iter(parts.values()))
+        )
+        midi = make_midi([(tick, bpm) for tick, bpm in tempos], [(0, 60, int(quarters * 480))])
+        return build_bar_map(midi, make_musicxml(parts, **xml))
+
+    def starts(self, bar_map):
+        return [(e["bar"], e["pass"], e["start"]) for e in bar_map["bars"]]
+
+    def test_bar_times_follow_the_midi_tempo(self):
+        # 120 bpm (2 s a bar), then 60 bpm from bar 3 (4 s a bar)
+        bar_map, parts, report = self.build({"Alto": whole_bars(4)}, tempos=((0, 120), (8 * 480, 60)))
+        self.assertEqual(self.starts(bar_map), [(1, 1, 0.0), (2, 1, 2.0), (3, 1, 4.0), (4, 1, 8.0)])
+        self.assertEqual(bar_map["end"], 12.0)
+        self.assertEqual(parts, ["Alto"])
+        self.assertIn("4 bars played", report[0])
+
+    def test_starting_notes_are_sounding_pitches(self):
+        bar_map, _, _ = self.build(
+            {
+                # Written at treble pitch with an "octave lower" transposition
+                "Tenor": [[("rest", 2), ("Eb5", 2)], [("D5", 4)]],
+                # In the octave-treble clef: written as it sounds
+                "Tenor 2": [[("G3", 4)], [("rest", 4)]],
+                "Alto": [[("C4", 4), ("E4", 4, "chord")], [("E4", 2, "tied"), ("F4", 2)]],
+            },
+            transpose={"Tenor": -1},
+        )
+        first, second = bar_map["bars"]
+        self.assertEqual(first["notes"], {"Tenor": "Eb4", "Tenor 2": "G3", "Alto": "C4,E4"})
+        # A tied note isn't a new one; the part's next note is. A rest-only bar has none.
+        self.assertEqual(second["notes"], {"Tenor": "D4", "Alto": "F4"})
+
+    def test_repeats_and_first_and_second_time_bars(self):
+        forward = '<barline location="left"><repeat direction="forward"/></barline>'
+        backward = '<barline location="right"><repeat direction="backward"/></barline>'
+        first_time = '<barline location="left"><ending number="1" type="start"/></barline>'
+        first_time_end = '<barline location="right"><ending number="1" type="stop"/><repeat direction="backward"/></barline>'
+        second_time = '<barline location="left"><ending number="2" type="start"/></barline><barline location="right"><ending number="2" type="discontinue"/></barline>'
+        # 1 |: 2 |1. 3 :|2. 4 | 5 6 :|
+        bar_map, _, report = self.build(
+            {"Alto": whole_bars(6)},
+            midi_quarters=4 * 9,
+            barlines={1: forward, 2: first_time + first_time_end, 3: second_time, 5: backward},
+        )
+        played = [(e["bar"], e["pass"]) for e in bar_map["bars"]]
+        # After the second-time bar a new repeat runs back to the bar after
+        # the last one taken (bar 5), as players read it
+        self.assertEqual(played, [(1, 1), (2, 1), (3, 1), (2, 2), (4, 1), (5, 1), (6, 1), (5, 2), (6, 2)])
+        self.assertEqual(bar_map["bars"][3]["start"], 6.0)
+        self.assertIn("Repeats followed", "\n".join(report))
+
+    def test_a_pickup_bar_is_its_own_length(self):
+        bar_map, _, _ = self.build({"Alto": [[("C4", 1)]] + whole_bars(2)}, implicit_first=True)
+        self.assertEqual(self.starts(bar_map), [(0, 1, 0.0), (1, 1, 0.5), (2, 1, 2.5)])
+
+    def test_mismatched_files_are_reported(self):
+        _, _, report = self.build({"Alto": whole_bars(2)}, midi_quarters=16)
+        self.assertIn("runs", "\n".join(report))
+
+    def test_a_compressed_mxl_file_is_read(self):
+        import io
+        import zipfile
+
+        from .score_import import read_musicxml
+
+        out = io.BytesIO()
+        with zipfile.ZipFile(out, "w") as archive:
+            archive.writestr(
+                "META-INF/container.xml",
+                '<container><rootfiles><rootfile full-path="score.musicxml"/></rootfiles></container>',
+            )
+            archive.writestr("score.musicxml", make_musicxml({"Alto": whole_bars(2)}))
+        measures, parts = read_musicxml(out.getvalue())
+        self.assertEqual(len(measures), 2)
+        self.assertEqual(parts["Alto"], ["C4", "C4"])
+
+    def test_unreadable_files_raise_a_readable_error(self):
+        from .score_import import ScoreImportError, build_bar_map
+
+        good_midi = make_midi([(0, 120)], [(0, 60, 480)])
+        for midi, xml in [(b"not midi", make_musicxml({"Alto": whole_bars(1)})), (good_midi, b"<not xml"), (good_midi, b"<score-timewise/>")]:
+            with self.subTest(midi=midi[:8], xml=xml[:12]):
+                with self.assertRaises(ScoreImportError):
+                    build_bar_map(midi, xml)
+
+
+class ScoreDataTests(TestCase):
+    """Learning Hub P3 on the piece page: uploading the score data imports
+    it, and sections are filled from their bars without overwriting what
+    the committee set by hand."""
+
+    def setUp(self):
+        create_committee_user(username="committee", password="pw")
+        User.objects.create_user(username="member", password="pw")
+        self.client.login(username="committee", password="pw")
+        self.piece = Repertoire.objects.create(composer="Lotti", title="Crucifixus")
+        self.detail = reverse("committee_repertoire_detail", args=[self.piece.id])
+        # Four bars of 4/4 at 120 bpm: bars start at 0, 2, 4 and 6 seconds
+        self.midi = make_midi([(0, 120)], [(0, 60, 16 * 480)])
+        self.xml = make_musicxml(
+            {
+                "Soprano 1": [[("G4", 4)], [("A4", 4)], [("B4", 4)], [("C5", 4)]],
+                "Alto": [[("rest", 2), ("E4", 2)], [("F4", 4)], [("E4", 4, "tied")], [("D4", 4)]],
+                "Organ": whole_bars(4),
+            }
+        )
+
+    def upload(self, midi=None, xml=None, offset="0"):
+        data = {"score": "1", "score-audio_offset_ms": offset}
+        if midi is not None:
+            data["score-score_midi"] = SimpleUploadedFile("piece.mid", midi)
+        if xml is not None:
+            data["score-score_musicxml"] = SimpleUploadedFile("piece.musicxml", xml)
+        return self.client.post(self.detail, data)
+
+    def section(self, label, bars, **fields):
+        return Section.objects.create(repertoire=self.piece, label=label, bar_start=bars[0], bar_end=bars[1], **fields)
+
+    def test_uploading_both_files_imports_them(self):
+        response = self.upload(self.midi, self.xml)
+        self.assertRedirects(response, self.detail + "#score-data", fetch_redirect_response=False)
+        self.piece.refresh_from_db()
+        self.assertEqual([e["start"] for e in self.piece.bar_map["bars"]], [0.0, 2.0, 4.0, 6.0])
+        self.assertEqual(self.piece.part_map, {"Soprano 1": "Soprano 1", "Alto": "Alto", "Organ": ""})
+        self.assertIn("Organ", self.piece.import_log)
+
+        # An "Opening" section over the whole piece, with everyone's first note
+        opening = self.piece.sections.get()
+        self.assertEqual((opening.label, opening.bar_start, opening.bar_end), ("Opening", 1, 4))
+        self.assertEqual((opening.start_seconds, opening.end_seconds), (Decimal("0"), Decimal("8")))
+        self.assertIsNone(opening.lead_in_seconds)
+        self.assertEqual(dict(opening.notes.values_list("part_name", "source")), {"Soprano 1": "IMPORT", "Alto": "IMPORT"})
+        self.assertEqual(dict(opening.notes.values_list("part_name", "pitches")), {"Soprano 1": "G4", "Alto": "E4"})
+
+    def test_one_file_alone_waits_for_the_other(self):
+        self.upload(self.midi)
+        self.piece.refresh_from_db()
+        self.assertTrue(self.piece.score_midi)
+        self.assertEqual(self.piece.bar_map, {})
+        self.upload(xml=self.xml)
+        self.piece.refresh_from_db()
+        self.assertEqual(len(self.piece.bar_map["bars"]), 4)
+
+    def test_a_section_with_bars_only_is_filled_on_save(self):
+        self.upload(self.midi, self.xml)
+        self.client.post(self.detail, {"section": "1", "label": "Middle", "bar_start": "2", "bar_end": "3", "published": "on"})
+        middle = Section.objects.get(label="Middle")
+        self.assertEqual((middle.start_seconds, middle.end_seconds, middle.lead_in_seconds), (Decimal("2"), Decimal("6"), Decimal("2")))
+        self.assertEqual(middle.timing_source, "IMPORT")
+        # Alto's bar 3 is tied over, so its note is bar 2's F4
+        self.assertEqual(dict(middle.notes.values_list("part_name", "pitches")), {"Soprano 1": "A4", "Alto": "F4"})
+
+    def test_hand_set_times_and_notes_survive_a_reimport(self):
+        self.upload(self.midi, self.xml)
+        mine = self.section("Mine", (2, 3), start_seconds=Decimal("1.5"), end_seconds=Decimal("5"))
+        SectionNote.objects.create(section=mine, part_name="Alto", pitches="G4", source="MANUAL")
+        self.upload()  # same files: import again
+        mine.refresh_from_db()
+        self.assertEqual((mine.start_seconds, mine.end_seconds, mine.timing_source), (Decimal("1.5"), Decimal("5"), "MANUAL"))
+        notes = {n.part_name: (n.pitches, n.source) for n in mine.notes.all()}
+        self.assertEqual(notes, {"Alto": ("G4", "MANUAL"), "Soprano 1": ("A4", "IMPORT")})
+
+    def test_resaving_a_section_keeps_imported_values_imported(self):
+        self.upload(self.midi, self.xml)
+        opening = self.piece.sections.get()
+        form = self.client.get(self.detail, {"section": opening.id}).context["section_form"]
+        data = {"section": "1", "section_id": opening.id, "published": "on"}
+        for name, field in form.fields.items():
+            value = form[name].value()
+            if name != "published" and value not in (None, ""):
+                data[name] = field.prepare_value(value) if hasattr(field, "prepare_value") else value
+        data["label"] = "Beginning"
+        self.client.post(self.detail, data)
+        opening.refresh_from_db()
+        self.assertEqual((opening.label, opening.timing_source), ("Beginning", "IMPORT"))
+        self.assertEqual(set(opening.notes.values_list("source", flat=True)), {"IMPORT"})
+
+    def test_changing_an_imported_sections_bars_moves_its_times(self):
+        self.upload(self.midi, self.xml)
+        opening = self.piece.sections.get()
+        self.client.post(
+            self.detail,
+            {"section": "1", "section_id": opening.id, "label": "Opening", "bar_start": "3", "bar_end": "4",
+             "start_seconds": "0:00", "end_seconds": "0:08", "published": "on"},
+        )
+        opening.refresh_from_db()
+        self.assertEqual((opening.start_seconds, opening.end_seconds), (Decimal("4"), Decimal("8")))
+
+    def test_the_audio_offset_shifts_imported_times(self):
+        self.upload(self.midi, self.xml, offset="250")
+        opening = self.piece.sections.get()
+        self.assertEqual((opening.start_seconds, opening.end_seconds), (Decimal("0.25"), Decimal("8.25")))
+
+    def test_correcting_a_part_name_moves_its_notes(self):
+        self.upload(self.midi, self.xml)
+        form = self.client.get(self.detail).context["part_map_form"]
+        names = {dorico: field for field, dorico in form.parts}
+        self.client.post(
+            self.detail,
+            {"part_map": "1", names["Soprano 1"]: "soprano", names["Alto"]: "Alto", names["Organ"]: ""},
+        )
+        self.piece.refresh_from_db()
+        self.assertEqual(self.piece.part_map["Soprano 1"], "Soprano")
+        opening = self.piece.sections.get()
+        self.assertEqual(sorted(opening.notes.values_list("part_name", flat=True)), ["Alto", "Soprano"])
+
+        # The correction survives another import
+        self.upload()
+        self.piece.refresh_from_db()
+        self.assertEqual(self.piece.part_map["Soprano 1"], "Soprano")
+
+    def test_a_failed_import_says_why_and_keeps_the_old_map(self):
+        self.upload(self.midi, self.xml)
+        response = self.upload(midi=b"not a midi file at all")
+        self.assertRedirects(response, self.detail + "#score-data", fetch_redirect_response=False)
+        self.assertIn("couldn't be imported", str(list(response.wsgi_request._messages)))
+        self.piece.refresh_from_db()
+        self.assertTrue(self.piece.import_log.startswith("Import failed"))
+        self.assertEqual(len(self.piece.bar_map["bars"]), 4)
+
+    def test_wrong_file_types_are_refused(self):
+        response = self.client.post(
+            self.detail,
+            {"score": "1", "score-audio_offset_ms": "0", "score-score_midi": SimpleUploadedFile("track.mp3", b"ID3")},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.piece.refresh_from_db()
+        self.assertFalse(self.piece.score_midi)
+
+    def test_score_data_is_committee_only(self):
+        self.client.login(username="member", password="pw")
+        response = self.upload(self.midi, self.xml)
+        self.assertEqual(response.status_code, 302)
+        self.piece.refresh_from_db()
+        self.assertFalse(self.piece.score_midi)
+
+    def test_members_get_the_one_bar_lead_in(self):
+        self.upload(self.midi, self.xml)
+        self.section("Middle", (2, 3))
+        from .score_import import fill_sections
+
+        self.piece.refresh_from_db()
+        fill_sections(self.piece)
+        project = Project.objects.create(name="Clent 2026", status="ACTIVE")
+        project.repertoire.add(self.piece)
+        LearningAsset.objects.create(
+            repertoire=self.piece, voice_part="ALT", asset_name="Alto", file_upload=SimpleUploadedFile("alto.mp3", b"ID3")
+        )
+        self.client.login(username="member", password="pw")
+        sections = self.client.get(reverse("hub", args=["alto", project.id])).context["player_data"]["sections"][str(self.piece.id)]
+        lead_ins = {s["label"]: s["leadIn"] for s in sections}
+        self.assertEqual(lead_ins, {"Opening": None, "Middle": 2.0})
+
+
 class AssetPartUploadTests(TestCase):
     """Learning Hub P2: uploads read each file's part from its name, and
     the committee can correct an asset's part afterwards."""
