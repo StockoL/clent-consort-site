@@ -200,7 +200,10 @@
     if (loopRegion) {
       loopRegion.setOptions({ start, end });
     } else {
-      loopRegion = regions.addRegion({ id: "loop", start, end, drag: true, resize: true });
+      // drag: false, so dragging inside the loop scrubs the playhead (as
+      // anywhere else on the waveform) rather than moving the loop; the
+      // flags still drag its ends
+      loopRegion = regions.addRegion({ id: "loop", start, end, drag: false, resize: true });
       addFlags(loopRegion);
     }
     showLoopStyle();
@@ -323,6 +326,8 @@
   // the beginning (as Loop start and Loop end used to).
   function moveMarker(which, time, { fromPlayhead = false } = {}) {
     if (!loopRegion) return;
+    // The flags only show with the loop on, so setting one switches it on
+    if (!loopOn) setLoop(true);
     const duration = wavesurfer.getDuration();
     if (which === "a") {
       const end = fromPlayhead && time >= loopRegion.end - MIN_LOOP ? duration : loopRegion.end;

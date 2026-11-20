@@ -91,9 +91,9 @@ The player is most of each voice-part hub. It uses wavesurfer.js, vendored into 
 
 - A large drop-down chooses the piece: every piece in the project with anything for the part, in repertoire order. A Score (PDF) button beside it opens the part's own PDF, or else the full score. A link can open a given piece with `?piece=`.
 - Where a piece has several tracks for the part (two movements recorded separately, say), tabs above the waveform switch between them, labelled from the file names. Part buttons switch between the part's own track, divided lines (Alto 1 and Alto 2) and the full choir. No row of buttons repeats a label.
-- A waveform of the track. Click or tap it to move the playhead.
-- Loop markers A and B, drawn as flags on the waveform that can be dragged, and shown as two cards with each one's time and, with the piece's score data, its bar. Each card moves its marker half a second either way, or to the playhead with Set to now; the `[` and `]` keys do the same. Reset loop puts them back at the ends.
-- A Loop switch with an On/Off light. With the loop on, playback stays between the markers and goes back round at B. With it off, the track plays straight through, and the markers wait for the loop to be switched on again.
+- A waveform that works as the timeline: click to jump, drag to scrub, inside the loop too.
+- Loop markers A and B, drawn as flags on the waveform while the loop is on and dragged to move the loop's ends, and shown as two cards with each one's time and, with the piece's score data, its bar. Each card moves its marker half a second either way, or to the playhead with Set to now; the `[` and `]` keys do the same. Setting a marker switches the loop on. Reset loop puts them back at the ends.
+- A Loop switch with an On/Off light. With the loop on, playback stays between the markers and goes back round at B. With it off, the flags are hidden and the track plays straight through; the markers keep their places for when the loop is switched on again.
 - A lead-in before marker A when looping: one bar (the bar before, where the piece has score data), two bars, 2 seconds, or off.
 - Speed from 50% to 110% without changing the pitch.
 - A note finder: an on-screen keyboard that plays any note, for checking a starting note.

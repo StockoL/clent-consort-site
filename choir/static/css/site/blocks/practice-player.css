@@ -160,7 +160,14 @@
    ::part(). The plugin sets the handles' styles inline, hence !important.
    Each handle is a 44px-wide grab area with a thin gold line down its
    middle, and carries its flag (added by the script). */
+/* Clicks and drags inside the loop reach the waveform beneath (to jump
+   or scrub); only the flags' handles take the pointer */
+.practice-player__wave ::part(region) {
+  pointer-events: none;
+}
+
 .practice-player__wave ::part(region-handle) {
+  pointer-events: auto;
   width: 44px !important;
   border: 0 !important;
   border-radius: 0 !important;
@@ -190,14 +197,11 @@
   pointer-events: none;
 }
 
-/* Loop off: the markers stay, as a dashed outline with no fill */
+/* Loop off: no flags or region, so the whole waveform is the timeline
+   (click to jump, drag to scrub). The markers keep their places for when
+   the loop is switched on again. */
 .practice-player__wave[data-loop="off"] ::part(region) {
-  outline: 2px dashed rgba(201, 164, 94, 0.7);
-  outline-offset: -2px;
-}
-
-.practice-player__wave[data-loop="off"] ::part(region-handle) {
-  background: none !important;
+  display: none !important;
 }
 
 /* --- Rows, groups and small controls --- */
