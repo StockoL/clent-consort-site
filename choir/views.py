@@ -827,12 +827,16 @@ def committee_repertoire_detail_view(request, piece_id):
                 return redirect("committee_repertoire_detail", piece_id=piece.id)
 
     tracks = _player_tracks(assets)
-    # How long the score data says the music lasts, shifted by the offset.
-    # The MIDI's last note, not the end of the last bar, which may hold a
-    # fermata's rest; the audio should match it to within a second or two.
-    score_seconds = None
+    # When the score data says the music starts and ends, shifted by the
+    # offset: the MIDI's first note and the end of its last (not the end of
+    # the last bar, which may hold a fermata's rest). The player compares
+    # them with where the sound starts and stops in a track.
+    score_seconds = score_start = None
     if (piece.bar_map or {}).get("midiEnd") is not None:
-        score_seconds = round(piece.bar_map["midiEnd"] + piece.audio_offset_ms / 1000, 3)
+        offset = piece.audio_offset_ms / 1000
+        score_seconds = round(piece.bar_map["midiEnd"] + offset, 3)
+        if piece.bar_map.get("midiStart") is not None:  # imports before this was recorded lack it
+            score_start = round(piece.bar_map["midiStart"] + offset, 3)
     # How many sections of its own each track has, for its Sections link
     own_counts = dict(
         piece.sections.filter(asset__isnull=False).values("asset").annotate(n=Count("id")).values_list("asset", "n")
@@ -862,7 +866,9 @@ def committee_repertoire_detail_view(request, piece_id):
             # The track whose sections are being edited loads first
             "startTrack": track.id if track else None,
             # For the player's check that a track matches the score data
+            "scoreStart": score_start,
             "scoreSeconds": score_seconds,
+            "audioOffsetMs": piece.audio_offset_ms,
         },
     }
     return render(request, "choir/committee_repertoire_detail.html", context)

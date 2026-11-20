@@ -301,7 +301,7 @@ class Repertoire(models.Model):
     # Added to every imported time, if the audio starts earlier or later
     # than the MIDI (e.g. a plugin's latency)
     audio_offset_ms = models.IntegerField(default=0)
-    # {"bars": [{"bar", "pass", "start", "notes": {part: pitches}}], "end", "midiEnd"}
+    # {"bars": [{"bar", "pass", "start", "notes": {part: pitches}}], "end", "midiStart", "midiEnd"}
     bar_map = models.JSONField(default=dict, blank=True)
     # Dorico part name -> site part name ("Alto 2"), "" for a part ignored
     part_map = models.JSONField(default=dict, blank=True)

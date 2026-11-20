@@ -2467,6 +2467,7 @@ class ScoreImportTests(TestCase):
         bar_map, parts, report = self.build({"Alto": whole_bars(4)}, tempos=((0, 120), (8 * 480, 60)))
         self.assertEqual(self.starts(bar_map), [(1, 1, 0.0), (2, 1, 2.0), (3, 1, 4.0), (4, 1, 8.0)])
         self.assertEqual(bar_map["end"], 12.0)
+        self.assertEqual(bar_map["midiStart"], 0.0)
         self.assertEqual(parts, ["Alto"])
         self.assertIn("4 bars played", report[0])
 
@@ -2651,6 +2652,9 @@ class ScoreDataTests(TestCase):
         self.upload(self.midi, self.xml, offset="250")
         opening = self.piece.sections.get()
         self.assertEqual((opening.start_seconds, opening.end_seconds), (Decimal("0.25"), Decimal("8.25")))
+        # The player checks tracks against the shifted start and end of the music
+        data = self.client.get(self.detail).context["player_data"]
+        self.assertEqual((data["scoreStart"], data["scoreSeconds"], data["audioOffsetMs"]), (0.25, 8.25, 250))
 
     def test_correcting_a_part_name_moves_its_notes(self):
         self.upload(self.midi, self.xml)

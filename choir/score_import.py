@@ -47,11 +47,13 @@ class ScoreImportError(Exception):
 
 class TempoMap:
     """A MIDI file's tempo changes, to turn a position in quarter notes
-    into seconds. end is when the last note finishes, in seconds."""
+    into seconds. start and end are when the first note starts and the
+    last one finishes, in seconds."""
 
-    def __init__(self, ticks_per_beat, tempos, last_tick):
+    def __init__(self, ticks_per_beat, tempos, last_tick, first_tick=0):
         self.ticks_per_beat = ticks_per_beat
         self.tempos = tempos  # [(tick, microseconds per quarter)], from tick 0
+        self.start = self.seconds_at_tick(first_tick)
         self.end = self.seconds_at_tick(last_tick)
         self.end_quarters = last_tick / ticks_per_beat
 
@@ -75,7 +77,7 @@ def read_midi(data):
     except Exception as error:  # mido raises several types for bad files
         raise ScoreImportError(f"The MIDI file couldn't be read ({error}).") from error
 
-    tempos, last_tick = [], 0
+    tempos, first_tick, last_tick = [], None, 0
     for track in midi.tracks:
         tick = 0
         for message in track:
@@ -84,12 +86,14 @@ def read_midi(data):
                 tempos.append((tick, message.tempo))
             elif message.type in ("note_on", "note_off"):
                 last_tick = max(last_tick, tick)
+                if message.type == "note_on" and message.velocity and (first_tick is None or tick < first_tick):
+                    first_tick = tick
     if not last_tick:
         raise ScoreImportError("The MIDI file has no notes in it.")
     tempos.sort()
     if not tempos or tempos[0][0] > 0:
         tempos.insert(0, (0, DEFAULT_TEMPO))
-    return TempoMap(midi.ticks_per_beat, tempos, last_tick)
+    return TempoMap(midi.ticks_per_beat, tempos, last_tick, first_tick or 0)
 
 
 # ------------------------------------------------------------ MusicXML
@@ -295,8 +299,10 @@ def build_bar_map(midi_data, musicxml_data):
     """(bar_map, part_names, report lines) from the two files' bytes.
 
     bar_map is {"bars": [{"bar", "pass", "start", "notes": {part: pitches}}],
-    "end", "midiEnd"}: one entry per played bar, its start in seconds
-    from the MIDI's tempo, and each part's new pitches in it."""
+    "end", "midiStart", "midiEnd"}: one entry per played bar, its start in
+    seconds from the MIDI's tempo, and each part's new pitches in it; then
+    where the last bar ends, and when the first note starts and the last
+    one finishes (for checking a track against the score data)."""
     tempo = read_midi(midi_data)
     measures, parts = read_musicxml(musicxml_data)
     order = played_order(measures)
@@ -334,7 +340,8 @@ def build_bar_map(midi_data, musicxml_data):
             "Warning: the score has more bars than the MIDI has notes for. "
             "Check both files come from the same version of the piece."
         )
-    return {"bars": bars, "end": end, "midiEnd": round(tempo.end, 3)}, list(parts), report
+    bar_map = {"bars": bars, "end": end, "midiStart": round(tempo.start, 3), "midiEnd": round(tempo.end, 3)}
+    return bar_map, list(parts), report
 
 
 def format_time(seconds):

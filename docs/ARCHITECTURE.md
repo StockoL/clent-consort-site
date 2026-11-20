@@ -180,7 +180,7 @@ The import walks the bars in playing order, through repeats, and stores a bar ma
 
 Times and notes have a source. The import only ever fills empty values and replaces ones it set itself, so anything the committee types is kept through every later import. Dorico part names are matched to the site's part names (such as "Tenor 2") by the same pattern as track file names, and the committee can correct the match.
 
-The import never reads the audio. Instead, the committee's player compares a track's length with the score data's and says whether they agree, which catches files from different exports without the server downloading any MP3s.
+The import never reads the audio. Instead, the committee's player finds where the sound starts and stops in the track it has just decoded for the waveform (the first and last moments within 50 dB of its loudest) and compares them with the MIDI's first note and the end of its last. Comparing the music rather than the file's length matters: Dorico's audio export can end with several seconds of silence, which the first Lotti tracks did. The same shift at both ends means the audio needs an offset, which the page works out; different shifts mean the files come from different exports.
 
 ## Email
 

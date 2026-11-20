@@ -324,21 +324,60 @@
     }
   });
 
-  // On the committee's piece page: does the loaded track last as long as
-  // the score data says the music does? A different length usually means
-  // the files come from different exports, or the audio needs an offset.
+  // Where the sound starts and stops in the decoded track, in seconds:
+  // the first and last 20 ms windows within 50 dB of its loudest. Null
+  // without real audio data (the plain-bar fallback has none).
+  function soundBounds() {
+    const audioData = triedFallback ? null : wavesurfer.getDecodedData();
+    if (!audioData) return null;
+    const samples = audioData.getChannelData(0);
+    const size = Math.max(1, Math.round(audioData.sampleRate * 0.02));
+    const levels = [];
+    for (let start = 0; start < samples.length; start += size) {
+      let sum = 0;
+      const stop = Math.min(start + size, samples.length);
+      for (let i = start; i < stop; i += 1) sum += samples[i] * samples[i];
+      levels.push(sum / (stop - start));
+    }
+    const threshold = Math.max(...levels) * 1e-5; // 50 dB below the peak
+    const first = levels.findIndex((level) => level > threshold);
+    if (first < 0) return null;
+    const last = levels.length - 1 - [...levels].reverse().findIndex((level) => level > threshold);
+    return { start: (first * size) / audioData.sampleRate, end: ((last + 1) * size) / audioData.sampleRate };
+  }
+
+  // On the committee's piece page: does the music in the loaded track
+  // start and stop when the score data says it does? Silence after the
+  // music doesn't matter. The same shift at both ends needs an audio
+  // offset; different shifts mean different exports or tempos.
   function showAlignment(duration) {
     const note = document.querySelector("[data-score-alignment]");
     if (!note || !Number.isFinite(data.scoreSeconds) || !current) return;
-    const gap = duration - data.scoreSeconds;
-    const lengths = `"${current.name}" lasts ${formatTime(duration)}; the score data's music lasts ${formatTime(data.scoreSeconds)}`;
-    if (Math.abs(gap) < 0.5) {
-      note.textContent = `${lengths}. They match.`;
-    } else if (Math.abs(gap) <= 3) {
-      note.textContent = `${lengths}, ${Math.abs(gap).toFixed(1)} seconds apart. That's normal if the track has a reverb tail; play a section to check it lines up.`;
+    const seconds = (value) => `${value.toFixed(1)} seconds`;
+    const bounds = Number.isFinite(data.scoreStart) ? soundBounds() : null;
+    let message;
+    if (!bounds) {
+      // No audio to measure: compare lengths, which silence can upset
+      const gap = duration - data.scoreSeconds;
+      message = `"${current.name}" lasts ${formatTime(duration)}, and the score data's music ${formatTime(data.scoreSeconds)}.`;
+      message += Math.abs(gap) < 2 ? " They match." : ` Play a section to check it lines up: silence at either end of the track would explain a difference of ${seconds(Math.abs(gap))}.`;
     } else {
-      note.textContent = `${lengths}, ${Math.abs(gap).toFixed(1)} seconds apart. Check the track and the score data come from the same export.`;
+      const startGap = bounds.start - data.scoreStart;
+      const endGap = bounds.end - data.scoreSeconds;
+      message = `In "${current.name}" the music runs from ${formatPrecise(bounds.start)} to ${formatPrecise(bounds.end)}; in the score data, from ${formatPrecise(data.scoreStart)} to ${formatPrecise(data.scoreSeconds)}.`;
+      if (Math.abs(endGap - startGap) > 1.5) {
+        message += ` The two drift ${seconds(Math.abs(endGap - startGap))} apart over the piece, so they're probably from different exports or tempos: export the score data and tracks again from the same version.`;
+      } else if (Math.abs(startGap) <= 0.25) {
+        message += " They line up." + (duration - bounds.end > 2 ? " The silence after the music doesn't matter." : "");
+      } else {
+        // The offset the track needs, from the score data's own timing (a
+        // difference of a quarter of a second or less needs none)
+        const needed = startGap + (Number(data.audioOffsetMs) || 0) / 1000;
+        const offset = Math.abs(needed) <= 0.25 ? 0 : Math.round(needed * 100) * 10;
+        message += ` The track's music starts ${seconds(Math.abs(startGap))} ${startGap > 0 ? "later" : "earlier"}: set the audio offset to ${offset} and import again.`;
+      }
     }
+    note.textContent = message;
     note.hidden = false;
   }
 
