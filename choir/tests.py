@@ -2064,6 +2064,13 @@ class PartNameTests(TestCase):
             "Full score.pdf": None,
             "Contrabass.mp3": None,
             "Tenor solo.mp3": None,
+            # Short forms, read as the full part name
+            "Lotti - Crucifixus a 6 - Sop 1.mp3": ("SOP", "Soprano 1"),
+            "Lotti_-_Crucifixus_a_6_-_Sop_2.mp3": ("SOP", "Soprano 2"),
+            "Ave verum Ten2.mp3": ("TEN", "Tenor 2"),
+            "Ave verum - Bari.mp3": ("BAS", "Baritone"),
+            # "Bar" could be a bar number, so it isn't one
+            "Ave verum - Bar 3.mp3": None,
         }
         for filename, expected in cases.items():
             with self.subTest(filename=filename):
@@ -2072,6 +2079,8 @@ class PartNameTests(TestCase):
     def test_normalise_part_name(self):
         self.assertEqual(normalise_part_name("alto  2"), "Alto 2")
         self.assertEqual(normalise_part_name("Bass"), "Bass")
+        self.assertEqual(normalise_part_name("sop 2"), "Soprano 2")
+        self.assertEqual(voice_part_for("Alt"), "ALT")
         self.assertIsNone(normalise_part_name("Organ"))
         self.assertEqual(voice_part_for("Baritone"), "BAS")
         self.assertIsNone(voice_part_for("Organ"))
@@ -2570,6 +2579,11 @@ class ScoreDataTests(TestCase):
         self.assertEqual([e["start"] for e in self.piece.bar_map["bars"]], [0.0, 2.0, 4.0, 6.0])
         self.assertEqual(self.piece.part_map, {"Soprano 1": "Soprano 1", "Alto": "Alto", "Organ": ""})
         self.assertIn("Organ", self.piece.import_log)
+        # The page then names the files it holds
+        page = self.client.get(self.detail)
+        self.assertContains(page, "Current: piece")
+        self.assertContains(page, ".mid")
+        self.assertContains(page, ".musicxml")
 
         # An "Opening" section over the whole piece, with everyone's first note
         opening = self.piece.sections.get()

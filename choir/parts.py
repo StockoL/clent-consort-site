@@ -12,8 +12,12 @@ import re
 
 # Leading word of a part name -> the site's voice part
 VOICE_WORDS = {"soprano": "SOP", "alto": "ALT", "tenor": "TEN", "baritone": "BAS", "bass": "BAS"}
+# Short forms used in file names ("... Sop 1.mp3"), read as the full word.
+# Not single letters, or "Bar", which could as easily be a bar number.
+ABBREVIATIONS = {"sop": "soprano", "sopr": "soprano", "alt": "alto", "ten": "tenor", "bari": "baritone", "bs": "bass"}
 
-_WORDS = "|".join(VOICE_WORDS)
+# Longest first, so "soprano" is tried before "sop"
+_WORDS = "|".join(sorted([*VOICE_WORDS, *ABBREVIATIONS], key=len, reverse=True))
 # At the end of a file name's stem, after a non-letter: "Ave verum - Alto 2"
 PART_AT_END = re.compile(rf"(?:^|[^a-z])({_WORDS})(?:[\s_-]*(\d{{1,2}}))?\s*$", re.I)
 # A whole part name, as the committee types it: "alto 2"
@@ -23,8 +27,15 @@ PART_NAME = re.compile(rf"^\s*({_WORDS})(?:\s*(\d{{1,2}}))?\s*$", re.I)
 PITCH = re.compile(r"^([A-Ga-g])([#♯b♭]?)(\d)$")
 
 
+def _word(word):
+    """The full voice word for a word or its short form: "Sop" -> "soprano"."""
+    word = word.lower()
+    return ABBREVIATIONS.get(word, word)
+
+
 def _format(word, number):
-    return f"{word.capitalize()} {number}" if number else word.capitalize()
+    word = _word(word).capitalize()
+    return f"{word} {number}" if number else word
 
 
 def part_from_filename(filename):
@@ -36,7 +47,7 @@ def part_from_filename(filename):
     if not match:
         return None
     word, number = match.groups()
-    return VOICE_WORDS[word.lower()], _format(word, number)
+    return VOICE_WORDS[_word(word)], _format(word, number)
 
 
 def normalise_part_name(text):
@@ -49,7 +60,7 @@ def normalise_part_name(text):
 def voice_part_for(part_name):
     """The voice part a part name belongs to ("Alto 2" -> "ALT"), or None."""
     match = PART_NAME.match(part_name or "")
-    return VOICE_WORDS[match.group(1).lower()] if match else None
+    return VOICE_WORDS[_word(match.group(1))] if match else None
 
 
 def normalise_pitches(text):

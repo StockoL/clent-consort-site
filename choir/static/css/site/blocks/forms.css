@@ -156,6 +156,9 @@
   font-size: 1.1rem; /* Prevents iOS zoom-on-focus */
   padding: var(--space-xs);
   background-color: #ffffff;
+  /* Dark text on the white field: a file input otherwise takes the card's
+     white text, so the chosen file's name was invisible */
+  color: #1a1a1a;
   border: 1px solid #ccc;
   border-radius: 8px;
   width: 100%;
