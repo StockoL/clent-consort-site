@@ -3216,6 +3216,35 @@ class HelpTextReferenceTests(TestCase):
         self.assertEqual(missing, [])
 
 
+class SelfHostedFontsTests(TestCase):
+    """Cinzel and Inter come from the site, not Google Fonts, whose
+    stylesheet held up the first paint; the Latin files are preloaded."""
+
+    def test_pages_load_fonts_from_the_site(self):
+        from django.contrib.staticfiles import finders
+
+        for url in [reverse("home"), reverse("account_login")]:
+            with self.subTest(url=url):
+                content = self.client.get(url).content.decode()
+                self.assertNotIn("fonts.googleapis.com", content)
+                self.assertNotIn("fonts.gstatic.com", content)
+                preloads = re.findall(r'<link rel="preload" href="([^"]+)" as="font"', content)
+                self.assertEqual(len(preloads), 2)
+                self.assertIn('font-family: "Cinzel"', content)
+                self.assertIn('font-family: "Inter"', content)
+
+        for path in [
+            "fonts/cinzel/cinzel-latin.woff2",
+            "fonts/cinzel/cinzel-latin-ext.woff2",
+            "fonts/inter/inter-latin.woff2",
+            "fonts/inter/inter-latin-ext.woff2",
+            "fonts/cinzel/OFL.txt",
+            "fonts/inter/OFL.txt",
+        ]:
+            with self.subTest(path=path):
+                self.assertTrue(finders.find(path))
+
+
 def load_build_css():
     from importlib.util import module_from_spec, spec_from_file_location
     from pathlib import Path

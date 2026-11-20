@@ -24,7 +24,7 @@ The public Events page has been built from the database since 27 October 2026. T
 
 ## Smaller improvements
 
-- Serve the Cinzel and Inter fonts from the site instead of Google Fonts. Since the CSS became one file, Lighthouse's estimate of the first paint on a slow phone is held back by the Google Fonts stylesheet, which needs connections to two more servers before anything shows (see [Testing](TESTING.md#after-the-single-css-file)).
+- Re-run Lighthouse on the live site now the fonts are served from the site, and record the change in [Testing](TESTING.md#after-the-single-css-file).
 - The About page's mission banner is a large background image, and is the main reason About scores 77 for performance where the other pages score 86 to 90. A smaller image, or preloading it, should close most of that gap.
 - A test that every form field has a label, to match the existing tests for tables and inline styles.
 - If spam starts reaching the inbox again, add a timing check (reject submissions sent faster than a person could type them) and a limit on links, still without a CAPTCHA.

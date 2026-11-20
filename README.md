@@ -73,6 +73,6 @@ The CSS is my own system, built on LooseLeaf UI and the Every Layout composition
 ## Credits
 
 - The layout compositions follow Every Layout by Heydon Pickering and Andy Bell.
-- Fonts are Cinzel and Inter, from Google Fonts.
+- Fonts are Cinzel and Inter, served from the site under the SIL Open Font License (licences in `choir/static/fonts/`).
 - [wavesurfer.js](https://wavesurfer.xyz/) (BSD-3-Clause) is vendored under `choir/static/js/vendor/wavesurfer/`.
 - Photographs and recordings belong to the choir.

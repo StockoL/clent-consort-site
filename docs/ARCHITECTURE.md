@@ -33,6 +33,7 @@ How the site is built. It is a single Django project with one app, `choir`, serv
 | `choir/templates/` | Templates, including overrides for allauth and django-invitations |
 | `choir/static/css/site/` | The CSS system |
 | `choir/static/js/` | Page scripts, plus vendored wavesurfer.js |
+| `choir/static/fonts/` | Cinzel and Inter, with their licences |
 | `choir/tests.py` | The test suite |
 | `design-tokens.json`, `build-tokens.js` | The source of the colour, type and spacing tokens |
 | `scripts/dev.py` | Development commands |
@@ -133,6 +134,10 @@ So production pages link a single file, `site.min.css`, which `scripts/build_css
 - It minifies conservatively, removing comments and whitespace only and leaving quoted strings alone.
 
 The 113 KB of source becomes 54 KB, before WhiteNoise compresses it. The bundle is generated, like `staticfiles/`, and not committed. The `CSS_BUNDLE` setting chooses the file and is on whenever `DEBUG` is off. Before switching it on I checked in Chrome that the bundle and `index.css` produce the same 496 rules in the same layers and order, and that screenshots of eleven pages are identical.
+
+### Fonts
+
+Cinzel and Inter are served from the site, in `choir/static/fonts/` with their SIL Open Font Licences. They used to come from Google Fonts, but once the CSS was one file, Google's stylesheet was what held up the first paint: a phone had to connect to two more servers before it could even learn where the font files were. Both are variable fonts, so each needs one file per script for every weight from 400 to 700: Latin, and Latin Extended for accented names, which only downloads on a page that uses those characters. The `@font-face` rules sit inline in `templates/_fonts.html`, so they cost no extra request, and the two Latin files are preloaded because the first screen of every page uses both. The admin includes the same file.
 
 ## JavaScript
 
