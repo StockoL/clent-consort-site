@@ -1119,6 +1119,7 @@ class PageScriptsTests(TestCase):
     def test_about_page_also_loads_the_carousel(self):
         response = self.client.get(reverse("about"))
         self.assertContains(response, "js/project-carousel")
+        self.assertContains(response, "js/defer-media")
 
     def test_rsvp_dashboard_loads_its_script(self):
         create_committee_user(username="committee", password="pw")
@@ -1131,10 +1132,10 @@ class PageScriptsTests(TestCase):
 
 class NoInlineStylesTests(TestCase):
     """Templates carry no style="" attributes (Build Order Phase 2). The
-    exceptions: the Spotify embed on About, and the invitation email,
-    which needs inline styles because email clients ignore stylesheets."""
+    exception: the invitation email, which needs inline styles because
+    email clients ignore stylesheets."""
 
-    ALLOWED = {"choir/about.html", "invitations/email/email_invite_message.html"}
+    ALLOWED = {"invitations/email/email_invite_message.html"}
 
     def test_no_inline_styles_in_templates(self):
         from pathlib import Path
@@ -3277,6 +3278,18 @@ class PublicMobilePassTests(TestCase):
         self.assertEqual(content.count("data-rhythm-play"), 3)
         self.assertContains(response, '<h1 class="visually-hidden">About Clent Consort</h1>', html=True)
         self.assertContains(response, 'title="Clent Consort repertoire playlist on Spotify"')
+
+    def test_about_media_below_the_banner_waits_until_its_near(self):
+        # Posters and the Spotify embed held up the banner on phones
+        content = self.client.get(reverse("about")).content.decode()
+        self.assertNotIn(" poster=", content)
+        self.assertEqual(content.count("data-defer-poster="), 3)
+        self.assertNotRegex(content, r'(?<![\w-])src="https://open\.spotify\.com')
+        self.assertIn('data-defer-src="https://open.spotify.com/embed/playlist/', content)
+        # Without JavaScript, a plain link stands in for the embed
+        self.assertRegex(content, r'<noscript>\s*<p><a href="https://open\.spotify\.com/playlist/')
+        # The banner is still preloaded
+        self.assertIn('rel="preload"', content)
 
     def test_every_page_has_the_menu_backdrop_and_the_events_cta_shortens(self):
         response = self.client.get(reverse("events"))

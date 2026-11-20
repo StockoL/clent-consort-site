@@ -45,7 +45,10 @@
 
 /* Spotify embed: its compact 232px layout on phones (Build Order Phase 10) */
 .spotify-about-playlist {
+  width: 100%;
   height: 352px;
+  border: none;
+  border-radius: 12px;
 }
 
 @media (max-width: 44.99rem) {

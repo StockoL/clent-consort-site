@@ -61,11 +61,11 @@
     <button class="nav-link" data-target="slide-03"><span>03</span> Residency</button>
   </nav>
 
-  <div class="project-rhythm-scroll">
-    
+  {# Posters load as the carousel comes near (js/defer-media.js), not with the page #}
+  <div class="project-rhythm-scroll" data-defer-group>
     <article class="rhythm-slide" id="slide-01">
       <div class="slide-bg">
-        <video muted loop playsinline preload="none" poster="{% static 'images/foundations_still.jpg' %}" aria-hidden="true">
+        <video muted loop playsinline preload="none" data-defer-poster="{% static 'images/foundations_still.jpg' %}" aria-hidden="true">
           <source src="{% static 'images/foundations_comp.mp4' %}" type="video/mp4" />
         </video>
       </div>
@@ -83,7 +83,7 @@
 
     <article class="rhythm-slide" id="slide-02">
       <div class="slide-bg">
-        <video muted loop playsinline preload="none" poster="{% static 'images/preparation_still.jpg' %}" aria-hidden="true">
+        <video muted loop playsinline preload="none" data-defer-poster="{% static 'images/preparation_still.jpg' %}" aria-hidden="true">
           <source src="{% static 'images/preparation_comp.mp4' %}" type="video/mp4" />
         </video>
       </div>
@@ -101,7 +101,7 @@
 
     <article class="rhythm-slide" id="slide-03">
       <div class="slide-bg">
-        <video muted loop playsinline preload="none" poster="{% static 'images/residency_still.jpg' %}" aria-hidden="true">
+        <video muted loop playsinline preload="none" data-defer-poster="{% static 'images/residency_still.jpg' %}" aria-hidden="true">
           <source src="{% static 'images/residency_comp.mp4' %}" type="video/mp4" />
         </video>
       </div>
@@ -139,22 +139,30 @@
       </ul>
     </div>
 
-    <div class="playlist-container">
+    {% comment %}
+      The embed loads as the visitor scrolls near it (js/defer-media.js), so Spotify's
+      scripts and cookies don't come with the page. The container is watched, since
+      the iframe is hidden until then.
+    {% endcomment %}
+    <div class="playlist-container" data-defer-group>
       <iframe
         class="spotify-about-playlist"
         title="Clent Consort repertoire playlist on Spotify"
-        src="https://open.spotify.com/embed/playlist/3DaStXUPTqdciPtq0i7ERH?utm_source=generator&si=e8c363922eaa4c64"
+        data-defer-src="https://open.spotify.com/embed/playlist/3DaStXUPTqdciPtq0i7ERH?utm_source=generator&si=e8c363922eaa4c64"
         height="352"
         allowfullscreen=""
         allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture;"
-        loading="lazy"
-        style="width: 100%; border-radius: 12px; border: none"
+        hidden
       >
       </iframe>
+      <noscript>
+        <p><a href="https://open.spotify.com/playlist/3DaStXUPTqdciPtq0i7ERH" target="_blank" rel="noopener noreferrer" class="text-link">Listen to our repertoire playlist on Spotify</a></p>
+      </noscript>
     </div>
   </div>
 </section>
 {% endblock %}
 {% block scripts %}
 <script src="{% static 'js/project-carousel.js' %}" defer></script>
+<script src="{% static 'js/defer-media.js' %}" defer></script>
 {% endblock scripts %}

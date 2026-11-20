@@ -106,6 +106,10 @@ Typing section times is slow, so the second part lets Dorico do it. I upload the
 
 I built it against a real export, Lotti's Crucifixus à 6, which settled two questions. The MusicXML has no record of the final fermata or the ritardando's speed, so the timings have to come from the MIDI's tempo; the MusicXML supplies the bars and the notes. And the first export had the tenor written at treble pitch with an "octave lower" instruction, which would have given tenors a starting note an octave too high; the import now applies the instruction, and handles the octave-treble clef too. I read the MIDI with mido and the MusicXML with Python's own XML parser rather than the large music21 package the brief suggested, and check the audio's length in the committee's player rather than on the server. Anything the committee types by hand is kept through every re-import. Once it was live I wanted more from "My note": a bass who has rested for a few bars needs their next note, not the section's first. The import now keeps every note each part starts, with its time, and "My note" plays the next one from wherever the playhead is, playing or paused. The suite is now at 249 tests.
 
+### The About page
+
+About was the one public page still scoring below 99 for performance. I expected the fix to be a smaller banner photo, but measuring first showed otherwise: the photo was already small, and Lighthouse runs with requests blocked showed the delay came from the poster images of the video slides further down, which a browser fetches with the page however far down they are. They, and the Spotify embed, now load as the visitor scrolls near them. That also keeps Spotify's cookies off the page until then. The suite is at 250 tests.
+
 What remains of Phase 12, offline practice, is on the [roadmap](ROADMAP.md).
 
 ### Things I learned in the rebuild

@@ -151,6 +151,7 @@ There is no JavaScript framework. Each page loads only the scripts it needs, thr
 | `mobile-menu.js` | Every page | The phone menu and its backdrop |
 | `back-to-top.js` | Every page | The back-to-top button |
 | `project-carousel.js` | About | The video slides, with reduced-motion and phone handling |
+| `defer-media.js` | About | Loads the slides' poster images and the Spotify embed only as the visitor scrolls near them |
 | `member-dashboard.js` | Dashboard, Looking Ahead | Saves RSVPs and poll answers with `fetch` |
 | `project-tabs.js` | Dashboard, Repertoire | Project tabs |
 | `members-nav.js` | Members' area | Scrolls the phone nav to the current page; the Committee drop-down |

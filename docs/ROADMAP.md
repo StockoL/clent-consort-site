@@ -25,7 +25,7 @@ The public Events page has been built from the database since 27 October 2026. T
 
 ## Smaller improvements
 
-- The About page's mission banner is a large background image, and is the main reason About scores 88 for performance where the other pages score 99 or 100. A smaller image, or preloading it, should close most of that gap.
+- Re-run Lighthouse on About once its posters and Spotify embed wait until they're near (see [Testing](TESTING.md#the-about-page)), and record the result.
 - A test that every form field has a label, to match the existing tests for tables and inline styles.
 - If spam starts reaching the inbox again, add a timing check (reject submissions sent faster than a person could type them) and a limit on links, still without a CAPTCHA.
 - Raise HSTS from one hour to a long-lived value once the HTTPS redirect has run without trouble for a while.

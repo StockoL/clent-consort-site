@@ -17,7 +17,7 @@ How I test the site: an automated suite that runs before every change ships, bro
 
 ## Automated tests
 
-The suite has 249 tests in 57 classes, in `choir/tests.py`. On 20 November 2026 all 249 pass.
+The suite has 250 tests in 57 classes, in `choir/tests.py`. On 20 November 2026 all 250 pass.
 
 ```bash
 python scripts/dev.py test     # build the CSS bundle, collectstatic, then the whole suite
@@ -122,6 +122,20 @@ On 20 November 2026 the fonts moved onto the site (see [Architecture](ARCHITECTU
 | Login | 100 | 100 | 100 | 100 | 1.1 s | 1.6 s |
 
 The simulated first paint fell from 2.9 seconds to about 1 second on every page, and the largest paint by more than a second. Four pages now score 99 or 100 for performance, against 86 to 90 a month ago. The only thing Lighthouse still lists as blocking the first paint is the single stylesheet, which a page cannot do without. About is still held back by its mission banner image and keeps its best-practices score of 77 for the embedded players, as above.
+
+### The About page
+
+The banner photo was About's largest paint, and it was already preloaded at high priority; on a real load it arrived in about 0.35 seconds. In Lighthouse's slow-phone simulation it took 3.8 seconds because other downloads shared the connection with it. To find out which, I re-ran Lighthouse on the live page with requests blocked:
+
+| Blocked | Performance | Largest paint | Page weight |
+| --- | --- | --- | --- |
+| Nothing | 88 | 3.83 s | 1,378 KiB |
+| The Spotify embed | 89 | 3.74 s | 1,378 KiB |
+| Spotify and the carousel's poster images | 96 to 97 | 2.62 to 2.69 s | 1,118 KiB |
+
+The Spotify figures look like no change, but Lighthouse can't block requests made inside an embedded frame, so its weight stayed in. The real competitor was the three poster images on the video slides further down the page: a video's poster always loads with the page, however far down it is. The photo itself is already tightly compressed (142 KB at 1,280 by 949), and re-encoding it would save little.
+
+So the posters and the Spotify embed now load as the visitor scrolls near them (`defer-media.js`). On a phone-width page in headless Chrome, only the banner loaded at first; the three posters arrived as the carousel came within reach, and the playlist appeared, at its compact phone size, as I scrolled to it. Without JavaScript the slides show no still frame and a plain link replaces the playlist. Spotify's cookies, behind About's best-practices score of 77, are no longer set when the page opens either. The embed's inline style moved into the stylesheet, so About no longer needs an exception to the no-inline-styles test.
 
 ### Members' and committee pages
 
