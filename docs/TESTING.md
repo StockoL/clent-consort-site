@@ -105,7 +105,21 @@ I ran the same audits on 28 October 2026, once the single file was live, three r
 | Contact | 90 | 90 | 2.9 s | 2.9 s |
 | Login | 90 | 90 | 2.9 s | 2.9 s |
 
-Accessibility, best practices and SEO are unchanged. The scores moved less than Lighthouse's 1.9-second estimate suggested, and the reason is in the detail. The first paint Lighthouse measured on the actual page load did fall, from 0.73 seconds to 0.45 on Contact. But the score comes from a simulation of a slow phone, and in that simulation the next thing in the way is the Google Fonts stylesheet: before it can arrive, the phone has to connect to two more servers, one for the stylesheet and one for the font files. So the simulated first paint stays at 2.9 seconds. Serving the fonts from the site itself is the next step, and is on the [roadmap](ROADMAP.md#smaller-improvements).
+Accessibility, best practices and SEO are unchanged. The scores moved less than Lighthouse's 1.9-second estimate suggested, and the reason is in the detail. The first paint Lighthouse measured on the actual page load did fall, from 0.73 seconds to 0.45 on Contact. But the score comes from a simulation of a slow phone, and in that simulation the next thing in the way is the Google Fonts stylesheet: before it can arrive, the phone has to connect to two more servers, one for the stylesheet and one for the font files. So the simulated first paint stays at 2.9 seconds. Serving the fonts from the site itself was the next step.
+
+### After self-hosting the fonts
+
+On 20 November 2026 the fonts moved onto the site (see [Architecture](ARCHITECTURE.md#fonts)), and I ran the same audits again, three runs per page with the median shown.
+
+| Page | Performance | Accessibility | Best practices | SEO | First paint | Largest paint |
+| --- | --- | --- | --- | --- | --- | --- |
+| Home | 99 | 100 | 100 | 100 | 0.8 s | 2.2 s |
+| About | 88 | 100 | 77 | 100 | 1.1 s | 3.8 s |
+| Events | 100 | 100 | 100 | 100 | 1.1 s | 1.7 s |
+| Contact | 100 | 100 | 100 | 100 | 1.1 s | 1.7 s |
+| Login | 100 | 100 | 100 | 100 | 1.1 s | 1.6 s |
+
+The simulated first paint fell from 2.9 seconds to about 1 second on every page, and the largest paint by more than a second. Four pages now score 99 or 100 for performance, against 86 to 90 a month ago. The only thing Lighthouse still lists as blocking the first paint is the single stylesheet, which a page cannot do without. About is still held back by its mission banner image and keeps its best-practices score of 77 for the embedded players, as above.
 
 ### Members' and committee pages
 
