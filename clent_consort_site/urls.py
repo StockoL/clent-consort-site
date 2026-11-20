@@ -38,6 +38,7 @@ from choir.views import (
     committee_project_edit_view,
     committee_projects_view,
     committee_repertoire_detail_view,
+    committee_track_titles_view,
     committee_repertoire_view,
     committee_rsvp_report,
     committee_schedule_event,  # <-- ADD THIS IMPORT LINE HERE
@@ -109,6 +110,11 @@ urlpatterns = [
         "members/committee/repertoire/<int:piece_id>/",
         committee_repertoire_detail_view,
         name="committee_repertoire_detail",
+    ),
+    path(
+        "members/committee/repertoire/<int:piece_id>/track-titles/",
+        committee_track_titles_view,
+        name="committee_track_titles",
     ),
     path(
         "members/committee/repertoire/assets/<int:asset_id>/delete/",

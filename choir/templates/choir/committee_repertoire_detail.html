@@ -21,6 +21,9 @@
     {% else %}
     <h2 class="text-primary text-step-1 card-heading" id="sections-title">Sections</h2>
     <p class="text-small settings-hint">Passages members can loop in the practice player, shared by every part's track. Members see a section once it has a start and end time and is set to show.{% if player_data.tracks %} Play a track above and use "Set from player" to take the times by ear. For sections of one track only, use the Sections link on that track under Scores &amp; Tracks.{% endif %}</p>
+    {% if track_titles|length > 1 %}
+    <p class="text-small settings-hint">This piece's tracks cover {{ track_titles|join:", " }}. If they have different timings, give each track its own sections with its Sections link, rather than adding them here.</p>
+    {% endif %}
     {% endif %}
 
     {% if sections %}
@@ -202,6 +205,7 @@
         <div>
           <strong>{{ asset.asset_name }}</strong>
           <span class="badge">{% if asset.part_name %}{{ asset.part_name }}{% else %}{{ asset.get_voice_part_display }}{% endif %}</span>
+          {% if asset.track_title %}<span class="badge">{{ asset.track_title }}</span>{% endif %}
           <br>
           <span class="text-small text-muted">
             {% if asset.file_upload %}<a href="{{ asset.file_upload.url }}" target="_blank" rel="noopener noreferrer" class="text-link">{{ asset.file_upload.name|cut:"learning_assets/" }}</a>{% elif asset.external_url %}<a href="{{ asset.external_url }}" target="_blank" rel="noopener noreferrer" class="text-link">External link</a>{% else %}No file{% endif %}
@@ -238,6 +242,11 @@
                 <label for="{{ form.part_name.id_for_label }}" class="form-label text-small">Part name (for a divided part)</label>
                 {{ form.part_name }}
               </div>
+            </div>
+            <div class="form-group flow flow--small">
+              <label for="{{ form.track_title.id_for_label }}" class="form-label text-small">{{ form.track_title.label }}</label>
+              {{ form.track_title }}
+              <p class="text-small settings-hint" id="{{ form.track_title.id_for_label }}-hint">{{ form.track_title.help_text }}</p>
             </div>
             <div class="consent-row">
               {{ form.use_player }}
@@ -279,6 +288,24 @@
         {{ upload_form.files }}
         <div class="form-error">{{ upload_form.files.errors }}</div>
       </div>
+
+      {% comment %}
+        Track titles (Build Order Phase 14b). js/track-titles.js lists the
+        chosen files with a title each, suggested from its name, and hides
+        the single field; without it, the single field applies to every
+        file, and blank means each file's suggestion.
+      {% endcomment %}
+      <div class="form-group flow flow--small" data-track-title-single>
+        <label for="{{ upload_form.track_title.id_for_label }}" class="form-label text-small">Track title (optional)</label>
+        {{ upload_form.track_title }}
+        <p class="text-small settings-hint">The movement the tracks cover, such as Magnificat, when a piece has more than one. Leave blank to take it from each file's name, which leaves it blank for a track of the whole piece.</p>
+        <div class="form-error">{{ upload_form.track_title.errors }}</div>
+      </div>
+      <fieldset class="form-group form-fieldset flow flow--small" data-track-titles data-url="{{ track_titles_url }}" hidden>
+        <legend class="form-label text-small">Track titles</legend>
+        <p class="text-small settings-hint">Suggested from each file's name: the movement it covers, such as Magnificat. Change any, or clear one if its track is the whole piece.</p>
+        <div class="flow flow--small" data-track-title-list></div>
+      </fieldset>
 
       <p class="text-small settings-hint">Or, instead of files, link to a recording elsewhere (e.g. YouTube):</p>
 
@@ -322,6 +349,7 @@
 
 {% block scripts %}
 <script src="{% static 'js/confirm-forms.js' %}" defer></script>
+<script src="{% static 'js/track-titles.js' %}" defer></script>
 {% if player_data.tracks %}
 {{ player_data|json_script:"player-data" }}
 <script src="{% static 'js/vendor/wavesurfer/wavesurfer-7.12.12.min.js' %}" defer></script>

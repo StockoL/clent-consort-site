@@ -2420,6 +2420,145 @@ class HubPlayerLayoutTests(TestCase):
         self.assertIn("attachment; filename=\"Gibbons  Short Mag.mp3\"", url)
 
 
+class TrackTitleTests(TestCase):
+    """Build Order Phase 14b: a track's title (the movement it covers),
+    suggested from its file name on upload, groups the player's tabs; and
+    each uploaded file's size shows under Downloads & links."""
+
+    def setUp(self):
+        create_committee_user(username="committee", password="pw")
+        self.client.login(username="committee", password="pw")
+        self.piece = Repertoire.objects.create(composer="Gibbons", title="Short Evening Service")
+        self.project = Project.objects.create(name="Evensong 2027", status="ACTIVE")
+        self.project.repertoire.add(self.piece)
+        self.detail = reverse("committee_repertoire_detail", args=[self.piece.id])
+
+    def mp3(self, name, size=3):
+        return SimpleUploadedFile(name, b"x" * size, content_type="audio/mpeg")
+
+    def upload(self, files, **data):
+        payload = {"upload": "1", "voice_part": "", "asset_name": "", "external_url": "", "track_title": "", "files": files}
+        payload.update(data)
+        return self.client.post(self.detail, payload)
+
+    def titles(self):
+        return dict(LearningAsset.objects.values_list("asset_name", "track_title"))
+
+    def test_suggestions_from_real_looking_names(self):
+        from .parts import suggest_track_title
+
+        cases = [
+            (("Gibbons - Short Mag - Bass.mp3", "Short Evening Service", "Gibbons"), "Magnificat"),
+            (("Gibbons - Short Nunc - Full choir.mp3", "Short Evening Service", "Gibbons"), "Nunc Dimittis"),
+            (("Lotti Crucifixus Alto 2.mp3", "Crucifixus a 6", "Lotti"), ""),
+            (("Stanford in G - Magnificat - Bass.mp3", "Magnificat and Nunc Dimittis in G", "Stanford"), "Magnificat"),
+            (("Mass for Four - 01 Ky - Sop.mp3", "Mass for Four Voices", "Byrd"), "Kyrie"),
+            (("Mass - Ag - Tenor.mp3", "Mass", "Byrd"), "Agnus Dei"),
+            (("Short Service - Te Deum - Bass.mp3", "Short Service", "Byrd"), "Te Deum"),
+        ]
+        for args, expected in cases:
+            with self.subTest(name=args[0]):
+                self.assertEqual(suggest_track_title(*args), expected)
+
+    def test_upload_without_titles_takes_each_files_suggestion_and_size(self):
+        self.upload([self.mp3("Gibbons - Short Mag - Bass.mp3", 3400), self.mp3("Gibbons - Bass.mp3", 10)])
+        self.assertEqual(self.titles(), {"Gibbons - Short Mag - Bass": "Magnificat", "Gibbons - Bass": ""})
+        sizes = dict(LearningAsset.objects.values_list("asset_name", "file_size"))
+        self.assertEqual(sizes, {"Gibbons - Short Mag - Bass": 3400, "Gibbons - Bass": 10})
+
+    def test_one_title_for_every_file(self):
+        self.upload([self.mp3("Gibbons - Short Mag - Bass.mp3"), self.mp3("Gibbons - Alto.mp3")], track_title="Te Deum")
+        self.assertEqual(set(self.titles().values()), {"Te Deum"})
+
+    def test_titles_typed_per_file_win_even_when_cleared(self):
+        self.upload(
+            [self.mp3("Gibbons - Short Mag - Bass.mp3"), self.mp3("Gibbons - Short Nunc - Bass.mp3")],
+            track_title="Ignored",
+            file_title_0="Magnificat (verse)",
+            file_title_1="",
+        )
+        self.assertEqual(
+            self.titles(), {"Gibbons - Short Mag - Bass": "Magnificat (verse)", "Gibbons - Short Nunc - Bass": ""}
+        )
+
+    def test_a_title_over_60_characters_is_refused(self):
+        response = self.upload([self.mp3("Gibbons - Bass.mp3")], file_title_0="x" * 61)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Keep track titles to 60 characters")
+        self.assertFalse(LearningAsset.objects.exists())
+
+    def test_suggestions_for_the_page_script(self):
+        url = reverse("committee_track_titles", args=[self.piece.id])
+        response = self.client.get(url, {"name": ["Gibbons - Short Mag - Bass.mp3", "Gibbons - Tenor.mp3"]})
+        self.assertEqual(response.json(), {"titles": ["Magnificat", ""]})
+        User.objects.create_user(username="member", password="pw")
+        self.client.login(username="member", password="pw")
+        self.assertNotEqual(self.client.get(url, {"name": "x.mp3"}).status_code, 200)
+
+    def test_the_edit_form_saves_a_title(self):
+        asset = LearningAsset.objects.create(repertoire=self.piece, voice_part="BAS", asset_name="Mag", file_upload=self.mp3("a.mp3"))
+        prefix = f"asset-{asset.id}"
+        self.client.post(
+            reverse("committee_asset_edit", args=[asset.id]),
+            {f"{prefix}-asset_name": "Mag", f"{prefix}-voice_part": "BAS", f"{prefix}-part_name": "", f"{prefix}-track_title": " Magnificat ", f"{prefix}-use_player": "on", f"{prefix}-piece_sections": "on"},
+        )
+        asset.refresh_from_db()
+        self.assertEqual(asset.track_title, "Magnificat")
+        page = self.client.get(self.detail)
+        self.assertContains(page, f'aria-describedby="id_{prefix}-track_title-hint"')
+        self.assertContains(page, f'id="id_{prefix}-track_title-hint"')
+
+    def hub_tracks(self):
+        User.objects.create_user(username="bass", password="pw")
+        self.client.login(username="bass", password="pw")
+        return self.client.get(reverse("hub", args=["bass", self.project.id])).context["player_data"]["tracks"]
+
+    def track(self, name, part, title=""):
+        return LearningAsset.objects.create(
+            repertoire=self.piece, voice_part=part, asset_name=name, track_title=title, file_upload=self.mp3(f"{name}.mp3")
+        )
+
+    def test_titles_group_the_tracks_before_the_fallback(self):
+        # Names that the fallback would group differently
+        self.track("Gibbons - one - Bass", "BAS", "Magnificat")
+        self.track("Gibbons - two - Bass", "BAS", "Nunc Dimittis")
+        self.track("Gibbons - three - Full choir", "ALL", "Magnificat")
+        tracks = {t["name"]: t for t in self.hub_tracks()}
+        self.assertEqual(tracks["Gibbons - one - Bass"]["title"], "Magnificat")
+        self.assertEqual(
+            {(t["groupLabel"], t["partLabel"]) for t in tracks.values()},
+            {("Magnificat", "Bass"), ("Nunc Dimittis", "Bass"), ("Magnificat", "Full choir")},
+        )
+        self.assertEqual(tracks["Gibbons - one - Bass"]["group"], tracks["Gibbons - three - Full choir"]["group"])
+
+    def test_tracks_all_with_one_title_are_one_group(self):
+        self.track("Gibbons - Mag - Bass", "BAS", "Magnificat")
+        self.track("Gibbons - Mag - Full choir", "ALL", "Magnificat")
+        self.assertEqual({t["group"] for t in self.hub_tracks()}, {"magnificat"})
+
+    def test_an_untitled_track_beside_titled_ones_is_the_whole_piece(self):
+        self.track("Gibbons - Mag - Bass", "BAS", "Magnificat")
+        self.track("Gibbons - Bass", "BAS")
+        labels = sorted(t["groupLabel"] for t in self.hub_tracks())
+        self.assertEqual(labels, ["Magnificat", "Whole piece"])
+
+    def test_downloads_show_the_size_where_known(self):
+        asset = self.track("Gibbons - Mag - Bass", "BAS", "Magnificat")
+        LearningAsset.objects.filter(id=asset.id).update(file_size=3_400_000)
+        old = self.track("Gibbons - Nunc - Bass", "BAS", "Nunc Dimittis")
+        LearningAsset.objects.filter(id=old.id).update(file_size=None)
+        User.objects.create_user(username="bass", password="pw")
+        self.client.login(username="bass", password="pw")
+        html = self.client.get(reverse("hub", args=["bass", self.project.id])).content.decode()
+        self.assertIn("MP3 · 3.4 MB", html)
+        self.assertEqual(html.count(" MB"), 1)
+
+    def test_the_sections_editor_mentions_several_titles(self):
+        self.track("Gibbons - Mag - Bass", "BAS", "Magnificat")
+        self.track("Gibbons - Nunc - Bass", "BAS", "Nunc Dimittis")
+        self.assertContains(self.client.get(self.detail), "tracks cover Magnificat, Nunc Dimittis")
+
+
 class PartNameTests(TestCase):
     """Learning Hub P2: reading parts from Dorico's file names, and
     tidying typed part names and pitches (choir.parts)."""

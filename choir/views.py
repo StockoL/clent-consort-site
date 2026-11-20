@@ -428,6 +428,7 @@ def _player_tracks(assets, own_part=None):
             "part": asset.player_part,
             "voicePart": asset.voice_part,
             "pieceSections": asset.piece_sections,
+            "title": asset.track_title,
             "url": asset.file_upload.url,
         }
         for asset in playable
@@ -438,14 +439,15 @@ def _player_tracks(assets, own_part=None):
 
 def _label_track_groups(pairs):
     """Labels the player's buttons for each piece's tracks, so that no row
-    of buttons holds two with the same label (Build Order Phase 14a).
+    of buttons holds two with the same label (Build Order Phase 14).
 
-    Tracks are grouped by what they cover: a track's title once tracks
-    have one (Phase 14b), and meanwhile, if two of a piece's tracks share
-    a part (a Magnificat and a Nunc Dimittis each recorded for basses),
-    by their names with the piece, composer and part taken out
-    (parts.track_label: "Gibbons - Short Mag - Bass" is "Short Mag").
-    A piece whose tracks don't share a part stays one group, as before.
+    Tracks are grouped by what they cover: their track title where the
+    committee has given one (14b). Tracks without one are a group of
+    their own ("Whole piece" beside titled ones), unless two of them
+    share a part (a Magnificat and a Nunc Dimittis each recorded for
+    basses, before they had titles): then they're grouped by their names
+    with the piece, composer and part taken out (14a's fallback,
+    parts.track_label: "Gibbons - Short Mag - Bass" is "Short Mag").
     Within a group each track's button is its part ("Alto 2", "Full
     choir"), or its own name if two would otherwise match."""
     from .parts import track_label
@@ -456,19 +458,22 @@ def _label_track_groups(pairs):
         by_piece.setdefault(asset.repertoire_id, []).append((asset, track))
 
     for items in by_piece.values():
-        parts = [track["partLabel"] for _, track in items]
-        shared = len(parts) != len(set(parts))
+        untitled = [track["partLabel"] for asset, track in items if not asset.track_title]
+        shared = len(untitled) != len(set(untitled))
         for asset, track in items:
-            title = ""
-            if shared:
+            label = asset.track_title
+            if not label and shared:
                 piece = asset.repertoire
-                title = track_label(asset.asset_name, piece.title, piece.composer) or asset.asset_name
-            track["groupLabel"] = title
-            track["group"] = title.lower()
+                label = track_label(asset.asset_name, piece.title, piece.composer) or asset.asset_name
+            track["groupLabel"] = label
+            track["group"] = label.lower()
 
         groups = {}
         for _, track in items:
             groups.setdefault(track["group"], []).append(track)
+        if len(groups) > 1 and "" in groups:
+            for track in groups[""]:
+                track["groupLabel"] = "Whole piece"
         for members in groups.values():
             labels = [track["partLabel"] for track in members]
             if len(labels) != len(set(labels)):
@@ -495,6 +500,16 @@ def _download_url(field_file, name):
         )
     except TypeError:
         return field_file.url
+
+
+def _file_size_label(size):
+    """A file's size for Downloads & links: "3.4 MB", "820 KB"; "" when
+    it wasn't recorded (files uploaded before Phase 14b)."""
+    if not size:
+        return ""
+    if size >= 1_000_000:
+        return f"{size / 1_000_000:.1f} MB"
+    return f"{max(1, round(size / 1000))} KB"
 
 
 def _asset_kind(asset):
@@ -555,7 +570,16 @@ def _player_pieces(pieces, assets, own_part=None):
                 href, url = _download_url(asset.file_upload, asset.asset_name), asset.file_upload.url
             else:
                 href, url = asset.external_url, asset.external_url
-            rows.append({"asset": asset, "kind": kind, "type": type_label, "href": href, "url": url})
+            rows.append(
+                {
+                    "asset": asset,
+                    "kind": kind,
+                    "type": type_label,
+                    "size": _file_size_label(asset.file_size),
+                    "href": href,
+                    "url": url,
+                }
+            )
         downloads.append({"piece": piece, "label": label, "rows": rows})
     return data, downloads
 
@@ -1062,6 +1086,10 @@ def committee_repertoire_detail_view(request, piece_id):
             for asset in assets
         ],
         "playable_ids": {t["id"] for t in tracks},
+        # Movements with different timings: the sections editor suggests
+        # each track's own sections instead of the piece's
+        "track_titles": sorted({t["title"] for t in tracks if t["title"]}),
+        "track_titles_url": reverse("committee_track_titles", args=[piece.id]),
         "projects": piece.projects.all(),
         "score_form": score_form,
         "part_map_form": part_map_form,
@@ -1121,6 +1149,19 @@ def _piece_part_names(assets):
     if not names:
         return [label for code, label in LearningAsset.PART_CHOICES if code != "ALL"]
     return [name for _, name in sorted(names)]
+
+
+@login_required
+@user_passes_test(is_committee)
+def committee_track_titles_view(request, piece_id):
+    """The track title suggested for each file name (?name=, repeated),
+    for the upload form's script to show before uploading (Build Order
+    Phase 14b). The same rule the upload uses when no title is given."""
+    from .parts import suggest_track_title
+
+    piece = get_object_or_404(Repertoire, id=piece_id)
+    names = request.GET.getlist("name")[:100]
+    return JsonResponse({"titles": [suggest_track_title(name, piece.title, piece.composer) for name in names]})
 
 
 @login_required

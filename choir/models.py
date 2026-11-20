@@ -353,6 +353,13 @@ class LearningAsset(models.Model):
     # Whether the piece's sections apply to this track as well as its own
     # (off for a track with different timing, such as a live recording)
     piece_sections = models.BooleanField(default=True)
+    # The movement or section a track covers ("Magnificat"), which the
+    # player groups a piece's tracks by (Build Order Phase 14b); blank
+    # means the whole piece
+    track_title = models.CharField(max_length=60, blank=True)
+    # In bytes, recorded on upload; null for files uploaded before it was
+    # (reading an S3 file's size later costs a request per file)
+    file_size = models.PositiveIntegerField(null=True, blank=True, editable=False)
 
     def __str__(self):
         return f"{self.repertoire.title} - {self.get_voice_part_display()} Asset"

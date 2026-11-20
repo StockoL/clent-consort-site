@@ -103,11 +103,14 @@ Member Overview shows each singer's attendance over time, as the share of answer
 2. Click the piece.
 3. Leave the voice part as "From each file's name", or choose one (Full Choir for scores everyone uses).
 4. Choose one or more files: PDF, MP3, M4A or WAV, up to 50 MB each. Each file becomes its own item, named after the file. Alternatively, paste a link to a recording elsewhere, such as YouTube, give it a name and choose its voice part.
-5. Upload.
+5. Check the track titles (see below).
+6. Upload.
 
 The files appear straight away on that voice part's hub. Very large WAV files can time out while uploading; convert them to MP3 first. Deleting an item deletes the file too.
 
 With "From each file's name", each file goes to the part its name ends with, which is how Dorico names part tracks: "Ave verum - Alto 2.mp3" becomes an Alto track for the Alto 2 line. That lets a whole set of tracks go up in one go. A file whose name doesn't end with a part (a full score, say) needs a voice part chosen. To correct a file afterwards, open Edit under it: you can change its name, voice part and part name, or take it out of the practice player, for example a recording that doesn't follow the same timing as the part tracks.
+
+A track's title is the movement it covers, such as Magnificat or Kyrie, for a piece recorded as several files. Singers then see a tab for each movement above the player, rather than two buttons that both say "Bass". When you choose files, each gets a title box filled in from its name: "Gibbons - Short Mag - Bass.mp3" suggests Magnificat, and the common short forms (Mag, Nunc, Ky, Ag) become the full name. Change any that are wrong. Leave the box empty for a track of the whole piece, which is most of them. You can change a title later under the track's Edit. Tracks uploaded before titles existed have none: give them one with Edit where a piece has more than one movement.
 
 ## Marking sections for the practice player
 

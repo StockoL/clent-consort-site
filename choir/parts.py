@@ -82,6 +82,42 @@ def track_label(asset_name, piece_title="", composer=""):
     return _SEPARATORS.sub(" ", text).strip()
 
 
+# Movements a track title is commonly about, with the short forms file
+# names use, for suggest_track_title
+MOVEMENTS = [
+    ("Magnificat", ["magnificat", "mag"]),
+    ("Nunc Dimittis", ["nunc dimittis", "nunc"]),
+    ("Kyrie", ["kyrie", "ky"]),
+    ("Gloria", ["gloria"]),
+    ("Credo", ["credo"]),
+    ("Sanctus", ["sanctus"]),
+    ("Benedictus", ["benedictus"]),
+    ("Agnus Dei", ["agnus dei", "agnus", "ag"]),
+]
+
+
+def suggest_track_title(filename, piece_title="", composer=""):
+    """The track title suggested for an uploaded file (Build Order Phase
+    14b): the movement it covers, from its name less the piece's title,
+    the composer and the part (track_label). A common movement or its
+    short form gives that movement's full name ("Gibbons - Short Mag -
+    Bass.mp3" -> "Magnificat"); otherwise whatever is left once the
+    title's words are gone too, which is usually nothing ("Lotti
+    Crucifixus Alto 2.mp3" -> ""), meaning the whole piece."""
+    label = track_label(filename, piece_title, composer)
+    found = [
+        name
+        for name, forms in MOVEMENTS
+        if any(re.search(rf"(?<![a-z]){re.escape(form)}(?![a-z])", label, re.I) for form in forms)
+    ]
+    if len(found) == 1:
+        return found[0]
+    for word in re.findall(r"\w+", piece_title or ""):
+        label = re.sub(rf"(?<!\w){re.escape(word)}(?!\w)", " ", label, flags=re.I)
+    label = _SEPARATORS.sub(" ", label).strip()
+    return "" if re.fullmatch(r"[\d\s]*", label) else label[:60]
+
+
 def normalise_pitches(text):
     """Starting notes as typed ("e4", "F♯4 A4", "bb3, d4") -> the stored
     form, comma-separated with ASCII accidentals ("E4", "F#4,A4",

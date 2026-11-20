@@ -24,7 +24,7 @@ from .models import (
     SubscriptionPayment,
     format_seconds,
 )
-from .parts import normalise_part_name, normalise_pitches, part_from_filename, voice_part_for
+from .parts import normalise_part_name, normalise_pitches, part_from_filename, suggest_track_title, voice_part_for
 from .permissions import COMMITTEE_GROUP
 
 
@@ -308,7 +308,14 @@ class AssetUploadForm(forms.Form):
     that sets the voice part too, so a whole set of part tracks uploads in
     one go; a chosen voice part wins, and keeps the part name only where
     the file's agrees with it.
+
+    Each file's track title (Build Order Phase 14b) is the title typed for
+    it on the page (file_title_<n>, for the nth file, which the page's
+    script adds with suggestions filled in), else the one Track title for
+    every file, else the suggestion from its name (suggest_track_title).
     """
+
+    TITLE_MAX = 60
 
     asset_name = forms.CharField(
         max_length=150,
@@ -328,6 +335,19 @@ class AssetUploadForm(forms.Form):
         required=False,
         widget=forms.URLInput(attrs={"class": "form-control", "placeholder": "https://"}),
     )
+    track_title = forms.CharField(
+        max_length=TITLE_MAX,
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "e.g., Magnificat"}),
+    )
+
+    def file_titles(self, files):
+        """Each file's title as typed on the page, or None where the page
+        sent none (no script)."""
+        return [
+            self.data[f"file_title_{n}"].strip() if f"file_title_{n}" in self.data else None
+            for n in range(len(files))
+        ]
 
     def clean_files(self):
         files = self.cleaned_data["files"]
@@ -350,6 +370,16 @@ class AssetUploadForm(forms.Form):
             raise forms.ValidationError("Upload files or give a link, not both.")
         if not files and not url and not self.errors:
             raise forms.ValidationError("Choose at least one file to upload, or give a link.")
+        too_long = [
+            upload.name
+            for upload, title in zip(files, self.file_titles(files))
+            if title and len(title) > self.TITLE_MAX
+        ]
+        if too_long:
+            self.add_error(
+                "track_title",
+                f"Keep track titles to {self.TITLE_MAX} characters ({', '.join(too_long)}).",
+            )
         if url and not cleaned.get("asset_name"):
             self.add_error("asset_name", "Give the link a name, e.g. 'YouTube recording'.")
         if not cleaned.get("voice_part"):
@@ -381,17 +411,24 @@ class AssetUploadForm(forms.Form):
                 )
             ]
 
+        shared_title = self.cleaned_data.get("track_title", "").strip()
         assets = []
-        for upload in files:
+        for upload, typed_title in zip(files, self.file_titles(files)):
             file_name = upload.name.rsplit(".", 1)[0][:150]
             detected_part, detected_name = part_from_filename(upload.name) or (None, "")
             part = chosen or detected_part
+            if typed_title is not None:
+                title = typed_title
+            else:
+                title = shared_title or suggest_track_title(upload.name, repertoire.title, repertoire.composer)
             assets.append(
                 LearningAsset.objects.create(
                     repertoire=repertoire,
                     voice_part=part,
                     part_name=detected_name if detected_part == part else "",
                     asset_name=name if (name and len(files) == 1) else file_name,
+                    track_title=title[: self.TITLE_MAX],
+                    file_size=upload.size,
                     file_upload=upload,
                 )
             )
@@ -406,18 +443,29 @@ class AssetEditForm(forms.ModelForm):
 
     class Meta:
         model = LearningAsset
-        fields = ["asset_name", "voice_part", "part_name", "use_player", "piece_sections"]
+        fields = ["asset_name", "voice_part", "part_name", "track_title", "use_player", "piece_sections"]
         labels = {
             "asset_name": "Name",
+            "track_title": "Track title",
             "use_player": "Open in the practice player",
             "piece_sections": "Use the piece's sections (untick for a track with different timing)",
         }
-        help_texts = {"asset_name": ""}
+        help_texts = {
+            "asset_name": "",
+            "track_title": "Name the movement this track covers, such as Magnificat, when a piece has more "
+            "than one. Leave blank if the track is the whole piece.",
+        }
         widgets = {
             "asset_name": forms.TextInput(attrs={"class": "form-control"}),
             "voice_part": forms.Select(attrs={"class": "form-control"}),
             "part_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "e.g., Alto 2"}),
+            "track_title": forms.TextInput(attrs={"class": "form-control", "placeholder": "e.g., Magnificat"}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # The hint under the field, which the template gives this id
+        self.fields["track_title"].widget.attrs["aria-describedby"] = f"{self['track_title'].auto_id}-hint"
 
     def clean_part_name(self):
         text = self.cleaned_data["part_name"].strip()

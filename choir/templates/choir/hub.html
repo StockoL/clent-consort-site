@@ -37,7 +37,7 @@
             {% endif %}
             <span class="downloads__text">
               <span class="downloads__name">{{ row.asset.asset_name }}{% if row.kind == "link" %}<span class="visually-hidden"> (opens in a new tab)</span>{% endif %}</span>
-              <span class="downloads__meta text-small">{{ row.type }}{% if row.asset.uploaded_at %} · added {{ row.asset.uploaded_at|date:"j M Y" }}{% endif %}</span>
+              <span class="downloads__meta text-small">{{ row.type }}{% if row.size %} · {{ row.size }}{% endif %}{% if row.asset.uploaded_at %} · added {{ row.asset.uploaded_at|date:"j M Y" }}{% endif %}</span>
             </span>
           </a>
           {% if row.kind == "audio" %}
