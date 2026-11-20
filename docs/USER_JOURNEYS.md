@@ -24,6 +24,7 @@ I took the screenshots on 27 October 2026 from a local copy of the current code,
   - [Scheduling and publishing a performance](#scheduling-and-publishing-a-performance)
   - [Checking who is coming](#checking-who-is-coming)
   - [Logging a subscription payment](#logging-a-subscription-payment)
+  - [Starting subscriptions for a new project](#starting-subscriptions-for-a-new-project)
   - [Adding music](#adding-music)
   - [Marking sections](#marking-sections)
   - [Polling availability](#polling-availability)
@@ -89,7 +90,7 @@ A wrong password gets a clear message. The right one leads to the dashboard, whe
 
 ### Checking the schedule and replying
 
-The dashboard starts with the subscription card, because Sam has not paid for this term. It shows the amount, the deadline and the bank details. Below it are the coming dates for each project.
+The dashboard starts with the subscription card, because Sam has not paid for the current subscription period. It shows the amount, the deadline and the bank details. Below it are the coming dates for each project.
 
 | Dashboard on a phone | Dashboard on a desktop |
 | --- | --- |
@@ -177,11 +178,19 @@ On a phone the overview's table becomes a card per singer.
 
 ### Logging a subscription payment
 
-The ledger shows who has paid this term. Clara logs a payment for Alex Alto with the default amount and method; the row turns to Paid and offers Edit and Delete.
+The ledger shows who has paid for the current subscription period. Clara logs a payment for Alex Alto with the default amount and method; the row turns to Paid and offers Edit and Delete.
 
 | Before | After logging |
 | --- | --- |
 | ![Ledger](images/journeys/committee/ledger-desktop.jpg) | ![Payment logged](images/journeys/committee/ledger-payment-logged-desktop.jpg) |
+
+### Starting subscriptions for a new project
+
+When a project is active but subscriptions are still for an older period, the ledger says so at the top and links to the new period page. Start new subscription period opens the same page. It suggests the project's name, the current amount and pay-by date, says exactly what will happen, and its button names the new period ("Start Lent 2027"). After pressing it, everyone except exempt members shows as unpaid for Lent 2027, and Autumn 2026's payments stay under the Subscription period list. (These two screenshots come from a smaller sample of data than the others on this page.)
+
+| The ledger's prompt | Starting the period |
+| --- | --- |
+| ![Ledger suggesting a new subscription period](images/journeys/committee/ledger-new-period-prompt-phone.jpg) | ![New subscription period page](images/journeys/committee/new-period-phone.jpg) |
 
 ![Ledger on a phone](images/journeys/committee/ledger-phone.jpg)
 
@@ -229,7 +238,7 @@ Enquiries and audition applications arrive in one list, unhandled first. The boo
 
 ### Duty of care, documents and settings
 
-The Duty of Care roster lists emergency contacts, medical notes and under-18 flags. Documents holds minutes and policies for the whole choir. Choir Settings holds the term, subscription amount, bank details, social links and the switch for the database-built Events page.
+The Duty of Care roster lists emergency contacts, medical notes and under-18 flags. Documents holds minutes and policies for the whole choir. Choir Settings holds the current subscription period, amount, bank details, social links and the switch for the database-built Events page.
 
 | Duty of Care | Documents |
 | --- | --- |

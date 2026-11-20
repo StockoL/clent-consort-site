@@ -34,7 +34,7 @@ None at the moment. The last ones (a test for form labels, a year-long HSTS sett
 These are worth doing if there is time, in order of value:
 
 1. A "My attendance" summary on each singer's dashboard.
-2. Exporting a term's ledger as a CSV file for the treasurer.
+2. Exporting a subscription period's ledger as a CSV file for the treasurer.
 3. A public "Join us" page built around the audition form.
 4. A recordings page fed from a recording link on each project.
 

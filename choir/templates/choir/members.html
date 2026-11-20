@@ -9,9 +9,9 @@
 {% block members_content %}
 {% if not has_paid_current_term %}
   <div class="card flow subs-card" data-variant="invert">
-    <h2 class="text-primary text-step-1">{{ current_term }} Subscriptions Due</h2>
+    <h2 class="text-primary text-step-1">Your subscription for {{ current_term }}</h2>
     <div class="flow flow--small">
-      <p class="text-small">Please settle your termly subscription via BACS transfer.</p>
+      <p class="text-small">Please pay by bank transfer (BACS).</p>
       <p class="text-small">£{{ choir_settings.subscription_amount }} for {{ current_term }}{% if choir_settings.subscription_deadline %} by {{ choir_settings.subscription_deadline|date:"j F Y" }}{% endif %}, please.</p>
     </div>
 

@@ -688,7 +688,11 @@ class ChoirSettingsForm(forms.ModelForm):
     class Meta:
         model = ChoirSettings
         # Repeats the label or placeholder, so not shown on the page.
-        help_texts = {"subscription_amount": ""}
+        # current_term is the subscription period (Build Order Phase 13).
+        help_texts = {
+            "subscription_amount": "",
+            "current_term": "e.g., Ewelme 2027. Payments are logged against this.",
+        }
         fields = [
             "current_term",
             "subscription_amount",
@@ -838,6 +842,10 @@ class SubscriptionPaymentForm(forms.ModelForm):
     class Meta:
         model = SubscriptionPayment
         fields = ["amount", "date_paid", "term_reference", "payment_method", "notes"]
+        # The choir thinks in projects, not terms (Build Order Phase 13); the
+        # field keeps its name, since renaming it would mean a migration
+        labels = {"term_reference": "Subscription period"}
+        help_texts = {"term_reference": "e.g., Ewelme 2027"}
         widgets = {
             "amount": forms.NumberInput(
                 attrs={"class": "form-control", "step": "0.01"}
@@ -847,6 +855,56 @@ class SubscriptionPaymentForm(forms.ModelForm):
             "payment_method": forms.Select(attrs={"class": "form-control"}),
             "notes": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
         }
+
+
+class SubscriptionPeriodForm(forms.Form):
+    """
+    Starts a new subscription period from the ledger (Build Order Phase
+    13): its name (usually the project's, "Ewelme 2027"), amount and
+    optional deadline, which replace ChoirSettings' current_term,
+    subscription_amount and subscription_deadline.
+
+    The name must be new. Reusing the current period's name would change
+    nothing, and reusing an earlier one would show that period's payers as
+    already paid. used_names is every name payments have been logged
+    against, plus the current one.
+    """
+
+    name = forms.CharField(
+        max_length=100,
+        label="Name",
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "e.g., Ewelme 2027"}),
+    )
+    amount = forms.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        min_value=0,
+        label="Amount (£)",
+        widget=forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
+    )
+    deadline = forms.DateField(
+        required=False,
+        label="Pay by (optional)",
+        widget=forms.DateInput(attrs={"type": "date", "class": "form-control"}, format="%Y-%m-%d"),
+    )
+
+    def __init__(self, *args, current_name="", used_names=(), **kwargs):
+        super().__init__(*args, **kwargs)
+        self.current_name = current_name
+        self.used_names = {name.strip().lower() for name in used_names if name}
+
+    def clean_name(self):
+        name = self.cleaned_data["name"].strip()
+        if not name:
+            raise forms.ValidationError("Give the new period a name, such as the project's.")
+        if name.lower() == self.current_name.strip().lower():
+            raise forms.ValidationError(f"Subscriptions are already for {name}. Choose a new name.")
+        if name.lower() in self.used_names:
+            raise forms.ValidationError(
+                f"Payments have already been logged for {name}, so those members would show as paid. "
+                "Choose a new name, for example by adding the year."
+            )
+        return name
 
 
 class CommitteeDocumentForm(forms.ModelForm):

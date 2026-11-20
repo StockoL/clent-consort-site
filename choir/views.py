@@ -14,7 +14,7 @@ from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.html import strip_tags
+from django.utils.html import format_html, strip_tags
 from django.views.decorators.http import require_POST
 
 from .forms import (
@@ -687,7 +687,23 @@ def committee_project_edit_view(request, project_id):
         form = ProjectForm(request.POST, instance=project)
         if form.is_valid():
             form.save()
-            messages.success(request, f"'{project.name}' updated.")
+            names = {name.strip().lower() for name in _subscription_period_names() if name}
+            if project.status == "ACTIVE" and project.name.strip().lower() not in names:
+                # Offer the matching subscription period (Build Order 13c)
+                new_period = f"{reverse('committee_subscription_period_new')}?{urlencode({'name': project.name})}"
+                messages.success(
+                    request,
+                    format_html(
+                        # No class: the link takes the message's colour (the
+                        # brand gold fails contrast on its light background)
+                        "'{}' updated. <a href=\"{}\">Start a subscription period for {}</a>",
+                        project.name,
+                        new_period,
+                        project.name,
+                    ),
+                )
+            else:
+                messages.success(request, f"'{project.name}' updated.")
             return redirect("committee_projects")
     else:
         form = ProjectForm(instance=project)
@@ -1340,7 +1356,8 @@ def committee_emergency_roster(request):
 @login_required
 @user_passes_test(is_committee)
 def committee_financials_view(request):
-    """Unified ledger to track and log termly subscriptions."""
+    """Unified ledger to track and log subscriptions, one subscription
+    period at a time (usually one per project)."""
     from .forms import SubscriptionPaymentForm
     from .models import MemberProfile
 
@@ -1422,8 +1439,82 @@ def committee_financials_view(request):
         "selected_term": selected_term,
         "earlier_terms": terms,
         "subscription_amount": ChoirSettings.load().subscription_amount,
+        # An active project with no subscription period yet (Build Order 13c)
+        "project_without_period": _project_without_period(),
     }
     return render(request, "choir/committee_financials.html", context)
+
+
+def _subscription_period_names():
+    """Every subscription period's name: the current one and every one a
+    payment has been logged against (ChoirSettings.current_term and
+    SubscriptionPayment.term_reference)."""
+    names = set(SubscriptionPayment.objects.values_list("term_reference", flat=True))
+    names.add(ChoirSettings.load().current_term)
+    return names
+
+
+def _project_without_period():
+    """The project the ledger suggests starting a subscription period for,
+    or None. Only while subscriptions aren't for any active project (the
+    current period is an older one): then it's the soonest ACTIVE project
+    that no period is named after. Once the current period is named after
+    an active project the choir has chosen, so there's no nudge, even if
+    an overlapping project never got a period of its own. Nothing is reset
+    automatically: projects can overlap, and the choir may one day charge
+    per year instead."""
+    active = list(Project.get_active_projects())
+    current = ChoirSettings.load().current_term.strip().lower()
+    if any(project.name.strip().lower() == current for project in active):
+        return None
+    names = {name.strip().lower() for name in _subscription_period_names() if name}
+    return next((project for project in active if project.name.strip().lower() not in names), None)
+
+
+@login_required
+@user_passes_test(is_committee)
+def committee_subscription_period_new_view(request):
+    """Starts a new subscription period from the ledger (Build Order Phase
+    13): its name, amount and deadline replace ChoirSettings' current
+    ones. Everyone except exempt members then shows as unpaid, members'
+    subscription banners return, and earlier payments stay under the
+    ledger's Subscription period list. ?name= prefills the name; otherwise
+    it's the soonest active project's."""
+    from .forms import SubscriptionPeriodForm
+
+    choir_settings = ChoirSettings.load()
+    current_name = choir_settings.current_term
+    form_kwargs = {"current_name": current_name, "used_names": _subscription_period_names()}
+
+    if request.method == "POST":
+        form = SubscriptionPeriodForm(request.POST, **form_kwargs)
+        if form.is_valid():
+            choir_settings.current_term = form.cleaned_data["name"]
+            choir_settings.subscription_amount = form.cleaned_data["amount"]
+            choir_settings.subscription_deadline = form.cleaned_data["deadline"]
+            choir_settings.save(update_fields=["current_term", "subscription_amount", "subscription_deadline"])
+            messages.success(
+                request,
+                f"Subscriptions are now for {choir_settings.current_term}. "
+                f"Payments for {current_name} are under Subscription period.",
+            )
+            return redirect("committee_financials")
+    else:
+        suggested = request.GET.get("name", "").strip()
+        if not suggested:
+            soonest = Project.get_active_projects().first()
+            suggested = soonest.name if soonest else ""
+        form = SubscriptionPeriodForm(
+            initial={
+                "name": suggested,
+                "amount": choir_settings.subscription_amount,
+                "deadline": choir_settings.subscription_deadline,
+            },
+            **form_kwargs,
+        )
+
+    context = {"form": form, "current_name": current_name}
+    return render(request, "choir/committee_subscription_period_new.html", context)
 
 
 # =============================================================================

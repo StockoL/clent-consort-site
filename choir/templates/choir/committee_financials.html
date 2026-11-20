@@ -4,12 +4,23 @@
 {% block title %}Financial Ledger - Clent Consort{% endblock title %}
 
 {% block page_title %}Financial Ledger{% endblock page_title %}
-{% block page_lede %}Subscription tracking for <strong class="text-warning">{{ selected_term }}</strong>{% if selected_term != current_term %} (an earlier term; the current term is {{ current_term }}){% endif %}.{% endblock page_lede %}
+{% block page_lede %}Subscriptions for <strong class="text-warning">{{ selected_term }}</strong>{% if selected_term != current_term %} (an earlier subscription period; the current one is {{ current_term }}){% endif %}.{% endblock page_lede %}
 
 {% block members_content %}
+  {% if project_without_period %}
+  {# A nudge, not an automatic reset: projects can overlap (Build Order 13c). The link takes the alert's text colour (no class), as the brand gold fails contrast on the light alert. #}
+  <div class="alert cluster" data-status="info" role="status">
+    <p>{{ project_without_period.name }} is active, but subscriptions are still for {{ current_term }}. <a href="{% url 'committee_subscription_period_new' %}?name={{ project_without_period.name|urlencode }}">Start a subscription period for {{ project_without_period.name }}?</a></p>
+  </div>
+  {% endif %}
+
+  <div class="cluster ledger-actions">
+    <a href="{% url 'committee_subscription_period_new' %}" class="button btn-small" data-variant="primary">Start new subscription period</a>
+  </div>
+
   {% if earlier_terms %}
   <form method="GET" class="cluster ledger-term">
-    <label for="ledger-term" class="text-small">Term</label>
+    <label for="ledger-term" class="text-small">Subscription period</label>
     <select id="ledger-term" name="term">
       <option value="{{ current_term }}"{% if selected_term == current_term %} selected{% endif %}>{{ current_term }} (current)</option>
       {% for term in earlier_terms %}

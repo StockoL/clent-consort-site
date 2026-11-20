@@ -113,7 +113,7 @@ Given an open availability poll, when I answer it on Looking Ahead, then my answ
 
 As a singer, I want to know whether I owe a subscription and how to pay.
 
-Given I have not paid for the current term, when I open the dashboard, then I see the amount, deadline and bank details. Once the committee logs my payment, the card disappears.
+Given I have not paid for the current project's subscription, when I open the dashboard, then I see the amount, deadline and bank details. Once the committee logs my payment, the card disappears.
 
 #### S6. My details
 
@@ -141,7 +141,9 @@ As a committee member, I want each event's RSVPs, a one-click reminder to those 
 
 #### K3. Track subscriptions
 
-As the treasurer, I want a ledger of who has paid this term, to log and correct payments, mark people exempt, and look back at earlier terms.
+As the treasurer, I want a ledger of who has paid for the current project, to log and correct payments, mark people exempt, and look back at earlier projects.
+
+Given a new project has become active, when I open the ledger, then it offers to start a subscription period for that project. Starting one shows everyone except exempt members as unpaid, and keeps the earlier period's payments.
 
 #### K4. Members and invitations
 
@@ -163,7 +165,7 @@ As a committee member, I want enquiries and audition applications in one list, t
 
 #### K8. Settings without a developer
 
-As a committee member, I want to change the term, subscription amount, bank details and social links myself.
+As a committee member, I want to change the subscription period, amount, bank details and social links myself.
 
 #### K9. Plan with polls
 
@@ -211,7 +213,7 @@ As the maintainer, I want credentials kept only in environment variables, and pr
 | S7 Calendar | Could | Done: per-event and per-project calendar files |
 | K1 Run the calendar | Must | Done |
 | K2 See who's coming | Must | Done |
-| K3 Track subscriptions | Must | Done, with a term selector |
+| K3 Track subscriptions | Must | Done, with a period per project started from the ledger, and earlier periods kept |
 | K4 Members and invitations | Must | Done |
 | K5 Music library | Must | Done, with parts read from file names and sections for the practice player |
 | K6 Email the choir safely | Must | Done: draft, preview, test, send once, per-recipient record |
@@ -221,7 +223,7 @@ As the maintainer, I want credentials kept only in environment variables, and pr
 | K10 Public events | Should | Done |
 | K11 Duty of care | Must | Done |
 | K12 Committee documents | Should | Done |
-| M1 Safe changes | Must | Done: 257 automated tests, `scripts/dev.py` and seed data |
+| M1 Safe changes | Must | Done: 267 automated tests, `scripts/dev.py` and seed data |
 | M2 No secrets in the repository | Must | Done |
 
 ## Won't have, for now

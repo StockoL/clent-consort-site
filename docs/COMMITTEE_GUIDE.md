@@ -6,7 +6,7 @@ How to run the choir through the site, task by task. Everything here is done fro
 
 ## Contents
 
-- [Start of a new term](#start-of-a-new-term)
+- [Subscriptions for a new project](#subscriptions-for-a-new-project)
 - [A new singer joins](#a-new-singer-joins)
 - [A singer leaves](#a-singer-leaves)
 - [Changing someone's role](#changing-someones-role)
@@ -24,13 +24,17 @@ How to run the choir through the site, task by task. Everything here is done fro
 - [Documents](#documents)
 - [If something goes wrong](#if-something-goes-wrong)
 
-## Start of a new term
+## Subscriptions for a new project
 
-1. Open Choir Settings.
-2. Change the current term (for example "Spring 2027"), and check the subscription amount, deadline and bank details.
-3. Save.
+Subscriptions are collected in subscription periods, usually one per project and named after it ("Ewelme 2027"). To start collecting for the next project:
 
-Changing the term starts a new subscription period: everyone shows as Unpaid in Financials, and singers see the subscription card on their dashboard. Payments for earlier terms are kept and can still be viewed.
+1. Open Financials and press Start new subscription period.
+2. Check the name (it suggests the soonest active project's), the amount and the pay-by date.
+3. Press Start. The button names the new period.
+
+Everyone except exempt members then shows as Unpaid, and singers see the subscription card on their dashboard again. Payments for earlier periods are kept, under the ledger's Subscription period list. The name has to be new: reusing an old one would show that period's payers as already paid, so the page refuses it.
+
+When a project is active but subscriptions are still for an older period, Financials says so at the top and links straight to the new period page. Saving a project as active offers the same link. Nothing changes until you press Start, because projects can overlap and you may not want to charge for every one.
 
 ## A new singer joins
 
@@ -146,13 +150,13 @@ Results show the counts, each member's note, and how many have not answered, wit
 
 ## Subscriptions
 
-Open Financials. It shows the current term; use the term selector to look at earlier ones.
+Open Financials. It shows the current subscription period; use the Subscription period list to look at earlier ones. To start a new one, see [Subscriptions for a new project](#subscriptions-for-a-new-project).
 
 - When someone pays, check the amount and method and click Log. Their dashboard card disappears.
 - Edit or Delete corrects a mistake.
 - Mark Exempt for anyone who should not pay. Un-exempt reverses it.
 
-Logging a payment while viewing an earlier term records it against that term.
+Logging a payment while viewing an earlier period records it against that period.
 
 ## Emailing the choir
 

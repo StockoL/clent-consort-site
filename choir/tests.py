@@ -19,6 +19,7 @@ from django.test import TestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.html import strip_tags
 from invitations.utils import get_invitation_model
 
 from .models import (
@@ -32,6 +33,7 @@ from .models import (
     Enquiry,
     Event,
     LearningAsset,
+    MemberProfile,
     Project,
     Repertoire,
     Section,
@@ -564,6 +566,148 @@ class ContactSpamChecksTests(TestCase):
         response = self.audition(experience="https://a.example https://b.example https://c.example")
         self.assertContains(response, "no more than 2 links")
         self.assertFalse(Enquiry.objects.exists() or AuditionApplication.objects.exists())
+
+
+class SubscriptionPeriodTests(TestCase):
+    """Build Order Phase 13: the finance officer starts a new subscription
+    period for each project from the ledger, the word "term" is gone from
+    the pages, and the ledger nudges when an active project has no period
+    yet, without ever resetting anything by itself."""
+
+    def setUp(self):
+        self.committee = create_committee_user(username="committee", password="pw", first_name="Clara")
+        self.paid = User.objects.create_user(username="paid", password="pw", first_name="Paula")
+        self.exempt = User.objects.create_user(username="exempt", password="pw", first_name="Ezra")
+        self.organist = User.objects.create_user(username="organist", password="pw", first_name="Olive")
+        MemberProfile.objects.filter(user=self.exempt).update(is_exempt_from_subs=True)
+        MemberProfile.objects.filter(user=self.organist).update(is_singer=False)
+        settings_row = ChoirSettings.load()
+        settings_row.current_term = "Autumn 2026"
+        settings_row.subscription_amount = Decimal("50.00")
+        settings_row.save()
+        SubscriptionPayment.objects.create(
+            member=self.paid.profile, amount="50.00", date_paid=timezone.now().date(), term_reference="Autumn 2026"
+        )
+        self.clent = Project.objects.create(
+            name="Clent 2026", status="ACTIVE", start_date=timezone.now().date() + timedelta(days=10)
+        )
+        self.ewelme = Project.objects.create(
+            name="Ewelme 2027", status="ACTIVE", start_date=timezone.now().date() + timedelta(days=100)
+        )
+        self.url = reverse("committee_subscription_period_new")
+        self.client.login(username="committee", password="pw")
+
+    def start(self, name, amount="55.00", deadline=""):
+        return self.client.post(self.url, {"name": name, "amount": amount, "deadline": deadline})
+
+    def test_the_page_is_committee_only(self):
+        self.client.logout()
+        self.assertEqual(self.client.get(self.url).status_code, 302)
+        self.client.login(username="paid", password="pw")
+        self.assertEqual(self.client.get(self.url).status_code, 302)
+        self.assertEqual(self.start("Ewelme 2027").status_code, 302)
+        self.assertEqual(ChoirSettings.load().current_term, "Autumn 2026")
+
+    def test_the_form_suggests_the_soonest_active_project_and_current_amount(self):
+        form = self.client.get(self.url).context["form"]
+        self.assertEqual(form["name"].value(), "Clent 2026")
+        self.assertEqual(form["amount"].value(), Decimal("50.00"))
+        self.assertEqual(self.client.get(self.url, {"name": "Ewelme 2027"}).context["form"]["name"].value(), "Ewelme 2027")
+
+    def test_starting_a_period_changes_the_settings_and_says_where_the_old_one_is(self):
+        response = self.start("Ewelme 2027", deadline="2027-03-01")
+        self.assertRedirects(response, reverse("committee_financials"), fetch_redirect_response=False)
+        settings_row = ChoirSettings.load()
+        self.assertEqual(
+            (settings_row.current_term, settings_row.subscription_amount, settings_row.subscription_deadline),
+            ("Ewelme 2027", Decimal("55.00"), datetime(2027, 3, 1).date()),
+        )
+        message = str(list(self.client.get(reverse("committee_financials")).context["messages"])[0])
+        self.assertEqual(message, "Subscriptions are now for Ewelme 2027. Payments for Autumn 2026 are under Subscription period.")
+
+    def test_afterwards_the_ledger_starts_again_and_keeps_the_old_period(self):
+        self.start("Ewelme 2027")
+        rows = {row["user"].username: row for row in self.client.get(reverse("committee_financials")).context["roster"]}
+        self.assertIsNone(rows["paid"]["payment"])  # unpaid for the new period
+        self.assertTrue(rows["exempt"]["is_exempt"])  # exemptions carry over
+        self.assertNotIn("organist", rows)  # non-singers still left out
+
+        response = self.client.get(reverse("committee_financials"))
+        self.assertIn("Autumn 2026", response.context["earlier_terms"])
+        old = {row["user"].username: row for row in self.client.get(reverse("committee_financials"), {"term": "Autumn 2026"}).context["roster"]}
+        self.assertIsNotNone(old["paid"]["payment"])
+
+    def test_the_dashboard_card_returns_for_singers_only(self):
+        self.client.login(username="paid", password="pw")
+        self.assertNotContains(self.client.get(reverse("members")), "Your subscription for")
+        self.client.login(username="committee", password="pw")
+        self.start("Ewelme 2027")
+        self.client.login(username="paid", password="pw")
+        self.assertContains(self.client.get(reverse("members")), "Your subscription for Ewelme 2027")
+        self.client.login(username="organist", password="pw")
+        self.assertNotContains(self.client.get(reverse("members")), "Your subscription for")
+
+    def test_a_used_name_is_refused(self):
+        SubscriptionPayment.objects.create(
+            member=self.paid.profile, amount="50.00", date_paid=timezone.now().date(), term_reference="Ludlow 2026"
+        )
+        for name, phrase in [("Autumn 2026", "already for"), ("  ludlow 2026 ", "already been logged"), ("   ", "")]:
+            with self.subTest(name=name):
+                response = self.start(name)
+                self.assertEqual(response.status_code, 200)
+                self.assertTrue(response.context["form"].errors)
+                if phrase:
+                    self.assertContains(response, phrase)
+        self.assertEqual(ChoirSettings.load().current_term, "Autumn 2026")
+
+    def test_the_ledger_nudges_about_an_active_project_until_it_has_a_period(self):
+        response = self.client.get(reverse("committee_financials"))
+        self.assertEqual(response.context["project_without_period"], self.clent)
+        self.assertContains(response, "Clent 2026 is active, but subscriptions are still for Autumn 2026")
+        self.assertContains(response, f"{self.url}?name=Clent%202026")
+
+        self.start("Clent 2026")
+        # Subscriptions are for an active project now: no nudge, even though
+        # the overlapping Ewelme has no period of its own yet
+        response = self.client.get(reverse("committee_financials"))
+        self.assertIsNone(response.context["project_without_period"])
+        self.assertNotContains(response, "is active, but subscriptions are still for")
+
+    def test_the_nudge_skips_a_project_that_already_had_a_period(self):
+        # Clent's period has been and gone (it has payments); the choir has
+        # since moved to an unrelated period, so the next is Ewelme
+        SubscriptionPayment.objects.create(
+            member=self.paid.profile, amount="50.00", date_paid=timezone.now().date(), term_reference="Clent 2026"
+        )
+        self.assertEqual(self.client.get(reverse("committee_financials")).context["project_without_period"], self.ewelme)
+
+    def test_saving_a_project_as_active_offers_its_period(self):
+        planning = Project.objects.create(name="Easter 2027", status="PLANNING")
+        self.client.post(
+            reverse("committee_project_edit", args=[planning.id]),
+            {"name": "Easter 2027", "status": "ACTIVE", "description": "", "public_summary": ""},
+        )
+        message = str(list(self.client.get(reverse("committee_projects")).context["messages"])[0])
+        self.assertIn("Start a subscription period for Easter 2027", message)
+        self.assertIn(f'{self.url}?name=Easter+2027', message)
+
+    def test_no_page_says_term(self):
+        payment = SubscriptionPayment.objects.get(member=self.paid.profile)
+        self.start("Ewelme 2027")
+        urls = [
+            reverse("committee_financials"),
+            reverse("committee_financials_edit", args=[payment.id]),
+            reverse("committee_settings"),
+            reverse("committee_hub"),
+            self.url,
+        ]
+        pages = [self.client.get(url) for url in urls]
+        self.client.login(username="paid", password="pw")
+        pages.append(self.client.get(reverse("members")))
+        for page in pages:
+            with self.subTest(url=page.wsgi_request.path):
+                text = strip_tags(page.content.decode())
+                self.assertNotRegex(text, r"(?i)\bterm(s|ly)?\b")
 
 
 class CommitteeBroadcastTests(TestCase):
@@ -1864,7 +2008,7 @@ class NonSingerTests(TestCase):
         response = self.client.get(reverse("members"))
         self.assertEqual(response.status_code, 200)
         self.assertFalse(Attendance.objects.filter(user=self.organist).exists())
-        self.assertNotContains(response, "Subscriptions Due")
+        self.assertNotContains(response, "Your subscription for")
 
     def test_non_singer_is_left_out_of_the_committee_lists(self):
         Event.objects.create(project=self.project, date_time=timezone.now() + timedelta(days=7), location="Hall")

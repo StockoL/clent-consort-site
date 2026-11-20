@@ -44,6 +44,7 @@ from choir.views import (
     committee_section_delete_view,
     committee_section_move_view,
     committee_settings_view,
+    committee_subscription_period_new_view,
     committee_toggle_exempt_view,
     committee_update_rsvp_override,
     contact_view,
@@ -230,6 +231,11 @@ urlpatterns = [
         "members/committee/financials/",
         committee_financials_view,
         name="committee_financials",
+    ),
+    path(
+        "members/committee/financials/new-period/",
+        committee_subscription_period_new_view,
+        name="committee_subscription_period_new",
     ),
     path(
         "members/committee/financials/<int:payment_id>/edit/",

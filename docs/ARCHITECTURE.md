@@ -45,13 +45,13 @@ How the site is built. It is a single Django project with one app, `choir`, serv
 
 | Model | Holds |
 | --- | --- |
-| `ChoirSettings` | One row: current term, subscription amount and deadline, bank details, social links, and the Events page switch. `ChoirSettings.load()` always returns it. |
+| `ChoirSettings` | One row: the current subscription period (the field is still called `current_term`), subscription amount and deadline, bank details, social links, and the Events page switch. `ChoirSettings.load()` always returns it. |
 | `Project` | A season or residency, with a status (planning, active, archived), dates, repertoire and a public summary |
 | `Event` | A rehearsal or performance in a project, with its rehearsal plan and, for performances, the public listing fields |
 | `Attendance` | One singer's RSVP for one event |
 | `MemberProfile` | One per user: voice part, contact and emergency details, consents, medical notes, and the singer, under-18 and exempt flags |
 | `InvitationProfile` | The name and voice part entered when an invitation was sent, copied to the profile on sign-up |
-| `SubscriptionPayment` | A payment against a term, with amount, date, method and an optional transaction ID |
+| `SubscriptionPayment` | A payment against a subscription period (`term_reference`), with amount, date, method and an optional transaction ID. The fields kept their "term" names when the choir moved to a period per project, because renaming them would mean a migration for no benefit. |
 | `Repertoire` | A piece: composer and title, and its score data: the MIDI and MusicXML files, the audio offset, and what the import read from them (the bar map, the part mapping and the report) |
 | `LearningAsset` | A score, track or external link for one piece and one voice part (or the full choir), with a part name for a divided part ("Alto 2"), whether it opens in the practice player, and whether the piece's sections apply to it |
 | `Section`, `SectionNote` | A passage singers can loop (label, bars, start and end times, shown or hidden), and each part's starting note for it. Most sections belong to the piece, because every part's track comes from one Dorico export and shares its timeline; a section with an asset belongs to that one track. |

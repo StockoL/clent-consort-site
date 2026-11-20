@@ -62,7 +62,7 @@ Keeping "singer" separate lets the choir give a login to someone who does not si
 
 ### Schedule (the dashboard)
 
-- A subscription card when the singer owes for the current term, with the amount, deadline and bank details from Choir Settings, and a payment reference. It disappears once the treasurer logs the payment, and never shows to members who are exempt or not singers.
+- A subscription card when the singer owes for the current subscription period (usually the current project), with the amount, deadline and bank details from Choir Settings, and a payment reference. It disappears once the treasurer logs the payment, and never shows to members who are exempt or not singers.
 - A tab per active project, each listing the coming dates as collapsed cards. A card opens to an Attending, Absent or No Response select that saves as soon as it changes, the event type, time and place, an Add to Calendar button, and the rehearsal plan.
 - "Add all dates to your calendar" for each project, as a single calendar file.
 - Past dates in a folded "Earlier this project" section.
@@ -118,11 +118,11 @@ With a piece's score data uploaded (the MIDI and MusicXML files from Dorico), th
 | Events | Coming events by project, with Edit and Delete, and a form for a new event. The edit page has a rich text rehearsal plan and, for performances, the public listing fields. |
 | RSVPs | Event Logistics: each event's replies by status, overridable, with an email reminder to everyone who has not answered. Member Overview: each singer's attendance rate over time, lowest first, with "No replies yet" for singers who have not answered anything. |
 | Polling | Create, edit, close and reopen availability polls; results with each member's note and a reminder link for those who have not answered. |
-| Financials | The subscription ledger for the current term or any earlier one. Log, edit or delete a payment; mark a member exempt. |
+| Financials | The subscription ledger for the current subscription period or any earlier one. Log, edit or delete a payment; mark a member exempt. Start a new period for the next project, with a check that its name hasn't been used; when a project is active but subscriptions are still for an older period, the page suggests starting one. |
 | Documents | Upload and delete documents for the Document Vault. |
 | Broadcast | Write, preview, test and send an email to the whole choir or one voice part. A list of drafts and sent broadcasts with delivery counts. |
 | Duty of Care | Emergency contacts, medical notes and under-18 flags for every singer. |
-| Choir Settings | Current term, subscription amount and deadline, bank details, social media links, and the Events page switch. Changing the term starts a new subscription period; earlier payments are kept. |
+| Choir Settings | Current subscription period, amount and deadline, bank details, social media links, and the Events page switch. Changing the period here works too; earlier payments are kept. |
 
 ## Email
 

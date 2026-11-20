@@ -112,6 +112,10 @@ About was the one public page still scoring below 99 for performance. I expected
 
 The last part of Phase 12 was to be offline practice. I decided against it for now: it isn't essential, and it belongs with an installable web app I may build once the site has settled. It's on the [roadmap](ROADMAP.md#later-an-installable-web-app) for later.
 
+### Phase 13: a subscription period per project
+
+Our finance officer asked to start a fresh round of subscriptions for each project. The site could already do it, by changing the "current term" on Choir Settings, but it called it a term when the choir thinks in projects, and it sat on a page the finance officer doesn't use. So the word "term" has gone from every screen: singers see "Your subscription for Ewelme 2027", and the finance pages talk about subscription periods. The ledger has a Start new subscription period button that suggests the next project's name, refuses a name that's been used before (it would show that period's payers as already paid), and says what will happen before anything does. While a project is active and subscriptions are still for an older period, the ledger suggests starting one, but nothing ever resets by itself. The database fields kept their old names, which kept this free of migrations. The suite is at 267 tests.
+
 ### Things I learned in the rebuild
 
 The inbox was the most useful thing I built. The day it went live it showed 143 enquiries, every one spam, which had piled up unseen because the honeypot field had never actually been rendered on the page. The forms had always validated it, but bots never saw it. Rendering it and adding bulk delete dealt with both problems.

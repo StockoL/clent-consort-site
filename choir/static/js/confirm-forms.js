@@ -17,3 +17,21 @@ document.addEventListener("submit", (event) => {
     event.preventDefault();
   }
 });
+
+/**
+ * Saying what will happen: an element with data-fill-from="<input id>"
+ * shows that input's current value as it's typed, so a page can spell out
+ * its consequence and its button can name it ("Start Ewelme 2027"). Its
+ * own text stays as the fallback while the input is empty, and without
+ * JavaScript.
+ */
+document.querySelectorAll("[data-fill-from]").forEach((target) => {
+  const input = document.getElementById(target.dataset.fillFrom);
+  if (!input) return;
+  const fallback = target.textContent;
+  const fill = () => {
+    target.textContent = input.value.trim() || fallback;
+  };
+  input.addEventListener("input", fill);
+  fill();
+});

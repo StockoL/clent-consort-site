@@ -1,0 +1,51 @@
+{% extends 'choir/_members_base.html' %}
+{% load static %}
+
+{% block title %}New Subscription Period - Clent Consort{% endblock title %}
+
+{% block page_title %}New Subscription Period{% endblock page_title %}
+{% block page_lede %}Start collecting subscriptions for the next project. Subscriptions are currently for <strong>{{ current_name }}</strong>.{% endblock page_lede %}
+
+{% block members_content %}
+  <section class="card flow" data-variant="invert">
+    <form method="POST" class="flow">
+      {% csrf_token %}
+
+      <div class="form-group flow flow--small">
+        <label for="{{ form.name.id_for_label }}" class="form-label text-small">{{ form.name.label }}</label>
+        {{ form.name }}
+        <p class="text-small settings-hint">Usually the project's name. It has to be one that hasn't been used before.</p>
+        <div class="form-error">{{ form.name.errors }}</div>
+      </div>
+
+      <div class="switcher field-row">
+        <div class="form-group flow flow--small">
+          <label for="{{ form.amount.id_for_label }}" class="form-label text-small">{{ form.amount.label }}</label>
+          {{ form.amount }}
+          <div class="form-error">{{ form.amount.errors }}</div>
+        </div>
+        <div class="form-group flow flow--small">
+          <label for="{{ form.deadline.id_for_label }}" class="form-label text-small">{{ form.deadline.label }}</label>
+          {{ form.deadline }}
+          <div class="form-error">{{ form.deadline.errors }}</div>
+        </div>
+      </div>
+
+      {# The new name below follows the Name field as it's typed (js/confirm-forms.js) #}
+      <p class="text-small">
+        Everyone except exempt members will show as unpaid for <strong data-fill-from="{{ form.name.id_for_label }}">the new period</strong>,
+        and the subscription banner will return on their dashboards. Payments for <strong>{{ current_name }}</strong> are kept
+        and stay viewable under Subscription period on the ledger.
+      </p>
+
+      <div class="cluster">
+        <button type="submit" class="button" data-variant="primary">Start <span data-fill-from="{{ form.name.id_for_label }}">new period</span></button>
+        <a href="{% url 'committee_financials' %}" class="button" data-variant="outline">Cancel</a>
+      </div>
+    </form>
+  </section>
+{% endblock members_content %}
+
+{% block scripts %}
+<script src="{% static 'js/confirm-forms.js' %}" defer></script>
+{% endblock scripts %}
