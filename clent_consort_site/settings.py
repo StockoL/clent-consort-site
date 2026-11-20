@@ -53,9 +53,13 @@ else:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
     # Redirect any plain-HTTP request to HTTPS, and tell browsers to stick to
-    # HTTPS. HSTS is kept to one hour until the redirect has proved itself.
+    # HTTPS for a year (HSTS). It was one hour from 26 October 2026 until the
+    # redirect had proved itself. Subdomains and preloading are left off on
+    # purpose: they would bind every *.clentconsort.org address, including any
+    # a mail or other service adds, and preloading is hard to undo. So
+    # check --deploy's W005 and W021 are expected.
     SECURE_SSL_REDIRECT = True
-    SECURE_HSTS_SECONDS = 3600
+    SECURE_HSTS_SECONDS = 31536000  # one year
 
 
 # Application definition

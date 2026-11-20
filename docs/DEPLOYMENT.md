@@ -58,7 +58,7 @@ The site is at http://127.0.0.1:8000/.
 | `python scripts/dev.py run` | Starts the development server |
 | `python scripts/dev.py seed` | Fills the local database with sample data |
 
-`check` prints two warnings, W005 and W021, about HSTS subdomains and preload. They are expected while HSTS is kept to one hour.
+`check` prints two warnings, W005 and W021, about HSTS subdomains and preload. They are expected: both are left off on purpose ([Architecture](ARCHITECTURE.md#security-settings) explains why).
 
 ## Sample data
 

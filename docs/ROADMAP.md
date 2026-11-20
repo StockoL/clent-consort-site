@@ -28,7 +28,6 @@ The public Events page has been built from the database since 27 October 2026. T
 ## Smaller improvements
 
 - If spam starts reaching the inbox again, add a timing check (reject submissions sent faster than a person could type them) and a limit on links, still without a CAPTCHA.
-- Raise HSTS from one hour to a long-lived value once the HTTPS redirect has run without trouble for a while.
 
 ## Could have
 

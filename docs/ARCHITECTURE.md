@@ -191,4 +191,6 @@ With `DEBUG=False`, email goes through Brevo's HTTP API using django-anymail, be
 
 ## Security settings
 
-With `DEBUG=False` the production settings switch on HTTPS redirects, HSTS (one hour for now) and secure session and CSRF cookies, and read the database URL, secret key and API keys from the environment. Nothing secret is in the repository. `python scripts/dev.py check` runs Django's deploy checks against these settings before any change ships.
+With `DEBUG=False` the production settings switch on HTTPS redirects, HSTS and secure session and CSRF cookies, and read the database URL, secret key and API keys from the environment. Nothing secret is in the repository. `python scripts/dev.py check` runs Django's deploy checks against these settings before any change ships.
+
+HSTS tells browsers to use HTTPS for the site for a year, even if someone types or follows a plain `http://` address. It started at one hour on 26 October 2026, so that a fault in the new HTTPS redirect couldn't lock visitors out for long, and went to a year on 20 November 2026 once the redirect had run without trouble. It doesn't extend to subdomains, and the site isn't on browsers' preload list. Both would bind every `*.clentconsort.org` address, including any that an email or other service might add later, and preloading is hard to undo.
