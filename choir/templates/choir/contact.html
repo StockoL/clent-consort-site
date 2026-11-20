@@ -21,7 +21,8 @@
         <h2 class="text-step-1">General Enquiry</h2>
         <form action="{% url 'contact' %}" method="POST" class="flow">
           {% csrf_token %}
-          {# Spam trap: hidden from people, filled in by bots (see clean_website). #}
+          {# Spam trap: hidden from people, filled in by bots (see clean_website). Labelled in case the stylesheet doesn't load. #}
+          <label for="{{ enquiry_form.website.id_for_label }}" class="honeypot">{{ enquiry_form.website.label }}</label>
           {{ enquiry_form.website }}
 
           <div class="form-group flow flow--small">
@@ -56,7 +57,8 @@
         <h2 class="text-step-1">Join the Consort</h2>
         <form action="{% url 'contact' %}" method="POST" class="flow">
           {% csrf_token %}
-          {# Spam trap: hidden from people, filled in by bots (see clean_website). #}
+          {# Spam trap: hidden from people, filled in by bots (see clean_website). Labelled in case the stylesheet doesn't load. #}
+          <label for="{{ audition_form.website.id_for_label }}" class="honeypot">{{ audition_form.website.label }}</label>
           {{ audition_form.website }}
 
           <div class="form-group flow flow--small">

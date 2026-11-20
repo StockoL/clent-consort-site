@@ -479,7 +479,9 @@ class ContactHoneypotTests(TestCase):
         response = self.client.get(reverse("contact"))
         self.assertContains(response, 'id="enquiry-website"', count=1)
         self.assertContains(response, 'id="audition-website"', count=1)
-        self.assertContains(response, 'class="honeypot"', count=2)
+        self.assertContains(response, 'name="website" class="honeypot"', count=2)
+        # Each is labelled too (hidden the same way), in case the stylesheet doesn't load
+        self.assertContains(response, 'class="honeypot">Leave this field empty</label>', count=2)
 
     def test_filled_trap_blocks_the_enquiry(self):
         self.client.post(
@@ -3658,6 +3660,113 @@ class HelpTextReferenceTests(TestCase):
             for target in re.findall(r'aria-describedby="([^"]+)"', html):
                 missing += [f"{url}: {t}" for t in target.split() if t not in ids]
         self.assertEqual(missing, [])
+
+
+class FormLabelTests(TestCase):
+    """Every form control a visitor can use has a label a screen reader can
+    find: a <label for> pointing at it, a <label> around it, or an
+    aria-label or aria-labelledby (pointing at something on the page)."""
+
+    UNLABELLED_TYPES = {"hidden", "submit", "button", "reset", "image"}
+
+    def controls_without_labels(self, html):
+        from html.parser import HTMLParser
+
+        test = self
+
+        class Collector(HTMLParser):
+            def __init__(self):
+                super().__init__()
+                self.ids, self.label_for, self.controls, self.label_depth = set(), set(), [], 0
+
+            def handle_starttag(self, tag, attrs):
+                attrs = dict(attrs)
+                if "id" in attrs:
+                    self.ids.add(attrs["id"])
+                if tag == "label":
+                    self.label_depth += 1
+                    if attrs.get("for"):
+                        self.label_for.add(attrs["for"])
+                if tag in ("input", "select", "textarea"):
+                    if tag == "input" and (attrs.get("type") or "text").lower() in test.UNLABELLED_TYPES:
+                        return
+                    self.controls.append((tag, attrs, self.label_depth > 0))
+
+            def handle_endtag(self, tag):
+                if tag == "label" and self.label_depth:
+                    self.label_depth -= 1
+
+        collector = Collector()
+        collector.feed(html)
+        missing = []
+        for tag, attrs, inside_label in collector.controls:
+            labelled_by = (attrs.get("aria-labelledby") or "").split()
+            if (
+                inside_label
+                or attrs.get("id") in collector.label_for
+                or (attrs.get("aria-label") or "").strip()
+                or (labelled_by and all(i in collector.ids for i in labelled_by))
+            ):
+                continue
+            missing.append(f'<{tag} name="{attrs.get("name")}" id="{attrs.get("id")}">')
+        return missing
+
+    def test_every_form_control_has_a_label(self):
+        committee = create_committee_user(username="committee", password="pw")
+        project = Project.objects.create(name="Clent 2026", status="ACTIVE")
+        planning = Project.objects.create(name="Easter 2027", status="PLANNING")
+        event = Event.objects.create(project=project, event_type="RES", date_time=timezone.now() + timedelta(days=3), location="Hall")
+        poll = AvailabilityPoll.objects.create(project=planning, question="Free?", is_open=True)
+        payment = SubscriptionPayment.objects.create(
+            member=committee.profile, amount="50.00", date_paid=timezone.now().date(), term_reference="Autumn 2026"
+        )
+        Enquiry.objects.create(name="Ann", email="ann@example.com", subject="Booking", message="Hello")
+        piece = Repertoire.objects.create(composer="Byrd", title="Ave verum")
+        project.repertoire.add(piece)
+        track = LearningAsset.objects.create(
+            repertoire=piece, voice_part="ALT", asset_name="Alto", file_upload=SimpleUploadedFile("alto.mp3", b"ID3")
+        )
+        Section.objects.create(repertoire=piece, label="Opening", bar_start=1, bar_end=4, start_seconds=0, end_seconds=8)
+        piece.part_map = {"Alto": "Alto"}
+        piece.save()
+
+        public = [reverse("contact"), reverse("account_login"), reverse("account_reset_password")]
+        members = [
+            reverse("members"),
+            reverse("member_polling"),
+            reverse("hub", args=["alto", project.id]),
+            reverse("settings"),
+        ]
+        committee_pages = [
+            reverse("committee_members"),
+            reverse("committee_member_edit", args=[committee.id]),
+            reverse("committee_projects"),
+            reverse("committee_project_edit", args=[project.id]),
+            reverse("committee_schedule"),
+            reverse("committee_event_edit", args=[event.id]),
+            reverse("committee_rsvps"),
+            reverse("committee_polling"),
+            reverse("committee_poll_edit", args=[poll.id]),
+            reverse("committee_financials"),
+            reverse("committee_financials_edit", args=[payment.id]),
+            reverse("committee_inbox"),
+            reverse("committee_documents"),
+            reverse("committee_broadcast"),
+            reverse("committee_settings"),
+            reverse("committee_repertoire"),
+            reverse("committee_repertoire_detail", args=[piece.id]),
+            reverse("committee_repertoire_detail", args=[piece.id]) + f"?track={track.id}",
+        ]
+
+        problems = []
+        for url in public:
+            problems += [f"{url}: {c}" for c in self.controls_without_labels(self.client.get(url).content.decode())]
+        self.client.login(username="committee", password="pw")
+        for url in members + committee_pages:
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 200, url)
+            problems += [f"{url}: {c}" for c in self.controls_without_labels(response.content.decode())]
+        self.assertEqual(problems, [])
 
 
 class SelfHostedFontsTests(TestCase):
