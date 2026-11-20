@@ -173,6 +173,9 @@
 
 /* Count badge on a nav link (unhandled inbox items) */
 .members-nav__count {
+  /* Holds its visually hidden words ("unhandled in the inbox"), which
+     otherwise escape the nav's scrolling strip and widen a phone's page */
+  position: relative;
   display: inline-block;
   min-width: 1.4em;
   margin-inline-start: 0.35rem;
