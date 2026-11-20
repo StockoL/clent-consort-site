@@ -93,7 +93,7 @@ What holds performance back:
 - Render-blocking CSS, on every page. The stylesheet was 52 files joined with `@import`, and the browser only finds each file after loading the one that imports it. Lighthouse estimated that one file would save about 1.9 seconds before the first paint. Production now serves one minified file (see [Architecture](ARCHITECTURE.md#one-file-in-production)), measured below.
 - On About, the mission banner's background image, which is the largest element on the page.
 
-About's best-practices score of 77 comes from the embedded YouTube and Spotify players, which set third-party cookies and log browser warnings. I accept that, as I did in April, because the recordings are the best evidence of how the choir sounds.
+About's best-practices score of 77 came from the embedded YouTube and Spotify players, which set third-party cookies and log browser warnings. I accepted that, as I did in April, because the recordings are the best evidence of how the choir sounds; since November 2026 the Spotify player loads only as a visitor reaches it, and the score is 100 (see [the About page](#the-about-page)).
 
 ### After the single CSS file
 
@@ -138,6 +138,15 @@ The Spotify figures look like no change, but Lighthouse can't block requests mad
 So the posters and the Spotify embed now load as the visitor scrolls near them (`defer-media.js`). On a phone-width page in headless Chrome, only the banner loaded at first; the three posters arrived as the carousel came within reach, and the playlist appeared, at its compact phone size, as I scrolled to it. Without JavaScript a plain link replaces the playlist. Spotify's cookies, behind About's best-practices score of 77, are no longer set when the page opens either. The embed's inline style moved into the stylesheet, so About no longer needs an exception to the no-inline-styles test.
 
 Shortly after, I replaced the slides' videos with their still frames. The stills load the same way, as the carousel comes near; I tried the browser's own `loading="lazy"` first, but Chrome fetched all three with the page. In headless Chrome at phone width only the banner loaded at first, the stills arrived as the carousel came within reach, and with JavaScript turned off each slide still shows its photograph. Removing the videos also took 2.4 MB of MP4 files out of the site.
+
+With both changes live, I ran the same audit on About on 20 November 2026, three times:
+
+| | Performance | Accessibility | Best practices | SEO | First paint | Largest paint | Page weight |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Before (fonts on the site) | 88 | 100 | 77 | 100 | 1.1 s | 3.8 s | 1,378 KiB |
+| After | 97 | 100 | 100 | 100 | 1.0 s | 2.6 s | 326 KiB |
+
+All three runs agreed: 97, 100, 100, 100. The largest paint fell by more than a second, and the page now downloads about a quarter of what it did when it opens. Best practices reached 100 for the first time, in April or since, because Spotify no longer sets cookies before a visitor reaches the playlist. Every public page now scores 97 or more for performance and 100 for everything else.
 
 ### Members' and committee pages
 
