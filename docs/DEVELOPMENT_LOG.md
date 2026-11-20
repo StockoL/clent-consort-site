@@ -108,7 +108,7 @@ I built it against a real export, Lotti's Crucifixus à 6, which settled two que
 
 ### The About page
 
-About was the one public page still scoring below 99 for performance. I expected the fix to be a smaller banner photo, but measuring first showed otherwise: the photo was already small, and Lighthouse runs with requests blocked showed the delay came from the poster images of the video slides further down, which a browser fetches with the page however far down they are. They, and the Spotify embed, now load as the visitor scrolls near them. That also keeps Spotify's cookies off the page until then. The suite is at 250 tests.
+About was the one public page still scoring below 99 for performance. I expected the fix to be a smaller banner photo, but measuring first showed otherwise: the photo was already small, and Lighthouse runs with requests blocked showed the delay came from the poster images of the video slides further down, which a browser fetches with the page however far down they are. They, and the Spotify embed, now load as the visitor scrolls near them. That also keeps Spotify's cookies off the page until then. Seeing the page again afterwards, I decided the slides' looping videos added motion without adding anything to the story, and replaced them with their still frames. The suite is at 250 tests.
 
 What remains of Phase 12, offline practice, is on the [roadmap](ROADMAP.md).
 

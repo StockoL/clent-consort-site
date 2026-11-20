@@ -109,7 +109,7 @@ The October 2026 pass reworked the public pages for phones.
 - The home page photograph fills the first screen, with a short introduction and the next performance below it.
 - The menu turns into a cross when open, with a solid panel and a dimmed page behind it.
 - The Events button reads "Enquire" on one line, and the archive's year headings stay pinned while scrolling.
-- The About page's background videos are not downloaded on phones; each slide offers a Play button instead. The same applies on any device set to reduce motion.
+- The About page's background videos were not downloaded on phones, with a Play button on each slide instead. In November 2026 I replaced them with still photographs: the motion added nothing to the story the slides tell, and the stills are lighter.
 - The floating back-to-top button is hidden on phones, where it used to cover buttons and form fields.
 
 [User journeys](USER_JOURNEYS.md) shows the result at 375 pixels wide.

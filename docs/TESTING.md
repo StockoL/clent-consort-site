@@ -53,7 +53,7 @@ Headless Chrome will not make a window narrower than 500 pixels, so for true 375
 | Check | What it confirmed |
 | --- | --- |
 | Public pages at 375, 768 and 1366 pixels, before and after the mobile-first pass | No page scrolls sideways at any width; the home photograph exactly fills the first screen on a phone |
-| Phone menu and About videos | The menu opens and closes, a tap on the backdrop cannot reach a link beneath it, and no video downloads on a phone page load |
+| Phone menu and About videos | The menu opens and closes, a tap on the backdrop cannot reach a link beneath it, and no video downloads on a phone page load (the videos were replaced by stills in November 2026) |
 | Practice player | The waveform draws, speed changes, `[` and `]` set a loop that playback stays inside, and settings return after a reload. Repeated with the audio on a second origin sending no CORS headers, which showed the fallback bar working. |
 | Player loop range | Setting a loop while playing, clicking before or after the loop, and pressing Play from outside it all keep playback inside the loop |
 | Player sections | On an alto hub at 375 pixels: only shown sections are listed; tapping one loops it from its lead-in; moving the loop marks it edited and tapping it restores it; My note plays the right pitches for Alto 1, Alto 2 and a two-note chord; switching from Alto 1 to Alto 2 mid-loop keeps the place, section and loop; a reload restores them. On the committee's piece page: Play loops a hidden section, and Set from player copies the playhead's time into the form. No script errors. |
@@ -135,7 +135,9 @@ The banner photo was About's largest paint, and it was already preloaded at high
 
 The Spotify figures look like no change, but Lighthouse can't block requests made inside an embedded frame, so its weight stayed in. The real competitor was the three poster images on the video slides further down the page: a video's poster always loads with the page, however far down it is. The photo itself is already tightly compressed (142 KB at 1,280 by 949), and re-encoding it would save little.
 
-So the posters and the Spotify embed now load as the visitor scrolls near them (`defer-media.js`). On a phone-width page in headless Chrome, only the banner loaded at first; the three posters arrived as the carousel came within reach, and the playlist appeared, at its compact phone size, as I scrolled to it. Without JavaScript the slides show no still frame and a plain link replaces the playlist. Spotify's cookies, behind About's best-practices score of 77, are no longer set when the page opens either. The embed's inline style moved into the stylesheet, so About no longer needs an exception to the no-inline-styles test.
+So the posters and the Spotify embed now load as the visitor scrolls near them (`defer-media.js`). On a phone-width page in headless Chrome, only the banner loaded at first; the three posters arrived as the carousel came within reach, and the playlist appeared, at its compact phone size, as I scrolled to it. Without JavaScript a plain link replaces the playlist. Spotify's cookies, behind About's best-practices score of 77, are no longer set when the page opens either. The embed's inline style moved into the stylesheet, so About no longer needs an exception to the no-inline-styles test.
+
+Shortly after, I replaced the slides' videos with their still frames. The stills load the same way, as the carousel comes near; I tried the browser's own `loading="lazy"` first, but Chrome fetched all three with the page. In headless Chrome at phone width only the banner loaded at first, the stills arrived as the carousel came within reach, and with JavaScript turned off each slide still shows its photograph. Removing the videos also took 2.4 MB of MP4 files out of the site.
 
 ### Members' and committee pages
 

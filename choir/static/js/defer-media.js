@@ -2,64 +2,47 @@
     DEFERRED MEDIA (About page)
    ========================================================================== */
 /**
- * Loads media below the first screen only as the visitor scrolls near it,
- * so it doesn't compete with the page's banner for a phone's connection.
- * A video's poster image and an iframe load straight away however far down
- * the page they are (Chrome starts "lazy" iframes early on slow
- * connections), and on About they held up the first paint by about a
- * second in Lighthouse's phone test.
+ * Loads images and embeds below the first screen only as the visitor
+ * scrolls near them, so they don't compete with the page's banner for a
+ * phone's connection. loading="lazy" isn't enough: Chrome starts lazy
+ * images and iframes well before they're near (on About it fetched the
+ * carousel's stills with the page).
  *
- * - data-defer-poster on a <video> becomes its poster.
- * - data-defer-src on an <iframe> becomes its src, and the iframe is
- *   unhidden. Third-party embeds then set no cookies until they're near.
- * - Inside a [data-defer-group], everything loads together once the group
- *   is near. Use one for slides off to the side of a sideways-scrolling
- *   strip, which never count as near on their own, and around a hidden
- *   iframe, which can't be seen to come near until it's shown.
- *
- * Without JavaScript the posters stay blank and the page's <noscript>
- * fallbacks (a plain link) take the iframes' place.
+ * Inside a [data-defer-group], each element's data-defer-src becomes its
+ * src, and it's unhidden if it was hidden, once the group is within 300px
+ * of the screen. The group is what's watched: slides off to the side of
+ * a sideways-scrolling strip never count as near on their own, and a
+ * hidden iframe can't be seen to come near. A third-party embed then sets
+ * no cookies until it's needed. Without JavaScript, the page's <noscript>
+ * fallbacks (the stills themselves, a plain link) take their place.
  */
 (() => {
-  const deferred = document.querySelectorAll("[data-defer-src], [data-defer-poster]");
-  if (!deferred.length) return;
+  const groups = document.querySelectorAll("[data-defer-group]");
+  if (!groups.length) return;
 
-  const load = (element) => {
-    if (element.dataset.deferPoster) {
-      element.poster = element.dataset.deferPoster;
-      delete element.dataset.deferPoster;
-    }
-    if (element.dataset.deferSrc) {
+  const load = (group) => {
+    group.querySelectorAll("[data-defer-src]").forEach((element) => {
       element.src = element.dataset.deferSrc;
       element.hidden = false;
       delete element.dataset.deferSrc;
-    }
+    });
   };
 
   if (!("IntersectionObserver" in window)) {
-    deferred.forEach(load);
+    groups.forEach(load);
     return;
   }
-
-  // What to watch: each group, and each deferred element outside a group
-  const watched = new Set();
-  deferred.forEach((element) => watched.add(element.closest("[data-defer-group]") || element));
 
   const observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
         if (!entry.isIntersecting) return;
-        const target = entry.target;
-        if (target.matches("[data-defer-group]")) {
-          target.querySelectorAll("[data-defer-src], [data-defer-poster]").forEach(load);
-        } else {
-          load(target);
-        }
-        observer.unobserve(target);
+        load(entry.target);
+        observer.unobserve(entry.target);
       });
     },
     // A little ahead of the visitor, so it's there by the time they arrive
     { rootMargin: "300px 0px" },
   );
-  watched.forEach((element) => observer.observe(element));
+  groups.forEach((group) => observer.observe(group));
 })();

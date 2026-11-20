@@ -22,7 +22,7 @@ The choir's photograph fills the first screen, with the strapline "Ancient Spire
 
 ### About
 
-How the choir works: its approach, a note from the conductor, and how a project runs from first rehearsal to residency, told over three video slides. The videos play in the background on wide screens. On phones, and wherever the visitor has asked for reduced motion, they are not downloaded until the visitor presses Play. A Spotify embed gives a sample of the choir's sound.
+How the choir works: its approach, a note from the conductor, and how a project runs from first rehearsal to residency, told over three slides with still photographs behind them, which load as the visitor scrolls near (they were looping videos until November 2026). A Spotify embed gives a sample of the choir's sound, and also loads only as the visitor reaches it.
 
 ### Events
 

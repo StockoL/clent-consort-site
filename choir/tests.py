@@ -3269,21 +3269,23 @@ class PublicMobilePassTests(TestCase):
         self.assertContains(response, "Choral Evensong")
         self.assertContains(response, "St Mary the Virgin, Ewelme")
 
-    def test_about_videos_dont_autoplay_or_preload(self):
+    def test_about_carousel_shows_stills_not_videos(self):
         response = self.client.get(reverse("about"))
         content = response.content.decode()
-        self.assertEqual(content.count("<video"), 3)
-        self.assertNotIn("<video autoplay", content)
-        self.assertEqual(content.count('preload="none"'), 3)
-        self.assertEqual(content.count("data-rhythm-play"), 3)
+        # The slides were videos until November 2026: now a still each, no play buttons
+        self.assertNotIn("<video", content)
+        self.assertNotIn("data-rhythm-play", content)
+        for still in ["foundations_still", "preparation_still", "residency_still"]:
+            # Loaded as the carousel comes near, with the still itself for no-JavaScript visitors
+            self.assertRegex(content, rf'<img src="data:image/gif;base64,[^"]+" data-defer-src="[^"]*{still}[^"]*" alt=""')
+            self.assertRegex(content, rf'<noscript><img src="[^"]*{still}[^"]*" alt="" /></noscript>')
         self.assertContains(response, '<h1 class="visually-hidden">About Clent Consort</h1>', html=True)
         self.assertContains(response, 'title="Clent Consort repertoire playlist on Spotify"')
 
     def test_about_media_below_the_banner_waits_until_its_near(self):
-        # Posters and the Spotify embed held up the banner on phones
+        # The carousel's images and the Spotify embed held up the banner on phones
         content = self.client.get(reverse("about")).content.decode()
         self.assertNotIn(" poster=", content)
-        self.assertEqual(content.count("data-defer-poster="), 3)
         self.assertNotRegex(content, r'(?<![\w-])src="https://open\.spotify\.com')
         self.assertIn('data-defer-src="https://open.spotify.com/embed/playlist/', content)
         # Without JavaScript, a plain link stands in for the embed

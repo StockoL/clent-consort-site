@@ -45,7 +45,7 @@ The home page opens on the choir's photograph, with the next project one click a
 
 ![Home page on a desktop](images/journeys/public/home-desktop.jpg)
 
-The About page explains how the choir works and how a project runs. On a phone the background videos are not downloaded; each slide has a Play button instead.
+The About page explains how the choir works and how a project runs, over three slides with still photographs behind them. The photographs and the Spotify playlist load as the visitor scrolls near them.
 
 | About on a phone | About on a desktop |
 | --- | --- |
