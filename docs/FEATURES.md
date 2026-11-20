@@ -38,6 +38,8 @@ All of it is built from the committee's schedule. A performance appears once the
 
 Two forms side by side on a desktop and stacked on a phone: a general or booking enquiry, and an audition application with voice part and experience. Each saves the submission for the committee's inbox and emails the choir's address. Both carry a honeypot: a field hidden from people (with `display: none`, so screen readers skip it too) that bots fill in. A submission with it filled in fails validation, so nothing is saved and no email is sent.
 
+Since November 2026 two more checks sit alongside it, still without a CAPTCHA. Each form carries a hidden, signed note of when the page was shown. A form sent within three seconds of that is refused, and so is one whose note is missing or altered, which means it never came from the page. A real person caught by the timing check is asked to press the button again, and the second press goes through. A page left open for days still sends, since only speed counts. A name containing a web address, or a message or experience box with more than two links, is also refused, with a note saying what to change.
+
 ### 404
 
 A branded page with a way back to the home page.

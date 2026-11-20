@@ -199,7 +199,7 @@ As the maintainer, I want credentials kept only in environment variables, and pr
 | C2 A way to make contact | Must | Done: booking enquiries reach the committee inbox and email |
 | P1 What's on next | Must | Done: next public performance, built from the schedule |
 | P2 What they sing | Should | Done: recent performances list their repertoire |
-| P3 Apply to audition | Must | Done: audition form, protected by a honeypot |
+| P3 Apply to audition | Must | Done: audition form, protected by a honeypot and timing and link checks |
 | P4 Works on my phone | Must | Done: mobile-first pass, checked at 375, 768 and 1366 pixels |
 | P5 Accessible | Must | Done: Lighthouse accessibility 100 on all public pages |
 | S1 My schedule | Must | Done: dashboard with RSVPs and rehearsal plans; past events folded away |
@@ -221,7 +221,7 @@ As the maintainer, I want credentials kept only in environment variables, and pr
 | K10 Public events | Should | Done |
 | K11 Duty of care | Must | Done |
 | K12 Committee documents | Should | Done |
-| M1 Safe changes | Must | Done: 251 automated tests, `scripts/dev.py` and seed data |
+| M1 Safe changes | Must | Done: 257 automated tests, `scripts/dev.py` and seed data |
 | M2 No secrets in the repository | Must | Done |
 
 ## Won't have, for now

@@ -435,6 +435,18 @@ class ChoirCommunicationSendTests(TestCase):
         self.assertEqual(broadcast.status, "SENT")
 
 
+def started_ago(seconds):
+    """The contact forms' hidden 'started' record, as if the form had been
+    shown this many seconds ago (forms.SpamChecks)."""
+    import time
+
+    from django.core import signing
+
+    from .forms import FORM_STARTED_SALT
+
+    return signing.dumps(int(time.time()) - seconds, salt=FORM_STARTED_SALT)
+
+
 class ContactFormTests(TestCase):
     """Guards against contact_view redirecting (losing the user's input and
     field-specific errors) instead of re-rendering the bound form on a
@@ -465,6 +477,7 @@ class ContactFormTests(TestCase):
                 "email": "jane@example.com",
                 "subject": "general",
                 "message": "Hello there",
+                "started": started_ago(10),
             },
         )
         self.assertRedirects(response, reverse("contact"))
@@ -495,6 +508,63 @@ class ContactHoneypotTests(TestCase):
             },
         )
         self.assertFalse(Enquiry.objects.exists())
+
+class ContactSpamChecksTests(TestCase):
+    """The contact forms refuse what looks automated, beyond the honeypot:
+    sent too quickly after the page opened, never opened in a browser, or
+    stuffed with links. A person caught by mistake is told how to send."""
+
+    def enquiry(self, **changes):
+        data = {"name": "Jane Doe", "email": "jane@example.com", "subject": "general", "message": "Hello there", "started": started_ago(10)}
+        data.update(changes)
+        return self.client.post(reverse("contact"), data)
+
+    def audition(self, **changes):
+        data = {"name": "John Smith", "email": "john@example.com", "voice_part": "tenor", "experience": "Ten years", "started": started_ago(10)}
+        data.update(changes)
+        return self.client.post(reverse("contact"), data)
+
+    def test_the_page_carries_a_signed_start_time_for_each_form(self):
+        html = self.client.get(reverse("contact")).content.decode()
+        self.assertEqual(len(re.findall(r'<input type="hidden" name="started" value="[^"]+:[^"]+"', html)), 2)
+
+    def test_a_normal_enquiry_and_audition_go_through(self):
+        self.assertRedirects(self.enquiry(message="Our website is https://example.org"), reverse("contact"))
+        self.assertRedirects(self.audition(), reverse("contact"))
+        self.assertEqual((Enquiry.objects.count(), AuditionApplication.objects.count()), (1, 1))
+
+    def test_sent_too_quickly_is_refused_with_a_way_through(self):
+        response = self.enquiry(started=started_ago(1))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "press the button again")
+        # The banner gives that reason, not "check the highlighted fields" (none are)
+        banner = [str(m) for m in response.context["messages"]]
+        self.assertEqual(len(banner), 1)
+        self.assertIn("press the button again", banner[0])
+        self.assertFalse(Enquiry.objects.exists())
+        # The redisplayed form keeps the original start time, so pressing again works
+        token = response.context["enquiry_form"]["started"].value()
+        self.assertEqual(token, response.wsgi_request.POST["started"])
+
+    def test_a_page_left_open_a_long_time_still_sends(self):
+        self.assertRedirects(self.enquiry(started=started_ago(7 * 24 * 3600)), reverse("contact"))
+
+    def test_a_missing_or_altered_start_time_is_refused(self):
+        for started in ["", "12345", started_ago(10)[:-2] + "xx"]:
+            with self.subTest(started=started):
+                response = self.audition(started=started)
+                self.assertContains(response, "reload the page")
+        self.assertFalse(AuditionApplication.objects.exists())
+
+    def test_links_in_the_name_or_too_many_in_the_message_are_refused(self):
+        response = self.enquiry(name="Cheap pills www.spam.example")
+        self.assertContains(response, "just your name")
+        response = self.enquiry(message="See http://a.example http://b.example and http://c.example")
+        self.assertContains(response, "no more than 2 links")
+        response = self.audition(experience="https://a.example https://b.example https://c.example")
+        self.assertContains(response, "no more than 2 links")
+        self.assertFalse(Enquiry.objects.exists() or AuditionApplication.objects.exists())
+
 
 class CommitteeBroadcastTests(TestCase):
     """Guards against choir/views.py's committee_broadcast setting a

@@ -17,7 +17,7 @@ How I test the site: an automated suite that runs before every change ships, bro
 
 ## Automated tests
 
-The suite has 251 tests in 58 classes, in `choir/tests.py`. On 20 November 2026 all 251 pass.
+The suite has 257 tests in 59 classes, in `choir/tests.py`. On 20 November 2026 all 257 pass.
 
 ```bash
 python scripts/dev.py test     # build the CSS bundle, collectstatic, then the whole suite
@@ -36,7 +36,7 @@ Tests never touch real services. Email uses Django's in-memory outbox, or Anymai
 | --- | --- | --- |
 | RSVPs | `AttendanceAutoCreationTests`, `DashboardPastEventsTests`, `CommitteeRsvpProjectScopingTests`, `RsvpReportQueryCountTests`, `RsvpOverviewNoRepliesTests` | Every singer gets an RSVP for a new event; past events leave the upcoming list; the RSVP report runs a fixed number of queries however much data there is; a singer with no replies has no rate rather than 0% |
 | Access | `CommitteePermissionModelTests`, `CommitteeAccessModelTests`, `CommitteeNewUrlPermissionTests`, `NonSingerTests` | Only the Committee group reaches committee pages; `is_staff` alone does not; non-singers get no RSVPs and are left out of the ledger |
-| Public pages | `ContactFormTests`, `ContactHoneypotTests`, `PublicEventsPageTests`, `PublicMobilePassTests`, `EventPublicFieldsAndCalendarTests` | Both forms save and email; a filled honeypot is refused; rehearsals and non-public events never reach the Events page; calendar files are valid |
+| Public pages | `ContactFormTests`, `ContactHoneypotTests`, `ContactSpamChecksTests`, `PublicEventsPageTests`, `PublicMobilePassTests`, `EventPublicFieldsAndCalendarTests` | Both forms save and email; a filled honeypot is refused; a form sent within three seconds, or with a missing or altered start time, or with links in the name or more than two in the message, is refused with a message saying why, while one sent again, or after the page was left open for a week, goes through; rehearsals and non-public events never reach the Events page; calendar files are valid |
 | Members | `MemberRepertoireViewTests`, `HubViewTests`, `PracticePlayerTests`, `PracticePlayerSectionTests`, `AvailabilityPollingTests`, `MemberPollNotesTests`, `DashboardSubnavTests`, `MembersShellTests` | Hubs show only their part's files; the player's JSON lists the right tracks; a hub gets only shown sections that have times, in order, with only its own part's starting notes; a track's own sections reach only the hubs that have that track; poll notes save and clear |
 | Committee | `CommitteeEventManagementTests`, `CommitteePollEditingTests`, `CommitteeFinancialsTests`, `ChoirSettingsTests`, `CommitteeInboxTests`, `CommitteeInboxBulkTests`, `RepertoireLibraryTests`, `MemberManagementTests`, `MemberInvitationTests`, `CommitteeDocumentDeleteTests`, `CommitteeNavPanelTests`, `CommitteeEventsNavLabelTests`, `AssetPartUploadTests`, `PartNameTests` | Payments log against the right term; uploads are checked for type and size; each uploaded track's part is read from its file name; sections reject impossible times, bars and notes; deleting an asset deletes its file; a member cannot remove their own committee access; an invitation can be accepted end to end through allauth |
 | Email | `ChoirCommunicationSendTests`, `CommitteeBroadcastTests`, `BroadcastWorkflowTests`, `EmailManagementTests` | A broadcast is sent once only; it goes as one batch so recipients cannot see each other; a test send records nothing; failures are recorded per recipient |

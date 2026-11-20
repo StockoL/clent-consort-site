@@ -27,7 +27,7 @@ The public Events page has been built from the database since 27 October 2026. T
 
 ## Smaller improvements
 
-- If spam starts reaching the inbox again, add a timing check (reject submissions sent faster than a person could type them) and a limit on links, still without a CAPTCHA.
+None at the moment. The last ones (a test for form labels, a year-long HSTS setting, and the contact forms' timing and link checks) were done in November 2026.
 
 ## Could have
 

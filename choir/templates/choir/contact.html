@@ -24,6 +24,9 @@
           {# Spam trap: hidden from people, filled in by bots (see clean_website). Labelled in case the stylesheet doesn't load. #}
           <label for="{{ enquiry_form.website.id_for_label }}" class="honeypot">{{ enquiry_form.website.label }}</label>
           {{ enquiry_form.website }}
+          {# When the form was shown, signed; a form sent too soon after is refused (forms.SpamChecks) #}
+          {{ enquiry_form.started }}
+          {% if enquiry_form.non_field_errors %}<div class="form-error" role="alert">{{ enquiry_form.non_field_errors }}</div>{% endif %}
 
           <div class="form-group flow flow--small">
             <label for="{{ enquiry_form.subject.id_for_label }}">Subject</label>
@@ -60,6 +63,8 @@
           {# Spam trap: hidden from people, filled in by bots (see clean_website). Labelled in case the stylesheet doesn't load. #}
           <label for="{{ audition_form.website.id_for_label }}" class="honeypot">{{ audition_form.website.label }}</label>
           {{ audition_form.website }}
+          {{ audition_form.started }}
+          {% if audition_form.non_field_errors %}<div class="form-error" role="alert">{{ audition_form.non_field_errors }}</div>{% endif %}
 
           <div class="form-group flow flow--small">
             <label for="{{ audition_form.name.id_for_label }}">Name</label>

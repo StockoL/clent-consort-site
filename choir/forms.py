@@ -1,8 +1,10 @@
 import re
+import time
 from decimal import Decimal
 
 from django import forms
 from django.contrib.auth.models import User
+from django.core import signing
 from django.db import models
 
 from .models import (
@@ -26,8 +28,66 @@ from .parts import normalise_part_name, normalise_pitches, part_from_filename, v
 from .permissions import COMMITTEE_GROUP
 
 
-class EnquiryForm(forms.ModelForm):
+FORM_STARTED_SALT = "choir.contact-form-started"
+FASTEST_HUMAN_SECONDS = 3
+MOST_LINKS = 2
+LINK = re.compile(r"https?://|www\.", re.IGNORECASE)
+
+
+class SpamChecks(forms.Form):
+    """
+    Spam checks for the public contact forms, alongside each form's
+    honeypot, still without a CAPTCHA. A form is refused if:
+
+    - it was sent within FASTEST_HUMAN_SECONDS of the page opening. A
+      hidden, signed record of when the form was shown (started) gives the
+      time; one that's missing or altered means the form was never opened
+      in a browser. A person caught by this is asked to press the button
+      again, which works because the record keeps its original time.
+    - its name has a link in it, or its free text (free_text_field) has
+      more than MOST_LINKS links. Both are typical of spam and rare in a
+      real enquiry, and the message says how to put it right.
+
+    A page left open for days still works: only being too quick counts.
+    """
+
+    free_text_field = None
+
+    started = forms.CharField(required=False, widget=forms.HiddenInput)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["started"].initial = signing.dumps(int(time.time()), salt=FORM_STARTED_SALT)
+
+    def clean_name(self):
+        name = self.cleaned_data.get("name", "")
+        if LINK.search(name):
+            raise forms.ValidationError("Please give just your name here, without a web address.")
+        return name
+
+    def clean(self):
+        cleaned = super().clean()
+        text = cleaned.get(self.free_text_field) or ""
+        if len(LINK.findall(text)) > MOST_LINKS:
+            self.add_error(
+                self.free_text_field,
+                f"Please include no more than {MOST_LINKS} links. We'll ask for anything else we need.",
+            )
+        try:
+            started = signing.loads(cleaned.get("started") or "", salt=FORM_STARTED_SALT)
+        except signing.BadSignature:
+            raise forms.ValidationError("This form couldn't be sent. Please reload the page and try again.")
+        if time.time() - started < FASTEST_HUMAN_SECONDS:
+            raise forms.ValidationError(
+                "That was sent so quickly it looked automated. Please check your details and press the button again."
+            )
+        return cleaned
+
+
+class EnquiryForm(SpamChecks, forms.ModelForm):
     """Form for processing public contact and booking enquiries."""
+
+    free_text_field = "message"
 
     # THE HONEYPOT: Visually hidden from humans using CSS, but bots will fill it out.
     website = forms.CharField(
@@ -66,8 +126,10 @@ class EnquiryForm(forms.ModelForm):
         return bot_catcher
 
 
-class AuditionForm(forms.ModelForm):
+class AuditionForm(SpamChecks, forms.ModelForm):
     """Form for prospective singers applying to audition."""
+
+    free_text_field = "experience"
 
     def __init__(self, *args, **kwargs):
         # It shares the contact page with EnquiryForm, which has name and

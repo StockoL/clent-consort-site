@@ -139,9 +139,15 @@ def contact_view(request):
             # field they'd typed and never saw *which* field was wrong, only
             # a generic banner. The other form on the page still gets a
             # clean, empty instance since it wasn't the one submitted.
-            messages.error(
-                request, "There was an error with your submission. Please check the highlighted fields."
-            )
+            # A whole-form problem (the spam checks' timing, forms.SpamChecks)
+            # highlights no field, so the banner gives its reason instead
+            visible_errors = [name for name in form.errors if name not in ("__all__", "website")]
+            if form.non_field_errors() and not visible_errors:
+                messages.error(request, form.non_field_errors()[0])
+            else:
+                messages.error(
+                    request, "There was an error with your submission. Please check the highlighted fields."
+                )
             if is_audition:
                 enquiry_form = EnquiryForm()
                 audition_form = form
