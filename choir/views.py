@@ -401,13 +401,24 @@ def _plays_in_player(asset):
     )
 
 
-def _player_tracks(assets):
+def _player_tracks(assets, own_part=None):
     """The practice player's track list: uploaded audio only (PDFs and
-    external links keep their own buttons on the hub), less any track the
+    external links are listed under Downloads & links), less any track the
     committee has taken out of the player. URLs are presigned and expire
     (AWS_QUERYSTRING_EXPIRE), which is why hub_tracks_view exists to hand
-    the player fresh ones. part is what "My note" matches notes on."""
-    return [
+    the player fresh ones. part is what "My note" matches notes on.
+
+    Within each piece the tracks come in order: own_part's first (the
+    hub's voice part), then the other voice parts, then full choir. Each
+    is labelled for the player's buttons (Build Order Phase 14a): group
+    and groupLabel for the movement tabs, partLabel for the part buttons
+    within a group (see _label_track_groups)."""
+    order = [code for code, _ in LearningAsset.PART_CHOICES]
+    playable = sorted(
+        (asset for asset in assets if _plays_in_player(asset)),
+        key=lambda a: (a.voice_part != own_part, order.index(a.voice_part), a.part_name, a.asset_name.lower()),
+    )
+    tracks = [
         {
             "id": asset.id,
             "name": asset.asset_name,
@@ -419,9 +430,142 @@ def _player_tracks(assets):
             "pieceSections": asset.piece_sections,
             "url": asset.file_upload.url,
         }
-        for asset in assets
-        if _plays_in_player(asset)
+        for asset in playable
     ]
+    _label_track_groups(list(zip(playable, tracks)))
+    return tracks
+
+
+def _label_track_groups(pairs):
+    """Labels the player's buttons for each piece's tracks, so that no row
+    of buttons holds two with the same label (Build Order Phase 14a).
+
+    Tracks are grouped by what they cover: a track's title once tracks
+    have one (Phase 14b), and meanwhile, if two of a piece's tracks share
+    a part (a Magnificat and a Nunc Dimittis each recorded for basses),
+    by their names with the piece, composer and part taken out
+    (parts.track_label: "Gibbons - Short Mag - Bass" is "Short Mag").
+    A piece whose tracks don't share a part stays one group, as before.
+    Within a group each track's button is its part ("Alto 2", "Full
+    choir"), or its own name if two would otherwise match."""
+    from .parts import track_label
+
+    by_piece = {}
+    for asset, track in pairs:
+        track["partLabel"] = asset.player_part or "Full choir"
+        by_piece.setdefault(asset.repertoire_id, []).append((asset, track))
+
+    for items in by_piece.values():
+        parts = [track["partLabel"] for _, track in items]
+        shared = len(parts) != len(set(parts))
+        for asset, track in items:
+            title = ""
+            if shared:
+                piece = asset.repertoire
+                title = track_label(asset.asset_name, piece.title, piece.composer) or asset.asset_name
+            track["groupLabel"] = title
+            track["group"] = title.lower()
+
+        groups = {}
+        for _, track in items:
+            groups.setdefault(track["group"], []).append(track)
+        for members in groups.values():
+            labels = [track["partLabel"] for track in members]
+            if len(labels) != len(set(labels)):
+                for track in members:
+                    if labels.count(track["partLabel"]) > 1:
+                        track["partLabel"] = track["name"]
+
+
+def _download_url(field_file, name):
+    """A link that saves the file, named after the asset, rather than
+    opening it: S3 is asked to send it as an attachment. (A link's
+    download attribute doesn't work across sites, and the files live on
+    S3, so on many phones it used to open the MP3 in the browser.) Local
+    file storage takes no such option, so it gets the plain URL."""
+    import os
+    import unicodedata
+
+    extension = os.path.splitext(field_file.name)[1].lower()
+    safe = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode().replace('"', "").strip()
+    filename = f"{safe or 'download'}{extension}"
+    try:
+        return field_file.storage.url(
+            field_file.name, parameters={"ResponseContentDisposition": f'attachment; filename="{filename}"'}
+        )
+    except TypeError:
+        return field_file.url
+
+
+def _asset_kind(asset):
+    """(kind, type label) for an asset's row under Downloads & links."""
+    if asset.file_upload:
+        extension = asset.file_upload.name.rsplit(".", 1)[-1].lower()
+        if extension in ("mp3", "m4a", "wav"):
+            return "audio", extension.upper()
+        if extension == "pdf":
+            return "pdf", "PDF"
+        return "file", extension.upper()
+    url = (asset.external_url or "").lower()
+    if "spotify" in url:
+        return "link", "Spotify"
+    if "youtube" in url or "youtu.be" in url:
+        return "link", "YouTube"
+    return "link", "Link"
+
+
+def _player_pieces(pieces, assets, own_part=None):
+    """The pieces the player's Piece drop-down offers (Build Order Phase
+    14a), in the order given, each that has anything here: audio, a PDF or
+    a link. Each with its label ("Composer: Title"), its score (own_part's
+    PDF if there is one, otherwise the full-choir PDF; on the committee's
+    page, with no own_part, any), and its bar start times from the score
+    data, shifted by the audio offset, for the loop markers and lead-in.
+
+    Also returns the Downloads & links rows per piece, in the same order:
+    own_part's tracks, full-choir tracks, then PDFs, then links."""
+    by_piece = {}
+    for asset in assets:
+        by_piece.setdefault(asset.repertoire_id, []).append(asset)
+    order = [code for code, _ in LearningAsset.PART_CHOICES]
+    kind_order = {"audio": 0, "file": 1, "pdf": 2, "link": 3}
+
+    data, downloads = [], []
+    for piece in pieces:
+        items = by_piece.get(piece.id)
+        if not items:
+            continue
+        pdfs = [a for a in items if _asset_kind(a)[0] == "pdf"]
+        score = next((a for a in pdfs if own_part and a.voice_part == own_part), None)
+        score = score or next((a for a in pdfs if a.voice_part == "ALL"), None)
+        if score is None and own_part is None and pdfs:
+            score = pdfs[0]
+        offset = piece.audio_offset_ms / 1000
+        bars = [[round(entry["start"] + offset, 3), entry["bar"]] for entry in (piece.bar_map or {}).get("bars", [])]
+        label = f"{piece.composer}: {piece.title}" if piece.composer else piece.title
+        data.append({"id": piece.id, "label": label, "score": score.file_upload.url if score else None, "bars": bars})
+
+        rows = []
+        for asset in sorted(
+            items,
+            key=lambda a: (kind_order[_asset_kind(a)[0]], a.voice_part != own_part, order.index(a.voice_part), a.asset_name.lower()),
+        ):
+            kind, type_label = _asset_kind(asset)
+            if asset.file_upload:
+                href, url = _download_url(asset.file_upload, asset.asset_name), asset.file_upload.url
+            else:
+                href, url = asset.external_url, asset.external_url
+            rows.append({"asset": asset, "kind": kind, "type": type_label, "href": href, "url": url})
+        downloads.append({"piece": piece, "label": label, "rows": rows})
+    return data, downloads
+
+
+def _project_pieces(project):
+    """A project's repertoire in the order it was added to the project."""
+    through = Project.repertoire.through
+    ids = list(through.objects.filter(project=project).order_by("id").values_list("repertoire_id", flat=True))
+    pieces = {piece.id: piece for piece in Repertoire.objects.filter(id__in=ids)}
+    return [pieces[i] for i in ids if i in pieces]
 
 
 def _player_sections(pieces, tracks, voice_part=None, members=True):
@@ -491,22 +635,38 @@ def hub_view(request, voice_part, project_id):
     """Renders the learning hub dynamically based on the requested voice
     part, scoped to one project's repertoire - a member picking a voice
     part from Project A's tab shouldn't see Project B's assets mixed in.
-    Audio tracks open in the practice player (js/practice-player.js),
-    whose track list and the pieces' and tracks' sections are embedded in
-    the page as JSON."""
+
+    The page is the practice player (js/practice-player.js, Build Order
+    Phase 14a): a Piece drop-down over the project's pieces, then the
+    chosen piece's tracks, sections and notes, with everything embedded
+    as JSON. Below it, Downloads & links for every piece; the script shows
+    only the chosen piece's. ?piece=<id> opens a piece and ?track=<id> a
+    track (ids from elsewhere are ignored)."""
     project = get_object_or_404(Project, id=project_id, status="ACTIVE")
-    assets = _hub_assets(project, voice_part)
+    assets = list(_hub_assets(project, voice_part))
     db_part = HUB_PARTS.get(voice_part.lower())
-    tracks = _player_tracks(assets)
+    tracks = _player_tracks(assets, own_part=db_part)
+    pieces = _project_pieces(project)
+    piece_data, downloads = _player_pieces(pieces, assets, own_part=db_part)
+
+    piece_ids = {piece["id"] for piece in piece_data}
+    start_piece = request.GET.get("piece", "")
+    start_piece = int(start_piece) if start_piece.isdigit() and int(start_piece) in piece_ids else None
+    start_track = request.GET.get("track", "")
+    start_track = int(start_track) if start_track.isdigit() and any(t["id"] == int(start_track) for t in tracks) else None
 
     context = {
         "voice_part_name": voice_part.title(),
         "assets": assets,
         "project": project,
+        "downloads": downloads,
         "player_data": {
             "tracks": tracks,
-            "sections": _player_sections(project.repertoire.all(), tracks, voice_part=db_part),
-            "noteTimes": _note_timelines(project.repertoire.all(), voice_part=db_part),
+            "pieces": piece_data,
+            "startPiece": start_piece,
+            "startTrack": start_track,
+            "sections": _player_sections(pieces, tracks, voice_part=db_part),
+            "noteTimes": _note_timelines(pieces, voice_part=db_part),
             # Whose note "My note" falls back to on a full-choir track
             "voicePart": dict(LearningAsset.PART_CHOICES).get(db_part, ""),
             "refreshUrl": reverse("hub_tracks", args=[voice_part, project.id]),
@@ -521,7 +681,8 @@ def hub_tracks_view(request, voice_part, project_id):
     """The practice player's track list as JSON, with freshly presigned
     URLs - the player calls this when a track's URL has expired."""
     project = get_object_or_404(Project, id=project_id, status="ACTIVE")
-    return JsonResponse({"tracks": _player_tracks(_hub_assets(project, voice_part))})
+    own_part = HUB_PARTS.get(voice_part.lower())
+    return JsonResponse({"tracks": _player_tracks(_hub_assets(project, voice_part), own_part=own_part)})
 
 
 @login_required
@@ -907,6 +1068,7 @@ def committee_repertoire_detail_view(request, piece_id):
         "score_length": format_time(score_seconds) if score_seconds is not None else "",
         "player_data": {
             "tracks": tracks,
+            "pieces": _player_pieces([piece], assets)[0],
             "sections": _player_sections([piece], tracks, members=False),
             "noteTimes": _note_timelines([piece], members=False),
             "storageKey": f"piece:{piece.id}",

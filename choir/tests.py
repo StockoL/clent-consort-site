@@ -2223,10 +2223,12 @@ class PracticePlayerTests(TestCase):
         self.assertEqual(self.player_ids(response), sorted([self.sop_track.id, self.full_track.id]))
         self.assertContains(response, 'id="player-data"')
         self.assertContains(response, "js/practice-player")
-        self.assertContains(response, f'data-player-load="{self.sop_track.id}"')
-        # The PDF and the link keep their own buttons
-        self.assertContains(response, "Open Score")
-        self.assertContains(response, "External Link")
+        # The PDF and the link are under Downloads & links (Phase 14a), the
+        # PDF also as the Score button
+        self.assertContains(response, 'aria-labelledby="downloads-title"')
+        self.assertContains(response, "<span class=\"downloads__meta text-small\">PDF")
+        self.assertContains(response, "<span class=\"downloads__meta text-small\">YouTube")
+        self.assertEqual(response.context["player_data"]["pieces"][0]["score"], self.score.file_upload.url)
 
     def test_track_entries_carry_what_the_player_shows(self):
         response = self.client.get(reverse("hub", args=["soprano", self.project.id]))
@@ -2239,12 +2241,21 @@ class PracticePlayerTests(TestCase):
             reverse("hub_tracks", args=["soprano", self.project.id]),
         )
 
-    def test_no_player_without_audio(self):
+    def test_a_piece_without_audio_keeps_its_score_and_links(self):
+        # Since Phase 14a the player shows for it, saying it has no tracks
         LearningAsset.objects.filter(file_upload__endswith=".mp3").delete()
         LearningAsset.objects.filter(file_upload__endswith=".m4a").delete()
         response = self.client.get(reverse("hub", args=["soprano", self.project.id]))
+        data = response.context["player_data"]
+        self.assertEqual(data["tracks"], [])
+        self.assertEqual([p["label"] for p in data["pieces"]], ["Byrd: Ave verum"])
+        self.assertContains(response, "No practice tracks for this piece yet.")
+
+    def test_no_player_with_nothing_for_the_part(self):
+        LearningAsset.objects.filter(repertoire=self.piece).delete()
+        response = self.client.get(reverse("hub", args=["soprano", self.project.id]))
         self.assertNotContains(response, 'id="player-data"')
-        self.assertNotContains(response, "practice-player")
+        self.assertContains(response, "No rehearsal materials have been uploaded")
 
     def test_tracks_endpoint_returns_this_projects_tracks_for_the_part(self):
         response = self.client.get(reverse("hub_tracks", args=["alto", self.project.id]))
@@ -2265,6 +2276,148 @@ class PracticePlayerTests(TestCase):
     def test_unknown_part_gets_no_tracks(self):
         response = self.client.get(reverse("hub_tracks", args=["kazoo", self.project.id]))
         self.assertEqual(response.json()["tracks"], [])
+
+
+class HubPlayerLayoutTests(TestCase):
+    """Build Order Phase 14a: the hub is one player. A Piece drop-down over
+    the project's pieces in order, a Score button, movement tabs and part
+    buttons whose labels never repeat in a row, and Downloads & links for
+    every piece without JavaScript."""
+
+    def setUp(self):
+        User.objects.create_user(username="member", password="pw")
+        self.client.login(username="member", password="pw")
+        self.project = Project.objects.create(name="Evensong 2027", status="ACTIVE")
+        # Added to the project in this order, which isn't alphabetical
+        self.gibbons = Repertoire.objects.create(composer="Gibbons", title="Short Evening Service")
+        self.byrd = Repertoire.objects.create(composer="Byrd", title="Ave verum")
+        self.anthem = Repertoire.objects.create(composer="", title="Anthem with only a score")
+        self.nothing = Repertoire.objects.create(composer="Tallis", title="Nothing for basses")
+        for piece in (self.gibbons, self.byrd, self.anthem, self.nothing):
+            self.project.repertoire.add(piece)
+
+    def asset(self, piece, part, name, filename=None, url=None):
+        return LearningAsset.objects.create(
+            repertoire=piece,
+            voice_part=part,
+            asset_name=name,
+            file_upload=SimpleUploadedFile(filename, b"x") if filename else None,
+            external_url=url,
+        )
+
+    def hub(self, part="bass", **params):
+        return self.client.get(reverse("hub", args=[part, self.project.id]), params)
+
+    def gibbons_tracks(self):
+        # Two movements recorded as two files, neither with a part name:
+        # the case that showed two identical "BASS" buttons
+        self.asset(self.gibbons, "BAS", "Gibbons - Short Mag - Bass", "mag-bass.mp3")
+        self.asset(self.gibbons, "BAS", "Gibbons - Short Nunc - Bass", "nunc-bass.mp3")
+        self.asset(self.gibbons, "ALL", "Gibbons - Short Mag - Full choir", "mag-full.mp3")
+        self.asset(self.gibbons, "ALL", "Gibbons - Short Nunc - Full choir", "nunc-full.mp3")
+
+    def test_pieces_come_in_project_order_with_anything_for_the_part(self):
+        self.gibbons_tracks()
+        self.asset(self.byrd, "BAS", "Byrd bass", "byrd-bass.mp3")
+        self.asset(self.anthem, "ALL", "Score", "anthem.pdf")
+        self.asset(self.nothing, "ALT", "Alto only", "alto.mp3")
+        pieces = self.hub().context["player_data"]["pieces"]
+        self.assertEqual(
+            [p["label"] for p in pieces],
+            ["Gibbons: Short Evening Service", "Byrd: Ave verum", "Anthem with only a score"],
+        )
+
+    def test_the_score_is_the_parts_own_pdf_then_the_full_choirs(self):
+        full = self.asset(self.byrd, "ALL", "Full score", "full.pdf")
+        own = self.asset(self.byrd, "BAS", "Bass part", "bass.pdf")
+        self.asset(self.anthem, "ALL", "Full score", "anthem.pdf")
+        self.asset(self.gibbons, "BAS", "Bass", "bass.mp3")
+        scores = {p["id"]: p["score"] for p in self.hub().context["player_data"]["pieces"]}
+        self.assertEqual(scores[self.byrd.id], own.file_upload.url)
+        self.assertEqual(scores[self.anthem.id], LearningAsset.objects.get(repertoire=self.anthem).file_upload.url)
+        self.assertIsNone(scores[self.gibbons.id])
+        # The soprano hub doesn't see the bass PDF, so gets the full score
+        LearningAsset.objects.create(repertoire=self.byrd, voice_part="SOP", asset_name="Sop", external_url="https://example.com")
+        sop = {p["id"]: p["score"] for p in self.hub("soprano").context["player_data"]["pieces"]}
+        self.assertEqual(sop[self.byrd.id], full.file_upload.url)
+
+    def test_a_piece_or_track_can_be_asked_for_but_not_from_elsewhere(self):
+        self.gibbons_tracks()
+        byrd_track = self.asset(self.byrd, "BAS", "Byrd bass", "byrd-bass.mp3")
+        other = Repertoire.objects.create(composer="X", title="Other project's piece")
+        elsewhere = self.asset(other, "BAS", "Elsewhere", "else.mp3")
+
+        data = self.hub(piece=self.byrd.id).context["player_data"]
+        self.assertEqual(data["startPiece"], self.byrd.id)
+        data = self.hub(track=byrd_track.id).context["player_data"]
+        self.assertEqual(data["startTrack"], byrd_track.id)
+        for params in ({"piece": other.id}, {"track": elsewhere.id}, {"piece": "nonsense"}):
+            with self.subTest(params=params):
+                response = self.hub(**params)
+                self.assertEqual(response.status_code, 200)
+                self.assertIsNone(response.context["player_data"]["startPiece"])
+                self.assertIsNone(response.context["player_data"]["startTrack"])
+
+    def test_without_javascript_every_piece_has_its_downloads(self):
+        self.gibbons_tracks()
+        self.asset(self.byrd, "BAS", "Byrd bass", "byrd-bass.mp3")
+        self.asset(self.anthem, "ALL", "Recording", url="https://open.spotify.com/x")
+        html = self.hub().content.decode()
+        self.assertEqual(html.count("data-downloads-piece="), 3)
+        # Each track keeps a plain audio player for browsers without the script
+        self.assertEqual(html.count("<audio controls"), 5)
+        self.assertIn('target="_blank" rel="noopener noreferrer"', html)
+        self.assertIn("Spotify", html)
+
+    def test_tracks_carry_their_group_and_part_labels(self):
+        self.gibbons_tracks()
+        tracks = {t["name"]: t for t in self.hub().context["player_data"]["tracks"]}
+        mag = tracks["Gibbons - Short Mag - Bass"]
+        self.assertEqual((mag["group"], mag["groupLabel"], mag["partLabel"]), ("short mag", "Short Mag", "Bass"))
+        self.assertEqual(tracks["Gibbons - Short Mag - Full choir"]["group"], "short mag")
+        self.assertEqual(tracks["Gibbons - Short Nunc - Bass"]["groupLabel"], "Short Nunc")
+        # The bass's own track comes before the full choir's in each group
+        names = [t["name"] for t in self.hub().context["player_data"]["tracks"]]
+        self.assertLess(names.index("Gibbons - Short Mag - Bass"), names.index("Gibbons - Short Mag - Full choir"))
+
+    def test_a_piece_whose_tracks_dont_share_a_part_is_one_group(self):
+        self.asset(self.byrd, "BAS", "Byrd - Bass", "bass.mp3")
+        self.asset(self.byrd, "ALL", "Byrd - Full choir", "full.mp3")
+        tracks = self.hub().context["player_data"]["tracks"]
+        self.assertEqual({t["group"] for t in tracks}, {""})
+        self.assertEqual([t["partLabel"] for t in tracks], ["Bass", "Full choir"])
+
+    def test_no_row_of_buttons_repeats_a_label(self):
+        self.gibbons_tracks()
+        # Two tracks that can't be told apart by name either
+        self.asset(self.byrd, "BAS", "Byrd bass", "one.mp3")
+        self.asset(self.byrd, "BAS", "Byrd bass take 2", "two.mp3")
+        tracks = self.hub().context["player_data"]["tracks"]
+        for piece_id in {t["pieceId"] for t in tracks}:
+            piece_tracks = [t for t in tracks if t["pieceId"] == piece_id]
+            groups = {}
+            for track in piece_tracks:
+                groups.setdefault(track["group"], set()).add(track["groupLabel"])
+            labels = [next(iter(labels)) for labels in groups.values()]
+            with self.subTest(piece=piece_id, row="groups"):
+                self.assertEqual(len(labels), len(set(labels)))
+            for group in groups:
+                parts = [t["partLabel"] for t in piece_tracks if t["group"] == group]
+                with self.subTest(piece=piece_id, group=group):
+                    self.assertEqual(len(parts), len(set(parts)))
+
+    def test_download_links_ask_s3_to_save_the_file(self):
+        from .views import _download_url
+
+        class FakeStorage:
+            def url(self, name, parameters=None):
+                return f"https://s3.example/{name}?{parameters}"
+
+        field_file = mock.Mock(name="file")
+        field_file.name = "learning_assets/x.mp3"
+        field_file.storage = FakeStorage()
+        url = _download_url(field_file, "Gibbons – Short Mag")
+        self.assertIn("attachment; filename=\"Gibbons  Short Mag.mp3\"", url)
 
 
 class PartNameTests(TestCase):
@@ -2586,7 +2739,8 @@ class PracticePlayerSectionTests(TestCase):
         self.client.login(username="member", password="pw")
         response = self.client.get(reverse("hub", args=["alto", self.project.id]))
         self.assertEqual(response.context["player_data"]["tracks"], [])
-        self.assertContains(response, f'id="audio-{track.id}"')
+        # Still under Downloads & links, with its plain player
+        self.assertContains(response, 'aria-label="Listen to alto.mp3"')
 
 
 def make_midi(tempos, notes, ticks_per_beat=480):

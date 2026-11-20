@@ -104,21 +104,21 @@ Opening a date shows the time, the place and the rehearsal plan. Changing the re
 
 ### Learning the music
 
-Repertoire lists the current project's pieces and links to each voice part's hub. The hub has the practice player at the top and every score and track for the part below it.
+Repertoire lists the current project's pieces and links to each voice part's hub. The hub is the practice player: a drop-down at the top chooses the piece, and below the player, Downloads & links has that piece's tracks and score to save. Here Alex, an alto, is on the Gibbons Short Service, whose Magnificat and Nunc Dimittis are separate tracks: the tabs switch between them, and the part buttons between the alto track and the full choir.
 
-| Repertoire | Soprano hub |
+| Repertoire | Alto hub |
 | --- | --- |
-| ![Repertoire page](images/journeys/singer/repertoire-phone.jpg) | ![Soprano hub](images/journeys/singer/hub-phone.jpg) |
+| ![Repertoire page](images/journeys/singer/repertoire-phone.jpg) | ![Alto hub](images/journeys/singer/hub-phone.jpg) |
 
-Here Sam has clicked the waveform at two points and pressed Loop start and Loop end, turned the loop on and slowed the speed to 80%. The shaded band is the loop, and playback stays inside it. The bar along the bottom of the screen keeps the controls in reach while scrolling. The note finder plays any note on the keyboard, for checking a starting note.
+When the committee has marked sections of a piece, they are listed under the player. Here Alex has tapped "Passus et sepultus est" in Lotti's Crucifixus, which sets the loop's A and B flags to bars 20 to 27 and turns the loop on. The loop's cards show each marker's time and bar; the minus and plus buttons move one half a second, and Set to now moves it to the playhead. Alex has also slowed the speed to 80%. "My note" plays Alex's next note from wherever the playhead is, and is also on the bar fixed to the bottom of the screen. The note finder plays any note on the keyboard, for checking a starting note.
 
-| Looping a passage | Note finder |
+| A section chosen | The loop and speed |
 | --- | --- |
-| ![Practice player looping](images/journeys/singer/player-loop-phone.jpg) | ![Note finder keyboard](images/journeys/singer/player-note-finder-phone.jpg) |
+| ![Practice player with a section chosen](images/journeys/singer/player-sections-phone.jpg) | ![Loop markers and speed](images/journeys/singer/player-loop-phone.jpg) |
 
-When the committee has marked sections of a piece, they are listed under the waveform. Here Alex, an alto, has tapped "Esse immolatum", which loops bars 5 to 8 from a two-second lead-in. "My note" plays Alex's starting note for that section, and is also on the bar at the bottom of the screen. The alto part is divided in this piece, so the Alto 1 and Alto 2 buttons swap between the two lines' tracks without losing the place or the loop.
+![Note finder keyboard](images/journeys/singer/player-note-finder-phone.jpg)
 
-![Practice player with sections](images/journeys/singer/player-sections-phone.jpg)
+On a desktop, sections, speed and the note finder sit in a column beside the waveform and the loop. These four screenshots are from a smaller sample site than the others, with one alto track for the Lotti.
 
 ![Hub on a desktop](images/journeys/singer/hub-desktop.jpg)
 

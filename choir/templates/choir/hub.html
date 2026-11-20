@@ -3,99 +3,64 @@
 
 {% block title %}Learning Hub - Clent Consort{% endblock title %}
 
-{% block body_class %}{% if player_data.tracks %}has-player{% endif %}{% endblock body_class %}
+{% block body_class %}{% if player_data.pieces %}has-player{% endif %}{% endblock body_class %}
 
 {% block page_title %}{{ voice_part_name }} Learning Hub{% endblock page_title %}
 {% block page_lede %}Access your rehearsal tracks and sheet music for {{ project.name }} below.{% endblock page_lede %}
 
 {% block members_content %}
-  {% if player_data.tracks %}
+  {% if player_data.pieces %}
     {% include 'choir/_practice_player.html' %}
   {% endif %}
 
-  <div class="flow flow--large" data-hub>
-    {% regroup assets by repertoire as grouped_assets %}
+  {% if downloads %}
+  {% comment %}
+    One block per piece (Build Order Phase 14a). Without JavaScript they all
+    show, each with a plain audio player beside its tracks; the practice
+    player shows only the chosen piece's and hides the plain players.
+  {% endcomment %}
+  <section class="downloads flow" aria-labelledby="downloads-title" data-downloads>
+    <h2 class="downloads__title" id="downloads-title">Downloads &amp; links</h2>
+    <p class="text-small text-muted">Take the tracks with you for practice offline.</p>
 
-    {% for group in grouped_assets %}
-    <article class="card flow card-flex" data-variant="invert">
-
-      <div class="repertoire-header flow flow--small">
-        <h2 class="text-primary text-step-1">{{ group.grouper.title }}</h2>
-        {% if group.grouper.composer %}
-          <p class="text-muted text-small"><em>{{ group.grouper.composer }}</em></p>
-        {% endif %}
-      </div>
-
-      <hr class="divider" />
-
-      <div class="flow flow--small">
-        {% for asset in group.list %}
-          <div class="asset-item flow flow--small">
-            <p><strong>{{ asset.asset_name }}</strong>{% if asset.uploaded_at %} <span class="text-small text-muted">· added {{ asset.uploaded_at|date:"j M Y" }}</span>{% endif %}</p>
-
-            {% if asset.file_upload %}
-
-              {# Audio Track Integration #}
-              {% if ".mp3" in asset.file_upload.name|lower or ".wav" in asset.file_upload.name|lower or ".m4a" in asset.file_upload.name|lower %}
-                <div class="media-flex-row">
-                  {# Opens the track in the practice player; shown once the player has started. #}
-                  <button type="button" class="button btn-small w-100 text-center" data-variant="primary" data-player-load="{{ asset.id }}" aria-pressed="false" hidden>
-                    <span aria-hidden="true">🎧</span> Practise
-                  </button>
-                  {# Plain audio for browsers without JavaScript; the player hides it. #}
-                  <div class="player-fallback w-100">
-                    <audio id="audio-{{ asset.id }}" controls preload="none" class="w-100" aria-label="Listen to {{ asset.asset_name }}">
-                      <source src="{{ asset.file_upload.url }}" type="audio/mpeg">
-                      Your browser does not support the audio element.
-                    </audio>
-                  </div>
-                  <a href="{{ asset.file_upload.url }}" download class="icon-action-btn" title="Download Audio" aria-label="Download audio">
-                    <span aria-hidden="true">📥</span>
-                  </a>
-                </div>
-
-              {# Document / Sheet Music Integration #}
-              {% elif ".pdf" in asset.file_upload.name|lower %}
-                <div class="media-flex-row">
-                  <a href="{{ asset.file_upload.url }}" target="_blank" rel="noopener noreferrer" class="button btn-small w-100 text-center" data-variant="primary">
-                    <span aria-hidden="true">📄</span> Open Score
-                  </a>
-                </div>
-
-              {# Generic File Backup #}
-              {% else %}
-                <div class="media-flex-row">
-                  <a href="{{ asset.file_upload.url }}" target="_blank" rel="noopener noreferrer" class="button btn-small w-100 text-center" data-variant="primary">
-                    Open Resource
-                  </a>
-                </div>
-              {% endif %}
-
-            {% elif asset.external_url %}
-              <div class="media-flex-row">
-                <a href="{{ asset.external_url }}" target="_blank" rel="noopener noreferrer" class="button btn-small w-100 text-center" data-variant="primary">
-                  <span aria-hidden="true">🌐</span> External Link
-                </a>
-              </div>
+    {% for block in downloads %}
+    <div class="downloads__piece flow flow--small" data-downloads-piece="{{ block.piece.id }}">
+      <h3 class="downloads__piece-title text-step-0">{{ block.label }}</h3>
+      <ul class="downloads__list" role="list">
+        {% for row in block.rows %}
+        <li class="downloads__item">
+          <a href="{{ row.href }}" class="downloads__link" {% if row.kind == "link" %}target="_blank" rel="noopener noreferrer"{% else %}download{% endif %}>
+            {% if row.kind == "link" %}
+            <svg class="downloads__icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             {% else %}
-              <p class="text-error"><em>Resource currently unavailable</em></p>
+            <svg class="downloads__icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M12 4v11M7 10l5 5 5-5M5 20h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             {% endif %}
+            <span class="downloads__text">
+              <span class="downloads__name">{{ row.asset.asset_name }}{% if row.kind == "link" %}<span class="visually-hidden"> (opens in a new tab)</span>{% endif %}</span>
+              <span class="downloads__meta text-small">{{ row.type }}{% if row.asset.uploaded_at %} · added {{ row.asset.uploaded_at|date:"j M Y" }}{% endif %}</span>
+            </span>
+          </a>
+          {% if row.kind == "audio" %}
+          {# For browsers without JavaScript; the player hides it #}
+          <div class="player-fallback">
+            <audio controls preload="none" class="w-100" src="{{ row.url }}" aria-label="Listen to {{ row.asset.asset_name }}"></audio>
           </div>
+          {% endif %}
+        </li>
         {% endfor %}
-      </div>
-
-    </article>
-
-    {% empty %}
-    <div class="card full-width text-center" data-variant="invert">
-      <p>No rehearsal materials have been uploaded for this section yet.</p>
+      </ul>
     </div>
     {% endfor %}
+  </section>
+  {% else %}
+  <div class="card full-width text-center" data-variant="invert">
+    <p>No rehearsal materials have been uploaded for this section yet.</p>
   </div>
+  {% endif %}
 {% endblock members_content %}
 
 {% block scripts %}
-{% if player_data.tracks %}
+{% if player_data.pieces %}
 {{ player_data|json_script:"player-data" }}
 <script src="{% static 'js/vendor/wavesurfer/wavesurfer-7.12.12.min.js' %}" defer></script>
 <script src="{% static 'js/vendor/wavesurfer/regions-7.12.12.min.js' %}" defer></script>

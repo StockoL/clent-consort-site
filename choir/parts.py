@@ -63,6 +63,25 @@ def voice_part_for(part_name):
     return VOICE_WORDS[_word(match.group(1))] if match else None
 
 
+_ANY_PART = re.compile(rf"(?<![a-z])(?:{_WORDS})(?:[\s_-]*\d{{1,2}})?(?![a-z])", re.I)
+_SEPARATORS = re.compile(r"[\s\-_–:|,.()]+")
+
+
+def track_label(asset_name, piece_title="", composer=""):
+    """What tells a track apart from the piece's other tracks for the same
+    part, when it has no title of its own (Build Order Phase 14a): its
+    name without the piece's title, the composer, any part names, a file
+    extension and the separators between them. "Gibbons - Short Mag -
+    Bass" becomes "Short Mag". Empty if nothing is left."""
+    text = re.sub(r"\.(mp3|m4a|wav|pdf)$", "", asset_name or "", flags=re.I)
+    for phrase in (piece_title, composer):
+        if phrase and phrase.strip():
+            text = re.sub(re.escape(phrase.strip()), " ", text, flags=re.I)
+    text = _ANY_PART.sub(" ", text)
+    text = re.sub(r"(?i)\bfull choir\b", " ", text)
+    return _SEPARATORS.sub(" ", text).strip()
+
+
 def normalise_pitches(text):
     """Starting notes as typed ("e4", "F♯4 A4", "bb3, d4") -> the stored
     form, comma-separated with ASCII accidentals ("E4", "F#4,A4",

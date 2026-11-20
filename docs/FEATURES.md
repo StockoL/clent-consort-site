@@ -71,7 +71,7 @@ Every singer gets an RSVP for every event automatically. Signals add new singers
 
 ### Repertoire and voice-part hubs
 
-Repertoire lists the current projects' pieces and links to each voice part's hub. Each piece's title opens its full score (the PDF) in a new tab, where one has been uploaded. A hub lists every score and track for that part and project, with the date each was added, and opens with the practice player.
+Repertoire lists the current projects' pieces and links to each voice part's hub. Each piece's title opens its full score (the PDF) in a new tab, where one has been uploaded. A hub is the practice player, with a drop-down of the project's pieces, and under it Downloads & links: every track, score and recording link for the chosen piece, with the date each was added. Tracks and scores download rather than open, so they can be kept for practice offline. Without JavaScript the hub lists every piece's downloads, each track with a plain audio player.
 
 ### Looking Ahead
 
@@ -87,19 +87,21 @@ Minutes, policies and other documents the committee has uploaded, readable by ev
 
 ## Practice player
 
-The player sits at the top of each voice-part hub. It uses wavesurfer.js, vendored into the repository rather than loaded from a CDN.
+The player is most of each voice-part hub. It uses wavesurfer.js, vendored into the repository rather than loaded from a CDN.
 
+- A large drop-down chooses the piece: every piece in the project with anything for the part, in repertoire order. A Score (PDF) button beside it opens the part's own PDF, or else the full score. A link can open a given piece with `?piece=`.
+- Where a piece has several tracks for the part (two movements recorded separately, say), tabs above the waveform switch between them, labelled from the file names. Part buttons switch between the part's own track, divided lines (Alto 1 and Alto 2) and the full choir. No row of buttons repeats a label.
 - A waveform of the track. Click or tap it to move the playhead.
-- Loop start and Loop end buttons, or the `[` and `]` keys, set a loop. The loop shows as a shaded band whose edges can be dragged. Whole Track clears it.
-- With the loop on, playback wraps back to the start. With it off, playback stops at the end, rewound and ready to play the section again. Either way, it never plays outside the loop.
-- A lead-in before the loop start: one bar (the bar before the chosen section, where the piece has score data, otherwise 2 seconds), 2 seconds, or off.
+- Loop markers A and B, drawn as flags on the waveform that can be dragged, and shown as two cards with each one's time and, with the piece's score data, its bar. Each card moves its marker half a second either way, or to the playhead with Set to now; the `[` and `]` keys do the same. Reset loop puts them back at the ends.
+- A Loop switch with an On/Off light. With the loop on, playback stays between the markers and goes back round at B. With it off, the track plays straight through, and the markers wait for the loop to be switched on again.
+- A lead-in before marker A when looping: one bar (the bar before, where the piece has score data), two bars, 2 seconds, or off.
 - Speed from 50% to 110% without changing the pitch.
 - A note finder: an on-screen keyboard that plays any note, for checking a starting note.
-- Sections the committee has marked, listed under the waveform with their bars and length: the piece's, shared by every part's track, and any the track has of its own. Tapping one loops it from its lead-in. If the singer then moves the loop, the section shows as edited, and tapping it again goes back to its marked bars.
+- Sections the committee has marked, listed with their bars and length: the piece's, shared by every part's track, and any the track has of its own. Tapping one loops it from its lead-in. If the singer then moves a marker, the section shows as edited, and tapping it again goes back to its marked bars.
 - "My note" plays the singer's next note from wherever the playhead is, playing or paused: after a few bars' rest it gives the note they come back in on, and in a section's lead-in the note they enter the section on. That needs the piece's score data; without it, "My note" plays the chosen section's starting note. It plays the note for the track loaded, so Alto 2 hears Alto 2's note.
-- Where a part is divided, a toggle switches between the lines' tracks (Alto 1 and Alto 2, say) without losing the place, the loop or the speed, since the tracks share a timeline.
-- A bar fixed to the bottom of the screen keeps Play, My note and Loop in reach while scrolling the hub.
-- It remembers each track's position, speed, loop, lead-in and chosen section in the browser's local storage, so a singer picks up where they left off on that device.
+- Switching between divided lines keeps the place, the loop and the speed, since the tracks share a timeline.
+- A bar fixed to the bottom of the screen keeps Play, My note and the Loop switch in reach while scrolling the hub.
+- It remembers the last piece, each piece's last track, and each track's position, speed, loop, lead-in and chosen section in the browser's local storage, so a singer picks up where they left off on that device.
 
 If the browser cannot read the audio file to draw a waveform, the player falls back to a plain progress bar and everything else still works.
 

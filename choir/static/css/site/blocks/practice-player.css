@@ -1,26 +1,206 @@
 /* ==========================================================================
-   BLOCK: PRACTICE PLAYER (project-specific; Build Order Phase 7)
+   BLOCK: PRACTICE PLAYER (project-specific; Build Order Phases 7 and 14a)
    ==========================================================================
    The voice-part hub's player (_practice_player.html, js/practice-player.js):
-   a panel with the waveform, loop, speed and note finder, and a play bar
-   pinned to the bottom of the screen.
+   a panel with the piece, the waveform and its A and B markers, the loop
+   switch and marker cards, sections, speed and the note finder; a play bar
+   pinned to the bottom of the screen; and, below the player on the hub,
+   Downloads & links.
+
+   On a phone the panel is one column in the order piece, score, movement
+   tabs, parts, waveform, transport, sections, loop, speed, note finder:
+   the two column wrappers are display: contents, so their children line
+   up by `order`. From 45rem of the panel's own width the wrappers become a
+   wide left column and a narrow right one.
    ========================================================================== */
 
-.practice-player__head {
+.practice-player {
+  container-type: inline-size;
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-3xs) var(--space-xs);
+  flex-direction: column;
+  gap: var(--space-s);
 }
 
+.practice-player__columns,
+.practice-player__main,
+.practice-player__side {
+  display: contents;
+}
+
+.practice-player__top { order: 1; }
+.practice-player__empty { order: 2; }
+.practice-player__tabs { order: 3; }
+.practice-player__parts { order: 4; }
+.practice-player__wave { order: 5; }
+.practice-player__fallback { order: 6; }
+.practice-player__transport { order: 7; }
+.practice-player__sections-group { order: 8; }
+.practice-player__loop { order: 9; }
+.practice-player__speed { order: 10; }
+.practice-player__finder { order: 11; }
+
+@container (min-width: 45rem) {
+  .practice-player__columns {
+    order: 3;
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(15rem, 1fr);
+    gap: var(--space-m);
+    align-items: start;
+  }
+
+  .practice-player__main,
+  .practice-player__side {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-s);
+  }
+}
+
+/* --- Piece and score --- */
+.practice-player__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-xs);
+}
+
+.practice-player__piece {
+  display: grid;
+  gap: 0.25rem;
+  flex: 1 1 18rem;
+}
+
+.practice-player__piece-label {
+  color: var(--colors-text-accent);
+  font-size: var(--step--1);
+  font-weight: 600;
+  font-variant: small-caps;
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
+}
+
+/* Beats forms.css's [data-variant="invert"] select (white, small) */
+.practice-player .practice-player__piece-select {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.4rem 2.75rem 0.4rem 0.75rem;
+  border: 1px solid rgba(201, 164, 94, 0.5);
+  border-radius: 8px;
+  background: transparent
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6' fill='none' stroke='%23c9a45e' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    right 0.75rem center / 1.25rem no-repeat;
+  color: #fff;
+  font-family: var(--fonts-heading);
+  font-size: var(--step-1);
+  font-weight: 700;
+  appearance: none;
+  cursor: pointer;
+}
+
+/* A long title fits a phone at a smaller size */
+@container (max-width: 30rem) {
+  .practice-player .practice-player__piece-select {
+    font-size: var(--step-0);
+  }
+}
+
+/* Movement tabs and part buttons: forms.css makes every button in the
+   dark scope white, so the current one is gold and the others outlined */
+.practice-player__tabs .button[aria-pressed],
+.practice-player__parts .button[aria-pressed] {
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.practice-player__tabs .button[aria-pressed="false"],
+.practice-player__parts .button[aria-pressed="false"] {
+  background: transparent;
+  color: #fff;
+}
+
+.practice-player__tabs .button[aria-pressed="false"]:hover,
+.practice-player__parts .button[aria-pressed="false"]:hover {
+  border-color: #c9a45e;
+  background: rgba(201, 164, 94, 0.15);
+  color: #fff;
+}
+
+.practice-player__tabs .button[aria-pressed="true"],
+.practice-player__parts .button[aria-pressed="true"] {
+  border-color: #c9a45e;
+  background: #c9a45e;
+  color: #1a1a1a;
+}
+
+/* The open list is drawn by the system; keep its text readable */
+.practice-player__piece-select option {
+  background: #fff;
+  color: #1a1a1a;
+}
+
+.practice-player__score {
+  flex: 0 0 auto;
+}
+
+.practice-player__empty {
+  padding: var(--space-s);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: var(--colors-text-muted);
+}
+
+/* --- Waveform and the loop's A and B flags --- */
 .practice-player__wave {
-  min-height: 96px;
+  min-height: 80px;
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.04);
   cursor: pointer;
 }
 
+/* The waveform is in wavesurfer's shadow root, so it's styled through
+   ::part(). The plugin sets the handles' styles inline, hence !important.
+   Each handle is a 44px-wide grab area with a thin gold line down its
+   middle, and carries its flag (added by the script). */
+.practice-player__wave ::part(region-handle) {
+  width: 44px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: linear-gradient(#c9a45e, #c9a45e) center / 2px 100% no-repeat !important;
+}
+
+.practice-player__wave ::part(region-handle-left) {
+  left: -22px !important;
+}
+
+.practice-player__wave ::part(region-handle-right) {
+  right: -22px !important;
+}
+
+.practice-player__wave ::part(marker-flag) {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  min-width: 1.3rem;
+  padding: 0.05rem 0.3rem;
+  border-radius: 0 0 4px 4px;
+  background: #c9a45e;
+  color: #1a1a1a;
+  font: 700 0.75rem/1.3 var(--fonts-body);
+  text-align: center;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+/* Loop off: the markers stay, as a dashed outline with no fill */
+.practice-player__wave[data-loop="off"] ::part(region) {
+  outline: 2px dashed rgba(201, 164, 94, 0.7);
+  outline-offset: -2px;
+}
+
+.practice-player__wave[data-loop="off"] ::part(region-handle) {
+  background: none !important;
+}
+
+/* --- Rows, groups and small controls --- */
 .practice-player__row {
   display: flex;
   flex-wrap: wrap;
@@ -84,10 +264,141 @@
   font-family: inherit;
 }
 
-/* The loop region's resize handles: wide enough to grab on a phone */
-.practice-player__wave ::part(region-handle) {
-  width: 10px;
-  border-color: #c9a45e;
+/* --- The loop switch: an LED, the word On or Off, and a sliding track --- */
+.loop-switch {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 0.6rem;
+  min-height: 2.75rem;
+  padding: 0.25rem 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.loop-switch__label {
+  font-weight: 600;
+}
+
+.loop-switch__led {
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: #6b6b6b;
+}
+
+.loop-switch__word {
+  min-width: 2.2ch;
+  color: var(--colors-text-muted);
+  font-weight: 600;
+}
+
+.loop-switch__track {
+  position: relative;
+  width: 2.5rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  background: #3a3a3a;
+}
+
+.loop-switch__thumb {
+  position: absolute;
+  top: 0.15rem;
+  left: 0.15rem;
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.loop-switch[aria-checked="true"] .loop-switch__track {
+  background: #c9a45e;
+}
+
+.loop-switch[aria-checked="true"] .loop-switch__thumb {
+  left: calc(100% - 1.2rem);
+}
+
+.loop-switch[aria-checked="true"] .loop-switch__led,
+.player-bar__loop[aria-checked="true"] .loop-switch__led {
+  background: var(--colors-success-text);
+  box-shadow: 0 0 6px var(--colors-success-text);
+}
+
+.loop-switch[aria-checked="true"] .loop-switch__word,
+.player-bar__loop[aria-checked="true"] [data-loop-word] {
+  color: var(--colors-success-text);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .loop-switch__thumb {
+    transition: left 0.15s ease;
+  }
+}
+
+/* --- Marker cards: A (start) and B (end) --- */
+.practice-player__markers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--space-2xs);
+}
+
+.marker-card {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+}
+
+.marker-card__head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+}
+
+.marker-card__flag {
+  display: inline-grid;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 4px;
+  background: #c9a45e;
+  color: #1a1a1a;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.marker-card__time {
+  font-size: var(--step-1);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.marker-card__bar {
+  min-height: 1.4em;
+  color: var(--colors-text-muted);
+}
+
+.marker-card__actions {
+  --gutter: 0.4rem;
+}
+
+.practice-player__reset {
+  min-height: 2.75rem;
+  padding: 0 0.25rem 0 0;
+  border: 0;
+  background: none;
+  color: var(--colors-text-accent);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 /* --- Note finder: a small piano, C3 to C6, scrolling sideways --- */
@@ -177,6 +488,9 @@
 }
 
 .player-bar__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   flex: 0 0 auto;
   min-height: 2.75rem;
   padding: 0 0.8rem;
@@ -185,11 +499,6 @@
   background: transparent;
   color: #c9a45e;
   cursor: pointer;
-}
-
-.player-bar__pill[aria-pressed="true"] {
-  background: #c9a45e;
-  color: #1a1a1a;
 }
 
 /* --- Sections (Learning Hub P2): one button per marked passage --- */
@@ -236,6 +545,83 @@
 .practice-player__section-edited {
   color: #c9a45e;
   font-size: var(--step--1);
+}
+
+/* --- Downloads & links, below the player on the hub --- */
+/* The heading sits with its lede; each piece's block stands apart */
+.downloads > .downloads__title {
+  margin-bottom: 0;
+}
+
+.downloads > .downloads__title + p {
+  margin-top: var(--space-3xs);
+}
+
+.downloads > .downloads__piece {
+  margin-top: var(--space-m);
+}
+
+.downloads__list {
+  display: grid;
+  gap: var(--space-2xs);
+  margin: 0;
+  padding: 0 0 0 var(--space-xs);
+  border-left: 3px solid #c9a45e;
+  list-style: none;
+}
+
+.downloads__item {
+  display: grid;
+  gap: 0.4rem;
+  max-width: none; /* global-styles.css caps every li at a reading measure */
+}
+
+.downloads__link {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  min-height: 2.75rem;
+  padding: 0.4rem 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.downloads__link:hover .downloads__name,
+.downloads__link:focus-visible .downloads__name {
+  text-decoration: underline;
+}
+
+.downloads__icon {
+  flex: none;
+  margin-top: 0.1rem;
+  color: var(--colors-text-accent);
+}
+
+.downloads__text {
+  display: grid;
+}
+
+.downloads__name {
+  font-weight: 600;
+}
+
+.downloads__meta {
+  color: var(--colors-text-muted);
+}
+
+@media (min-width: 45rem) {
+  .downloads__list {
+    grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .downloads__item {
+    padding: 0.4rem 0.75rem;
+    border: 1px solid var(--colors-border-subtle);
+    border-left: 3px solid #c9a45e;
+    border-radius: 6px;
+  }
 }
 
 /* Room for the bar at the end of the page, and no back-to-top button
