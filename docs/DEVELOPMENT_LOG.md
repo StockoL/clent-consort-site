@@ -100,7 +100,13 @@ Uploads now read each track's part from its file name, which is how Dorico names
 
 Once it was live I wanted sections on individual tracks too, which the brief had ruled out. So a section can now belong to one track instead of the piece, through a Sections link on each track that opens the same editor for that track alone. A track shows the piece's sections and then its own, and a track with different timing, such as a live recording, can stop using the piece's. The suite is now at 224 tests.
 
-The remaining two parts of Phase 12, the Dorico import and offline practice, are on the [roadmap](ROADMAP.md).
+### Phase 12, part two: the score import
+
+Typing section times is slow, so the second part lets Dorico do it. I upload the MIDI and MusicXML files Dorico exports with the part tracks, and a section then needs only its bars: the site works out its times, a one-bar lead-in and each part's starting note.
+
+I built it against a real export, Lotti's Crucifixus à 6, which settled two questions. The MusicXML has no record of the final fermata or the ritardando's speed, so the timings have to come from the MIDI's tempo; the MusicXML supplies the bars and the notes. And the first export had the tenor written at treble pitch with an "octave lower" instruction, which would have given tenors a starting note an octave too high; the import now applies the instruction, and handles the octave-treble clef too. I read the MIDI with mido and the MusicXML with Python's own XML parser rather than the large music21 package the brief suggested, and check the audio's length in the committee's player rather than on the server. Anything the committee types by hand is kept through every re-import. The suite is now at 246 tests.
+
+What remains of Phase 12, offline practice, is on the [roadmap](ROADMAP.md).
 
 ### Things I learned in the rebuild
 

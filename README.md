@@ -66,6 +66,7 @@ The seeded accounts all use the password `choir-dev-password`. Log in as `commit
 - WhiteNoise for static files
 - PostgreSQL in production and SQLite locally
 - wavesurfer.js for the practice player's waveform
+- mido for reading Dorico's MIDI files in the score import
 - Render for hosting
 
 The CSS is my own system, built on LooseLeaf UI and the Every Layout composition patterns, with no CSS or JavaScript framework. [Architecture](docs/ARCHITECTURE.md#css) explains it.

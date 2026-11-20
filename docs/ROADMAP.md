@@ -6,17 +6,18 @@ What I plan to do next, roughly in order. Each item ships the way the October 20
 
 ## Contents
 
-- [Practice player: Dorico import and offline practice](#practice-player-dorico-import-and-offline-practice)
+- [Practice player: offline practice](#practice-player-offline-practice)
 - [After the Ewelme project](#after-the-ewelme-project)
 - [Smaller improvements](#smaller-improvements)
 - [Could have](#could-have)
 
-## Practice player: Dorico import and offline practice
+## Practice player: offline practice
 
-This is Phase 12 of the rebuild, in three parts that each deploy separately. The first, sections with "My note" and the divided-part toggle, was built on 28 October 2026 (see [Features](FEATURES.md#practice-player)). Two parts remain.
+This is the last part of Phase 12 of the rebuild. Sections with "My note" and the divided-part toggle came first (28 October 2026), then the Dorico import that fills sections in from the score (20 November 2026; see [Features](FEATURES.md#practice-player)). What remains is polish and offline practice:
 
-1. Dorico import. Uploading the MIDI and MusicXML files exported from Dorico alongside the tracks fills in each bar's timing and each part's starting notes, so sections can be marked by bar number alone and the lead-in can be a whole bar. Times and notes set by hand are never overwritten. The site plays the stored pitch; it never tries to detect notes from the audio.
-2. Polish and offline practice, so a singer can keep practising with a weak signal.
+- "Download for rehearsal", so a singer can keep practising a project's tracks in a church hall with no signal.
+- Keyboard shortcuts with a help panel, and a two-column layout on desktops.
+- A two-bar lead-in option, and a count-in click at the section's tempo if singers ask for it.
 
 ## After the Ewelme project
 

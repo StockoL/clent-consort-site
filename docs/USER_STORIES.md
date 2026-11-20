@@ -204,7 +204,7 @@ As the maintainer, I want credentials kept only in environment variables, and pr
 | P5 Accessible | Must | Done: Lighthouse accessibility 100 on all public pages |
 | S1 My schedule | Must | Done: dashboard with RSVPs and rehearsal plans; past events folded away |
 | S2 My music | Must | Done: voice-part hubs per project |
-| S3 Practise properly | Should | Done: loop, speed, note finder, marked sections, "My note" and the divided-part toggle. Filling sections in from Dorico's files is planned ([roadmap](ROADMAP.md)) |
+| S3 Practise properly | Should | Done: loop, speed, note finder, marked sections, "My note", the divided-part toggle, and sections filled in from Dorico's files. Offline practice is planned ([roadmap](ROADMAP.md)) |
 | S4 Help plan future projects | Should | Done: Looking Ahead with notes |
 | S5 Subscriptions | Should | Done: amount, deadline and bank details from the committee's settings |
 | S6 My details | Must | Done |
@@ -221,7 +221,7 @@ As the maintainer, I want credentials kept only in environment variables, and pr
 | K10 Public events | Should | Done |
 | K11 Duty of care | Must | Done |
 | K12 Committee documents | Should | Done |
-| M1 Safe changes | Must | Done: 224 automated tests, `scripts/dev.py` and seed data |
+| M1 Safe changes | Must | Done: 246 automated tests, `scripts/dev.py` and seed data |
 | M2 No secrets in the repository | Must | Done |
 
 ## Won't have, for now

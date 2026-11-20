@@ -117,6 +117,19 @@ Sections are passages singers can loop with one tap, such as "Fugue entry, bars 
 
 Singers see a section once it has both times and "Show to members" is ticked, so untick it while a section is unfinished. Play loops a section in the player on the same page; Edit, the arrows and Delete change, reorder and remove it.
 
+### Sections from the score
+
+With the piece's score data uploaded, a section needs only its label and bars. Leave Start and End blank and save: the times come from the score, along with a one-bar lead-in and each part's starting note. To set it up, once per piece:
+
+1. In Dorico, export the MIDI file and the MusicXML file, in the same sitting as the part tracks so they all agree.
+2. On the piece's page, under Score Data, choose both files and press Save and Import.
+3. Check the report: the number of bars, the length, and which parts' starting notes were found. Parts that aren't voices, such as an organ, are listed as ignored. If a part has landed under the wrong name, correct it under Parts; the name must match the part at the end of its track's file name, such as "Tenor 2".
+4. Play a track. The player says whether it lasts as long as the score data; a second or so longer is normal for a reverb tail.
+
+The first import adds an "Opening" section covering the whole piece, so "My note" works straight away. A section marked "From score data" has imported times. Anything you type yourself is kept, even when the score data is imported again; clear both times to hand a section back to the score. If you change the piece in Dorico, export all three again and upload the MIDI and MusicXML here: the sections keep their bars and their times move with the music.
+
+If every section plays slightly early or late, set the audio offset in milliseconds (a positive number moves them later) and import again.
+
 ### Sections for one track
 
 A section can also belong to just one track, for a passage only that part needs, such as an alto descant. Under Scores & Tracks, press Sections on the track. The page then shows that track's own sections, loads the track in the player, and asks for a starting note for its part only. Add sections the same way as above; "Back to the sections for every track" returns to the piece's.

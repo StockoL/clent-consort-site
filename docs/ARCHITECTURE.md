@@ -14,6 +14,7 @@ How the site is built. It is a single Django project with one app, `choir`, serv
 - [CSS](#css)
 - [JavaScript](#javascript)
 - [Files and storage](#files-and-storage)
+- [Score import](#score-import)
 - [Email](#email)
 - [Security settings](#security-settings)
 
@@ -27,6 +28,7 @@ How the site is built. It is a single Django project with one app, `choir`, serv
 | `choir/forms.py` | Forms, with their widget classes set here rather than in templates |
 | `choir/permissions.py` | Who counts as committee and who counts as a singer |
 | `choir/parts.py` | Reading a part ("Alto 2") from a track's file name, and tidying typed part names and pitches |
+| `choir/score_import.py` | Reading Dorico's MIDI and MusicXML into a bar map, and filling sections from it |
 | `choir/signals.py` | Automatic profiles and RSVPs |
 | `choir/context_processors.py` | Choir settings, committee flag and inbox count for every template |
 | `choir/management/commands/` | `seed_dev_data` and `import_event_archive` |
@@ -50,7 +52,7 @@ How the site is built. It is a single Django project with one app, `choir`, serv
 | `MemberProfile` | One per user: voice part, contact and emergency details, consents, medical notes, and the singer, under-18 and exempt flags |
 | `InvitationProfile` | The name and voice part entered when an invitation was sent, copied to the profile on sign-up |
 | `SubscriptionPayment` | A payment against a term, with amount, date, method and an optional transaction ID |
-| `Repertoire` | A piece: composer and title |
+| `Repertoire` | A piece: composer and title, and its score data: the MIDI and MusicXML files, the audio offset, and what the import read from them (the bar map, the part mapping and the report) |
 | `LearningAsset` | A score, track or external link for one piece and one voice part (or the full choir), with a part name for a divided part ("Alto 2"), whether it opens in the practice player, and whether the piece's sections apply to it |
 | `Section`, `SectionNote` | A passage singers can loop (label, bars, start and end times, shown or hidden), and each part's starting note for it. Most sections belong to the piece, because every part's track comes from one Dorico export and shares its timeline; a section with an asset belongs to that one track. |
 | `AvailabilityPoll`, `AvailabilityResponse` | A poll for a planning project, and each member's answer and note |
@@ -166,6 +168,19 @@ Static files (CSS, JavaScript, images) are served by WhiteNoise with compressed,
 Uploaded files (scores, tracks, documents) go to a private S3 bucket through django-storages. Links are presigned and last six hours, which is long enough for a practice session. The bucket allows cross-origin reads from the site's own domain only, so the practice player can draw waveforms. Files are never overwritten: a second upload with the same name gets a suffix.
 
 When the tests run, storage switches to Django's in-memory backend, so a test run never touches the real bucket.
+
+## Score import
+
+A piece's practice sections can be filled in from the two files Dorico exports alongside its part tracks: the MIDI file and the MusicXML file. `choir/score_import.py` reads them when the committee uploads them, and needs both, because each holds something the other lacks.
+
+- The MusicXML holds the score's structure: each bar's length (including a short pickup bar), the repeat signs and first- and second-time bars, the part names, and every note. Pitches are worked out as they sound: a tenor part written at treble pitch with an "octave lower" instruction is moved down, and one in the octave-treble clef is already stored at sounding pitch. A note tied over from the one before doesn't count as a new note.
+- The MIDI holds the tempo as Dorico plays it, including gradual ritardandos and the pause on a fermata, which the MusicXML leaves out. It's read with mido, a small pure-Python library; the MusicXML with Python's own XML parser, which avoids the large music21 package.
+
+The import walks the bars in playing order, through repeats, and stores a bar map on the piece: one entry per bar played, with its start in seconds and each part's first new pitches in it. Filling a section then needs no file reading. Its start is its first bar's start, its end the start of the bar after its last, its lead-in the length of the bar before, and each part's starting note the first new pitch from its first bar onwards.
+
+Times and notes have a source. The import only ever fills empty values and replaces ones it set itself, so anything the committee types is kept through every later import. Dorico part names are matched to the site's part names (such as "Tenor 2") by the same pattern as track file names, and the committee can correct the match.
+
+The import never reads the audio. Instead, the committee's player compares a track's length with the score data's and says whether they agree, which catches files from different exports without the server downloading any MP3s.
 
 ## Email
 
