@@ -110,7 +110,7 @@ I built it against a real export, Lotti's Crucifixus à 6, which settled two que
 
 About was the one public page still scoring below 99 for performance. I expected the fix to be a smaller banner photo, but measuring first showed otherwise: the photo was already small, and Lighthouse runs with requests blocked showed the delay came from the poster images of the video slides further down, which a browser fetches with the page however far down they are. They, and the Spotify embed, now load as the visitor scrolls near them. That also keeps Spotify's cookies off the page until then. Seeing the page again afterwards, I decided the slides' looping videos added motion without adding anything to the story, and replaced them with their still frames. Together the two changes took About from 88 to 97 for performance and from 77 to 100 for best practices, and cut what the page downloads on opening from 1,378 KiB to 326. The suite is at 250 tests.
 
-What remains of Phase 12, offline practice, is on the [roadmap](ROADMAP.md).
+The last part of Phase 12 was to be offline practice. I decided against it for now: it isn't essential, and it belongs with an installable web app I may build once the site has settled. It's on the [roadmap](ROADMAP.md#later-an-installable-web-app) for later.
 
 ### Things I learned in the rebuild
 
