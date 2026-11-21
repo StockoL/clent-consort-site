@@ -73,7 +73,9 @@ Some families signed up before this existed, with one account in the parent's na
 2. Enter the child's name. The page says exactly what will move: the voice part, consents, medical notes, emergency contact, RSVPs, poll answers and subscription payments.
 3. Press the button, which names both people.
 
-The child then has their own record with all their history, and the parent keeps their login and email address, linked as the child's parent. Until the next update, broadcasts and reminders don't reach a parent about their child; that follows shortly.
+The child then has their own record with all their history, and the parent keeps their login and email address, linked as the child's parent.
+
+A linked parent signs in as themselves and sees a card for each child on their dashboard, where they reply to rehearsals for them. They also answer Looking Ahead polls for them, and keep their medical notes, consents and emergency contact up to date under Settings. Until the next update, broadcasts and reminders don't reach a parent about their child; that follows shortly.
 
 ## Changing someone's role
 

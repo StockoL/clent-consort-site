@@ -3758,6 +3758,163 @@ class GuardianTests(TestCase):
         self.assertTrue(jane.profile.is_singer)
 
 
+class ParentActingTests(TestCase):
+    """Build Order Phase 15b: a parent or guardian signs in as themselves
+    and acts for their child: RSVPs, polls, the child's details and hubs."""
+
+    def setUp(self):
+        from .guardians import create_child
+
+        self.project = Project.objects.create(name="Ewelme 2027", status="ACTIVE")
+        self.event = Event.objects.create(project=self.project, date_time=timezone.now() + timedelta(days=5), location="Ewelme")
+        self.parent = User.objects.create_user("parent", "parent@example.com", "pw", first_name="Jane", last_name="Smith")
+        MemberProfile.objects.filter(user=self.parent).update(is_singer=False, voice_part=None, phone_number="07700 900123")
+        Attendance.objects.filter(user=self.parent).delete()
+        self.child = create_child("Alex", "Smith", "A")
+        self.child.profile.guardians.add(self.parent)
+        self.other_child = create_child("Kim", "Jones", "S")
+        self.adult = User.objects.create_user("adult", "adult@example.com", "pw", first_name="Ada", last_name="Adult")
+        MemberProfile.objects.filter(user=self.adult).update(voice_part="T")
+        self.client.login(username="parent", password="pw")
+
+    def rsvp(self, user, status="ATTENDING"):
+        attendance = Attendance.objects.get(user=user, event=self.event)
+        response = self.client.post(
+            reverse("update_rsvp", args=[attendance.id]), json.dumps({"status": status}), content_type="application/json"
+        )
+        attendance.refresh_from_db()
+        return response, attendance.status
+
+    def test_can_act_for(self):
+        from .permissions import can_act_for
+
+        self.assertTrue(can_act_for(self.parent, self.child.profile))
+        self.assertTrue(can_act_for(self.adult, self.adult.profile))
+        self.assertFalse(can_act_for(self.parent, self.other_child.profile))
+        self.assertFalse(can_act_for(self.parent, self.adult.profile))
+        self.assertFalse(can_act_for(self.adult, self.child.profile))
+
+    def test_a_parents_dashboard_has_a_card_per_child_with_their_events(self):
+        response = self.client.get(reverse("members"))
+        self.assertFalse(response.context["show_own"])
+        children = response.context["children"]
+        self.assertEqual([c["user"] for c in children], [self.child])
+        attendances = children[0]["projects_data"][0]["user_attendances"]
+        self.assertEqual([a.event for a in attendances], [self.event])
+        self.assertContains(response, "Singing: Alex Smith (Alto)")
+        self.assertContains(response, "Alex's RSVP for")
+        self.assertContains(response, reverse("hub", args=["alto", self.project.id]))
+        # Alex hasn't paid: their own subscription card, with a reference
+        # that tells siblings apart; the parent, not singing, gets none
+        self.assertContains(response, "Alex's subscription for")
+        self.assertNotContains(response, "Your subscription for")
+        self.assertNotContains(response, "Kim Jones")
+
+    def test_a_parent_who_sings_sees_their_own_schedule_too(self):
+        MemberProfile.objects.filter(user=self.parent).update(is_singer=True, voice_part="S")
+        response = self.client.get(reverse("members"))
+        self.assertTrue(response.context["show_own"])
+        self.assertContains(response, "Upcoming Schedule")
+        self.assertContains(response, "Singing: Alex Smith")
+
+    def test_an_adult_singers_dashboard_is_unchanged(self):
+        self.client.login(username="adult", password="pw")
+        response = self.client.get(reverse("members"))
+        self.assertTrue(response.context["show_own"])
+        self.assertEqual(response.context["children"], [])
+        self.assertContains(response, "Your RSVP for")
+        self.assertNotContains(response, "Singing:")
+
+    def test_a_parent_can_rsvp_for_their_child_only(self):
+        response, status = self.rsvp(self.child)
+        self.assertEqual((response.status_code, status), (200, "ATTENDING"))
+        for user in (self.other_child, self.adult):
+            with self.subTest(user=user.username):
+                response, status = self.rsvp(user)
+                self.assertEqual((response.status_code, status), (404, "PENDING"))
+
+    def answer(self, for_user=None, response="YES"):
+        payload = {"response": response, "notes": "Away until 3pm"}
+        if for_user is not None:
+            payload["for"] = for_user.id
+        poll_response = self.client.post(
+            reverse("member_poll_respond", args=[self.poll.id]), json.dumps(payload), content_type="application/json"
+        )
+        return poll_response
+
+    def test_a_parent_can_answer_a_poll_for_their_child_only(self):
+        planning = Project.objects.create(name="Easter 2028", status="PLANNING")
+        self.poll = AvailabilityPoll.objects.create(project=planning, question="Free on the 4th?", is_open=True)
+        page = self.client.get(reverse("member_polling"))
+        self.assertEqual([a["user"] for a in page.context["open_polls"][0].answers], [self.child])
+        self.assertContains(page, f'data-for="{self.child.id}"')
+        self.assertContains(page, "Alex's availability")
+
+        self.assertEqual(self.answer(self.child).status_code, 200)
+        self.assertEqual(AvailabilityResponse.objects.get().user, self.child)
+        for user in (self.other_child, self.adult):
+            with self.subTest(user=user.username):
+                self.assertEqual(self.answer(user).status_code, 403)
+        self.assertEqual(AvailabilityResponse.objects.count(), 1)
+
+    def test_the_parent_keeps_their_childs_details(self):
+        page = self.client.get(reverse("settings"))
+        self.assertContains(page, "Alex's details")
+        self.assertContains(page, "I consent, as Alex&#x27;s parent or guardian, to Alex being photographed")
+        self.assertNotContains(page, "Kim")
+        prefix = f"child-{self.child.id}"
+        response = self.client.post(
+            reverse("settings"),
+            {
+                "child": self.child.id,
+                f"{prefix}-emergency_contact_name": "",
+                f"{prefix}-emergency_contact_relation": "",
+                f"{prefix}-emergency_contact_phone": "",
+                f"{prefix}-consent_photography": "on",
+                f"{prefix}-medical_accessibility_notes": "Asthma inhaler in bag",
+            },
+        )
+        self.assertRedirects(response, reverse("settings") + f"#child-{self.child.id}", fetch_redirect_response=False)
+        profile = MemberProfile.objects.get(user=self.child)
+        self.assertTrue(profile.consent_photography)
+        self.assertFalse(profile.consent_audio_video)
+        self.assertEqual(profile.medical_accessibility_notes, "Asthma inhaler in bag")
+        # A blank emergency contact is the parent's own
+        self.assertEqual(
+            (profile.emergency_contact_name, profile.emergency_contact_relation, profile.emergency_contact_phone),
+            ("Jane Smith", "Parent or guardian", "07700 900123"),
+        )
+        # Saving the child's section left the parent's own details alone
+        self.parent.refresh_from_db()
+        self.assertEqual(self.parent.first_name, "Jane")
+
+    def test_a_typed_emergency_contact_is_kept(self):
+        prefix = f"child-{self.child.id}"
+        self.client.post(
+            reverse("settings"),
+            {"child": self.child.id, f"{prefix}-emergency_contact_name": "Gran", f"{prefix}-emergency_contact_relation": "Grandmother", f"{prefix}-emergency_contact_phone": "01234"},
+        )
+        self.assertEqual(MemberProfile.objects.get(user=self.child).emergency_contact_name, "Gran")
+
+    def test_no_one_edits_another_childs_details(self):
+        prefix = f"child-{self.other_child.id}"
+        response = self.client.post(reverse("settings"), {"child": self.other_child.id, f"{prefix}-medical_accessibility_notes": "x"})
+        self.assertEqual(response.status_code, 404)
+        self.assertFalse(MemberProfile.objects.get(user=self.other_child).medical_accessibility_notes)
+
+    def test_an_adult_linked_child_gets_their_own_consent_wording(self):
+        MemberProfile.objects.filter(user=self.child).update(is_under_18=False)
+        page = self.client.get(reverse("settings"))
+        self.assertContains(page, "Alex consents to being photographed")
+
+    def test_the_repertoire_page_links_the_childs_hub(self):
+        page = self.client.get(reverse("member_repertoire"))
+        self.assertContains(page, "Alex Smith sings Alto")
+        self.assertContains(page, reverse("hub", args=["alto", self.project.id]))
+        self.assertNotContains(page, "You sing")
+        self.assertEqual(self.client.get(reverse("hub", args=["alto", self.project.id])).status_code, 200)
+
+
 class MemberManagementTests(TestCase):
     """Build Order Phase 8: editing members, roles and leavers."""
 

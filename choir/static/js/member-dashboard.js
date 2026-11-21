@@ -6,8 +6,10 @@
  * reload:
  *   - select.rsvp-toggle[data-attendance-id]   -> POST /rsvp/<id>/
  *   - select.poll-response-toggle[data-poll-id] -> POST /members/polling/<id>/respond/
- *     (with the poll's note, input[data-poll-notes], which also saves when
- *     it loses focus)
+ *     (with its note, input[data-poll-notes], which also saves when it
+ *     loses focus). Each answer has a data-poll-key ("<poll>-<user>"), as
+ *     a parent answers for themselves and their children (Build Order
+ *     Phase 15b); data-for sends the child's user id.
  * The CSRF token comes from the page's #csrf_token_input.
  */
 
@@ -56,10 +58,11 @@ async function saveRsvp(select) {
  * note can't be saved before an answer is chosen, since the server stores
  * them together.
  */
-async function savePollResponse(pollId) {
-  const select = document.querySelector(`.poll-response-toggle[data-poll-id="${pollId}"]`);
-  const notesInput = document.querySelector(`[data-poll-notes="${pollId}"]`);
-  const status = document.getElementById(`poll-notes-status-${pollId}`);
+async function savePollResponse(key) {
+  const select = document.querySelector(`.poll-response-toggle[data-poll-key="${key}"]`);
+  const notesInput = document.querySelector(`[data-poll-notes="${key}"]`);
+  const status = document.getElementById(`poll-notes-status-${key}`);
+  const pollId = select.dataset.pollId;
 
   if (!select.value) {
     if (notesInput && notesInput.value.trim() && status) {
@@ -70,6 +73,7 @@ async function savePollResponse(pollId) {
 
   const payload = { response: select.value };
   if (notesInput) payload.notes = notesInput.value;
+  if (select.dataset.for) payload.for = select.dataset.for;
 
   try {
     const result = await postJson(`/members/polling/${pollId}/respond/`, payload);
@@ -90,7 +94,7 @@ document.addEventListener("change", (event) => {
   if (select.matches(".rsvp-toggle[data-attendance-id]")) {
     saveRsvp(select);
   } else if (select.matches(".poll-response-toggle[data-poll-id]")) {
-    savePollResponse(select.dataset.pollId);
+    savePollResponse(select.dataset.pollKey);
   }
 });
 

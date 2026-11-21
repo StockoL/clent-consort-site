@@ -36,3 +36,16 @@ def is_singer(user):
     """
     profile = getattr(user, "profile", None)
     return profile is not None and profile.is_singer
+
+
+def can_act_for(user, profile):
+    """
+    Whether user may act as the member whose MemberProfile is profile:
+    RSVP, answer polls and keep their details up to date. True for the
+    member themselves and for any parent or guardian linked to them
+    (MemberProfile.guardians, Build Order Phase 15), who act for an
+    under-18 singer without a login of their own.
+    """
+    if not (user.is_authenticated and user.is_active) or profile is None:
+        return False
+    return profile.user_id == user.pk or profile.guardians.filter(pk=user.pk).exists()

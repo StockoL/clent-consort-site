@@ -230,6 +230,69 @@ class ProfileUpdateForm(forms.ModelForm):
         }
 
 
+class ChildDetailsForm(forms.ModelForm):
+    """A child's details, kept up to date by their parent or guardian on
+    the Settings page (Build Order Phase 15b): media consents, medical
+    and accessibility notes, and emergency contact. For an under-18 the
+    consents are worded as the parent's, on the child's behalf. A blank
+    emergency contact is filled from the parent's own name and phone
+    number when the section is saved."""
+
+    class Meta:
+        model = MemberProfile
+        fields = [
+            "emergency_contact_name",
+            "emergency_contact_relation",
+            "emergency_contact_phone",
+            "consent_audio_video",
+            "consent_photography",
+            "medical_accessibility_notes",
+        ]
+        labels = {
+            "emergency_contact_name": "Contact name",
+            "emergency_contact_relation": "Relationship to them",
+            "emergency_contact_phone": "Contact phone number",
+        }
+        widgets = {"medical_accessibility_notes": forms.Textarea(attrs={"rows": 3})}
+
+    def __init__(self, *args, parent, **kwargs):
+        self.parent = parent
+        super().__init__(*args, **kwargs)
+        name = self.instance.user.first_name or "them"
+        if self.instance.is_under_18:
+            self.fields["consent_audio_video"].label = (
+                f"I consent, as {name}'s parent or guardian, to {name} being included in audio and video "
+                "recordings for promotional purposes."
+            )
+            self.fields["consent_photography"].label = (
+                f"I consent, as {name}'s parent or guardian, to {name} being photographed for social media "
+                "and website use."
+            )
+        else:
+            self.fields["consent_audio_video"].label = (
+                f"{name} consents to being included in audio and video recordings for promotional purposes."
+            )
+            self.fields["consent_photography"].label = f"{name} consents to being photographed for social media and website use."
+        self.fields["medical_accessibility_notes"].label = (
+            f"Any health, medical or accessibility needs the committee should know about to support {name} "
+            "during rehearsals and events (e.g., mobility needs, severe allergies). Optional."
+        )
+        for field in ("consent_audio_video", "consent_photography", "medical_accessibility_notes"):
+            self.fields[field].help_text = ""
+        for field in ("emergency_contact_name", "emergency_contact_relation", "emergency_contact_phone"):
+            self.fields[field].widget.attrs["aria-describedby"] = f"child-{self.instance.user_id}-contact-hint"
+
+    def save(self, commit=True):
+        profile = super().save(commit=False)
+        if not profile.emergency_contact_name.strip() and not profile.emergency_contact_phone.strip():
+            profile.emergency_contact_name = self.parent.get_full_name() or self.parent.username
+            profile.emergency_contact_relation = profile.emergency_contact_relation or "Parent or guardian"
+            profile.emergency_contact_phone = getattr(getattr(self.parent, "profile", None), "phone_number", "")
+        if commit:
+            profile.save()
+        return profile
+
+
 class ProjectForm(forms.ModelForm):
     """
     Frontend form for the committee to create/edit a Project - name,

@@ -69,17 +69,19 @@ Keeping "singer" separate lets the choir give a login to someone who does not si
 
 Every singer gets an RSVP for every event automatically. Signals add new singers to future events and add every singer to a new event, and the dashboard fills any gaps when it loads.
 
+A parent or guardian of an under-18 singer sees a card for each child, "Singing: Alex Smith (Alto)", with the child's coming dates and RSVP selects, the child's subscription card (its reference adds the child's first name, to tell siblings apart) and links to their voice part's hubs. A parent who also sings sees their own schedule first; one who doesn't sees only their children's cards. The RSVP endpoint accepts a member's own RSVPs and their children's, and no one else's.
+
 ### Repertoire and voice-part hubs
 
-Repertoire lists the current projects' pieces and links to each voice part's hub. Each piece's title opens its full score (the PDF) in a new tab, where one has been uploaded. A hub is the practice player, with a drop-down of the project's pieces, and under it Downloads & links: every track, score and recording link for the chosen piece, with its size (for files uploaded since November 2026) and the date it was added. Tracks and scores download rather than open, so they can be kept for practice offline. Without JavaScript the hub lists every piece's downloads, each track with a plain audio player.
+Repertoire lists the current projects' pieces and links to each voice part's hub, naming the member's own part and each child's ("Alex Smith sings Alto: Alto learning hub"). Each piece's title opens its full score (the PDF) in a new tab, where one has been uploaded. A hub is the practice player, with a drop-down of the project's pieces, and under it Downloads & links: every track, score and recording link for the chosen piece, with its size (for files uploaded since November 2026) and the date it was added. Tracks and scores download rather than open, so they can be kept for practice offline. Without JavaScript the hub lists every piece's downloads, each track with a plain audio player.
 
 ### Looking Ahead
 
-Open availability polls for projects still being planned. A member answers Yes, No or Maybe and can add a note, both saved without a submit button.
+Open availability polls for projects still being planned. A member answers Yes, No or Maybe and can add a note, both saved without a submit button. A parent answers for each child too, one row per person.
 
 ### Settings
 
-Name, phone number, voice part, emergency contact, consent to recordings and photographs, and medical or accessibility notes. Email addresses are managed through allauth, which verifies a new address before using it.
+Name, phone number, voice part, emergency contact, consent to recordings and photographs, and medical or accessibility notes. Email addresses are managed through allauth, which verifies a new address before using it. A parent or guardian also keeps each child's details here, in a section of its own: their consents, worded for an under-18 as the parent's ("I consent, as Alex's parent or guardian, to..."), their medical notes and their emergency contact, which is filled with the parent's own name and phone number if left blank.
 
 ### Document Vault
 

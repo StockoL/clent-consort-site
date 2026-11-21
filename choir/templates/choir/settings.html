@@ -121,4 +121,53 @@
       <button type="submit" class="button align-start" data-variant="primary">Save Changes</button>
     </form>
   </div>
+
+  {% comment %}
+    Each child's details, kept by their parent or guardian (Build Order
+    Phase 15b), each its own form so saving one doesn't touch the rest.
+  {% endcomment %}
+  {% for child, form in child_forms %}
+  <section class="card flow" data-variant="invert" id="child-{{ child.user_id }}" aria-labelledby="child-{{ child.user_id }}-title">
+    <h2 class="section-heading text-step-1" id="child-{{ child.user_id }}-title">{{ child.user.first_name|default:child.user.get_full_name }}'s details</h2>
+    <p class="text-small settings-hint">{{ child.user.get_full_name }}{% if child.voice_part %} ({{ child.get_voice_part_display }}){% endif %}{% if child.is_under_18 %}, under 18{% endif %}. You keep these up to date as their parent or guardian.</p>
+    <form action="{% url 'settings' %}" method="POST" class="flow">
+      {% csrf_token %}
+      <input type="hidden" name="child" value="{{ child.user_id }}">
+      {% if form.non_field_errors %}<div class="form-error">{{ form.non_field_errors }}</div>{% endif %}
+
+      <div class="switcher">
+        <div class="flow">
+          <h3 class="text-step-0">Emergency contact</h3>
+          <p class="text-small settings-hint" id="child-{{ child.user_id }}-contact-hint">Left blank, it's filled with your own name and phone number when you save.</p>
+          {% for field in form %}{% if field.name in "emergency_contact_name emergency_contact_relation emergency_contact_phone" %}
+          <div class="form-group flow flow--small">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            <div class="form-error">{{ field.errors }}</div>
+          </div>
+          {% endif %}{% endfor %}
+        </div>
+
+        <div class="flow">
+          <h3 class="text-step-0">Media &amp; publicity</h3>
+          {% for field in form %}{% if field.name in "consent_audio_video consent_photography" %}
+          <div class="form-group consent-row">
+            {{ field }}
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          </div>
+          <div class="form-error">{{ field.errors }}</div>
+          {% endif %}{% endfor %}
+        </div>
+      </div>
+
+      <div class="form-group settings-textarea flow flow--small">
+        <label for="{{ form.medical_accessibility_notes.id_for_label }}">{{ form.medical_accessibility_notes.label }}</label>
+        {{ form.medical_accessibility_notes }}
+        <div class="form-error">{{ form.medical_accessibility_notes.errors }}</div>
+      </div>
+
+      <button type="submit" class="button align-start" data-variant="primary">Save {{ child.user.first_name|default:"their" }}'s details</button>
+    </form>
+  </section>
+  {% endfor %}
 {% endblock members_content %}

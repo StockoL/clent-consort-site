@@ -1,6 +1,7 @@
 {% comment %}
     One collapsible event card on the member dashboard.
     show_rsvp: render the RSVP select (upcoming events only).
+    rsvp_for: a child's first name, when their parent answers for them.
 {% endcomment %}
 <div class="event-card-highlight">
 
@@ -18,7 +19,7 @@
 
             {% if show_rsvp %}
             <div class="event-card-header" data-align="end">
-                <select class="rsvp-toggle rsvp-{{ attendance.status|lower }}" data-attendance-id="{{ attendance.id }}" aria-label="Your RSVP for {{ attendance.event.date_time|date:'j M Y' }}">
+                <select class="rsvp-toggle rsvp-{{ attendance.status|lower }}" data-attendance-id="{{ attendance.id }}" aria-label="{% if rsvp_for %}{{ rsvp_for }}'s{% else %}Your{% endif %} RSVP for {{ attendance.event.date_time|date:'j M Y' }}">
                     <option value="PENDING" {% if attendance.status == 'PENDING' %}selected{% endif %}>No Response</option>
                     <option value="ATTENDING" {% if attendance.status == 'ATTENDING' %}selected{% endif %}>Attending</option>
                     <option value="ABSENT" {% if attendance.status == 'ABSENT' %}selected{% endif %}>Absent</option>

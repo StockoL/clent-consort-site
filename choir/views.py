@@ -42,7 +42,7 @@ from .models import (
     SubscriptionPayment,  # <-- Added for the new financial logic
 )
 from .parts import voice_part_for
-from .permissions import is_committee, is_singer
+from .permissions import can_act_for, is_committee, is_singer
 from .score_import import ScoreImportError, fill_section, fill_sections, format_time, import_score
 
 # ==============================================================================
@@ -173,67 +173,30 @@ def contact_view(request):
 # ==============================================================================
 
 
-@login_required
-def dashboard_view(request):
-    """
-    The primary member command center - "Schedule & Logistics" on the
-    subnav. Scoped to every currently-ACTIVE project (shown as tabs when
-    there's more than one - a deliberate handoff overlap between projects
-    is a real, supported state, not an edge case); Repertoire & Learning
-    lives on its own page now (member_repertoire_view).
-    """
-    active_projects = list(Project.get_active_projects())
+def _has_paid(profile, term):
+    """Whether a member has paid for the subscription period term; true
+    for non-singers, who aren't in the ledger and are never asked."""
+    return not profile.is_singer or SubscriptionPayment.objects.filter(member=profile, term_reference=term).exists()
 
-    current_term = ChoirSettings.load().current_term
-    # Non-singers aren't in the ledger, so they're never asked to pay.
-    has_paid_current_term = not is_singer(request.user) or SubscriptionPayment.objects.filter(
-        member=request.user.profile, term_reference=current_term
-    ).exists()
 
-    if not active_projects:
-        # No project is currently ACTIVE - a real, reachable state (right
-        # after a fresh deploy, or any handoff gap between archiving one
-        # project and activating the next), not an edge case to hand-wave.
-        context = {
-            "active_project": None,
-            "active_projects": [],
-            "projects_data": [],
-            "user_attendances": [],
-            "current_term": current_term,
-            "has_paid_current_term": has_paid_current_term,
-        }
-        return render(request, "choir/members.html", context)
-
-    # --- A. THE AUTO-HEALING MATRIX ---
-    # Backfill missing Attendance rows for the active projects' events
-    # only - not every Event ever, which used to mean a member visiting
-    # the dashboard silently created RSVP rows for events belonging to
-    # long-archived projects too.
+def _schedule(user, active_projects):
+    """A member's schedule for each active project: upcoming events, with
+    their RSVP, and earlier ones. Backfills any RSVPs a singer is missing
+    for these projects' events (the auto-healing matrix), but never for a
+    non-singer (Build Order Phase 5), and never for older projects'."""
     project_events = Event.objects.filter(project__in=active_projects)
+    if is_singer(user):
+        existing = Attendance.objects.filter(user=user, event__in=project_events).values_list("event_id", flat=True)
+        missing = project_events.exclude(id__in=existing)
+        if missing.exists():
+            Attendance.objects.bulk_create([Attendance(user=user, event=event, status="PENDING") for event in missing])
 
-    existing_rsvp_event_ids = Attendance.objects.filter(
-        user=request.user, event__in=project_events
-    ).values_list("event_id", flat=True)
-
-    missing_events = project_events.exclude(id__in=existing_rsvp_event_ids)
-
-    # Non-singers get no RSVPs (Build Order Phase 5), so don't backfill any.
-    if is_singer(request.user) and missing_events.exists():
-        new_attendances = [
-            Attendance(user=request.user, event=event, status="PENDING")
-            for event in missing_events
-        ]
-        Attendance.objects.bulk_create(new_attendances)
-
-    # --- B. FETCH DASHBOARD DATA ---
-    # One bulk query across every active project, then grouped in Python
-    # per-project below - cheaper than a separate query per tab.
+    # One query across every active project, grouped per project below
     all_attendances = (
-        Attendance.objects.filter(user=request.user, event__project__in=active_projects)
+        Attendance.objects.filter(user=user, event__project__in=active_projects)
         .select_related("event", "event__project")
         .order_by("event__date_time")
     )
-
     # Upcoming events keep their RSVP select; past ones move to a collapsed
     # "Earlier this project" list, most recent first.
     now = timezone.now()
@@ -244,23 +207,63 @@ def dashboard_view(request):
             {
                 "project": project,
                 "user_attendances": [a for a in attendances if a.event.date_time >= now],
-                "past_attendances": [
-                    a for a in reversed(attendances) if a.event.date_time < now
-                ],
+                "past_attendances": [a for a in reversed(attendances) if a.event.date_time < now],
+            }
+        )
+    return projects_data
+
+
+@login_required
+def dashboard_view(request):
+    """
+    The primary member command center - "Schedule & Logistics" on the
+    subnav. Scoped to every currently-ACTIVE project (shown as tabs when
+    there's more than one - a deliberate handoff overlap between projects
+    is a real, supported state, not an edge case); Repertoire & Learning
+    lives on its own page now (member_repertoire_view).
+
+    A parent or guardian also gets a card per child they're linked to
+    (Build Order Phase 15b): the child's events with RSVPs, their
+    subscription, and their voice part's learning hubs. A parent who
+    doesn't sing sees only those.
+    """
+    from .guardians import children_of
+
+    active_projects = list(Project.get_active_projects())
+    current_term = ChoirSettings.load().current_term
+    profile = request.user.profile
+    projects_data = _schedule(request.user, active_projects) if active_projects else []
+
+    children = []
+    for child in children_of(request.user):
+        part = child.get_voice_part_display()
+        children.append(
+            {
+                "user": child.user,
+                "profile": child,
+                "projects_data": _schedule(child.user, active_projects) if active_projects else [],
+                "has_paid": _has_paid(child, current_term),
+                "hubs": [
+                    (project, reverse("hub", args=[part.lower(), project.id])) for project in active_projects
+                ]
+                if part
+                else [],
             }
         )
 
     context = {
         # Backward-compat aliases: the first (soonest) active project's data,
         # for anything still reading the old single-project context shape.
-        "active_project": active_projects[0],
-        "user_attendances": projects_data[0]["user_attendances"],
+        "active_project": active_projects[0] if active_projects else None,
+        "user_attendances": projects_data[0]["user_attendances"] if projects_data else [],
         "active_projects": active_projects,
         "projects_data": projects_data,
         "current_term": current_term,
-        "has_paid_current_term": has_paid_current_term,
+        "has_paid_current_term": _has_paid(profile, current_term),
+        "children": children,
+        # A parent who doesn't sing sees only their children's cards
+        "show_own": profile.is_singer or not children,
     }
-
     return render(request, "choir/members.html", context)
 
 
@@ -269,8 +272,17 @@ def member_repertoire_view(request):
     """"Repertoire & Learning" on the subnav - shown as one tab per
     currently-ACTIVE project. Each project's voice-part hub links (see
     hub_view) are scoped to that project's own repertoire. Each piece
-    links to its score (see _score_for)."""
+    links to its score (see _score_for).
+
+    Above the four hub buttons, the member's own part and each child's
+    they're a parent or guardian of (Build Order Phase 15b) link straight
+    to their hub."""
+    from .guardians import children_of
+
     active_projects = list(Project.get_active_projects())
+    own = request.user.profile
+    parts = [(None, own.get_voice_part_display())] if own.is_singer and own.voice_part else []
+    parts += [(child.user, child.get_voice_part_display()) for child in children_of(request.user) if child.voice_part]
     projects_data = []
     for project in active_projects:
         pieces = list(project.repertoire.prefetch_related("assets").order_by("title"))
@@ -284,6 +296,8 @@ def member_repertoire_view(request):
         "current_repertoire": projects_data[0]["repertoire"] if projects_data else [],
         "active_projects": active_projects,
         "projects_data": projects_data,
+        # (child's User, or None for the member, voice part name)
+        "parts": [(person, name, name.lower()) for person, name in parts],
     }
     return render(request, "choir/member_repertoire.html", context)
 
@@ -310,28 +324,45 @@ def member_polling_view(request):
     the one deliberate exception - members answer question/proposed_date/
     notes here, never that project's repertoire or description, which
     this view's context never includes."""
+    from .guardians import children_of
+
     open_polls = list(
         AvailabilityPoll.objects.filter(
             project__status="PLANNING", is_open=True
         ).select_related("project")
     )
 
-    existing_responses = {
-        response.poll_id: response
-        for response in AvailabilityResponse.objects.filter(
-            user=request.user, poll__in=open_polls
-        )
-    }
-    # Django templates can't do a dict lookup with a variable key
-    # ({{ dict.some_var }} only works for literal keys) - attach each
-    # poll's response directly as an attribute instead, so the template
-    # can just read {{ poll.user_response }}.
-    for poll in open_polls:
-        existing = existing_responses.get(poll.id)
-        poll.user_response = existing.response if existing else None
-        poll.user_notes = existing.notes if existing else ""
+    # Who answers here: the member, and each child they're a parent or
+    # guardian of (Build Order Phase 15b); a parent who doesn't sing
+    # answers only for their children.
+    children = [child.user for child in children_of(request.user)]
+    people = ([request.user] if is_singer(request.user) or not children else []) + children
 
-    context = {"open_polls": open_polls}
+    existing_responses = {
+        (response.poll_id, response.user_id): response
+        for response in AvailabilityResponse.objects.filter(user__in=people, poll__in=open_polls)
+    }
+    # Django templates can't do a dict lookup with a variable key, so each
+    # poll carries its answers, one per person, as a list.
+    for poll in open_polls:
+        poll.answers = []
+        for person in people:
+            existing = existing_responses.get((poll.id, person.id))
+            poll.answers.append(
+                {
+                    "user": person,
+                    "is_self": person.pk == request.user.pk,
+                    "key": f"{poll.id}-{person.id}",
+                    "response": existing.response if existing else None,
+                    "notes": existing.notes if existing else "",
+                }
+            )
+        # The member's own, as before, for anything still reading these
+        own = next((a for a in poll.answers if a["is_self"]), None)
+        poll.user_response = own["response"] if own else None
+        poll.user_notes = own["notes"] if own else ""
+
+    context = {"open_polls": open_polls, "answering_for_children": bool(children)}
     return render(request, "choir/member_polling.html", context)
 
 
@@ -340,15 +371,23 @@ def member_polling_view(request):
 def member_poll_respond_view(request, poll_id):
     """API endpoint updating a member's response to one poll, mirroring
     update_rsvp_view's fetch+CSRF-header AJAX pattern rather than a full
-    page reload."""
+    page reload. "for" (a user id) answers for a child the member is a
+    parent or guardian of (choir.permissions.can_act_for)."""
     poll = get_object_or_404(AvailabilityPoll, id=poll_id, is_open=True)
 
     try:
         data = json.loads(request.body)
         response_value = data.get("response")
         notes = data.get("notes")
+        for_id = data.get("for")
     except (json.JSONDecodeError, AttributeError):
         return JsonResponse({"success": False, "error": "Invalid payload"}, status=400)
+
+    member = request.user
+    if for_id not in (None, "", request.user.pk, str(request.user.pk)):
+        member = User.objects.select_related("profile").filter(pk=for_id).first() if str(for_id).isdigit() else None
+        if member is None or not can_act_for(request.user, getattr(member, "profile", None)):
+            return JsonResponse({"success": False, "error": "Not allowed"}, status=403)
 
     valid_choices = [choice[0] for choice in AvailabilityResponse.RESPONSE_CHOICES]
     if response_value not in valid_choices:
@@ -365,7 +404,7 @@ def member_poll_respond_view(request, poll_id):
 
     AvailabilityResponse.objects.update_or_create(
         poll=poll,
-        user=request.user,
+        user=member,
         defaults=defaults,
     )
     return JsonResponse({"success": True, "response": response_value})
@@ -712,23 +751,50 @@ def hub_tracks_view(request, voice_part, project_id):
 
 @login_required
 def settings_view(request):
-    """Allows members to update their base User and Profile details simultaneously."""
-    if request.method == "POST":
-        user_form = UserUpdateForm(request.POST, instance=request.user)
-        profile_form = ProfileUpdateForm(request.POST, instance=request.user.profile)
+    """Allows members to update their base User and Profile details
+    simultaneously. A parent or guardian also keeps each child's details
+    here (Build Order Phase 15b), one form per child, saved on its own
+    (the POST names the child's user id as "child")."""
+    from .forms import ChildDetailsForm
+    from .guardians import children_of
 
-        if user_form.is_valid() and profile_form.is_valid():
-            user_form.save()
-            profile_form.save()
-            messages.success(request, "Your profile has been updated successfully.")
-            return redirect("settings")
-    else:
+    children = children_of(request.user)
+    posted_child = request.POST.get("child") if request.method == "POST" else None
+
+    def child_form(child, data=None):
+        return ChildDetailsForm(data, instance=child, parent=request.user, prefix=f"child-{child.user_id}")
+
+    if posted_child:
+        child = next((c for c in children if str(c.user_id) == posted_child), None)
+        if child is None or not can_act_for(request.user, child):
+            raise Http404
+        form = child_form(child, request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"{child.user.first_name or child.user.get_full_name()}'s details have been updated.")
+            return redirect(f"{reverse('settings')}#child-{child.user_id}")
+        child_forms = [(c, form if c.pk == child.pk else child_form(c)) for c in children]
         user_form = UserUpdateForm(instance=request.user)
         profile_form = ProfileUpdateForm(instance=request.user.profile)
+    else:
+        if request.method == "POST":
+            user_form = UserUpdateForm(request.POST, instance=request.user)
+            profile_form = ProfileUpdateForm(request.POST, instance=request.user.profile)
+
+            if user_form.is_valid() and profile_form.is_valid():
+                user_form.save()
+                profile_form.save()
+                messages.success(request, "Your profile has been updated successfully.")
+                return redirect("settings")
+        else:
+            user_form = UserUpdateForm(instance=request.user)
+            profile_form = ProfileUpdateForm(instance=request.user.profile)
+        child_forms = [(c, child_form(c)) for c in children]
 
     context = {
         "user_form": user_form,
         "profile_form": profile_form,
+        "child_forms": child_forms,
     }
     return render(request, "choir/settings.html", context)
 
@@ -748,8 +814,12 @@ def custom_logout_view(request):
 @login_required
 @require_POST
 def update_rsvp_view(request, attendance_id):
-    """Asynchronous API endpoint to update RSVP status without page reloads."""
-    attendance = get_object_or_404(Attendance, id=attendance_id, user=request.user)
+    """Asynchronous API endpoint to update RSVP status without page reloads.
+    For the member's own RSVP, or a child's they're a parent or guardian
+    of (choir.permissions.can_act_for); anyone else's is not found."""
+    attendance = get_object_or_404(Attendance.objects.select_related("user__profile"), id=attendance_id)
+    if not can_act_for(request.user, getattr(attendance.user, "profile", None)):
+        raise Http404
 
     try:
         data = json.loads(request.body)

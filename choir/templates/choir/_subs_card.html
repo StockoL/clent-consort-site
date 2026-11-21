@@ -1,0 +1,22 @@
+{% comment %}
+    The subscription reminder on the member dashboard, for the member
+    (payer unset) or for a child of theirs (payer: the child's User, Build
+    Order Phase 15b). The child's reference adds their first name, so the
+    treasurer can tell siblings apart.
+{% endcomment %}
+<div class="card flow subs-card" data-variant="invert">
+    <h2 class="text-primary text-step-1">{% if payer %}{{ payer.first_name }}'s{% else %}Your{% endif %} subscription for {{ current_term }}</h2>
+    <div class="flow flow--small">
+      <p class="text-small">Please pay by bank transfer (BACS).</p>
+      <p class="text-small">£{{ choir_settings.subscription_amount }} for {{ current_term }}{% if choir_settings.subscription_deadline %} by {{ choir_settings.subscription_deadline|date:"j F Y" }}{% endif %}, please.</p>
+    </div>
+
+    {% if choir_settings.bank_account_number %}
+    <div class="subs-card__bank flow flow--small">
+      <p class="text-small"><strong>Account Name:</strong> {{ choir_settings.bank_account_name }}</p>
+      <p class="text-small"><strong>Sort Code:</strong> {{ choir_settings.bank_sort_code }}</p>
+      <p class="text-small"><strong>Account No:</strong> {{ choir_settings.bank_account_number }}</p>
+      <p class="text-small text-muted"><em>Reference: {% if payer %}{{ payer.last_name|upper }} {{ payer.first_name|upper }}{% else %}{{ user.last_name|upper }}{% endif %} SUBS</em></p>
+    </div>
+    {% endif %}
+</div>

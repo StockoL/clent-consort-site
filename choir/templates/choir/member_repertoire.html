@@ -61,6 +61,13 @@
 
         <div class="text-center flow flow--small">
           <h2 class="text-primary text-step-1">Access Scores &amp; Learning Tracks</h2>
+          {% if parts %}
+          <ul class="list-unstyled flow flow--small" role="list">
+            {% for person, name, slug in parts %}
+            <li class="text-small">{% if person %}{{ person.get_full_name }} sings {{ name }}{% else %}You sing {{ name }}{% endif %}: <a href="{% url 'hub' slug item.project.id %}" class="text-link">{{ name }} learning hub</a></li>
+            {% endfor %}
+          </ul>
+          {% endif %}
           <div class="flex-center-wrap">
             <a href="{% url 'hub' 'soprano' item.project.id %}" class="button btn-small" data-variant="primary">Sop</a>
             <a href="{% url 'hub' 'alto' item.project.id %}" class="button btn-small" data-variant="primary">Alto</a>

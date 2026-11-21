@@ -114,3 +114,15 @@ def split_parent_record(parent, first_name, last_name):
 
     make_guardian(parent, profile)
     return child
+
+
+def children_of(user):
+    """The active singers user is a parent or guardian of, by name, with
+    their User loaded."""
+    from .models import MemberProfile
+
+    return list(
+        MemberProfile.objects.filter(guardians=user, user__is_active=True)
+        .select_related("user")
+        .order_by("user__first_name", "user__last_name")
+    )

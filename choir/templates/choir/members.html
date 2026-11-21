@@ -7,25 +7,11 @@
 {% block page_lede %}Welcome back, {{ user.first_name|default:user.username }}.{% endblock page_lede %}
 
 {% block members_content %}
-{% if not has_paid_current_term %}
-  <div class="card flow subs-card" data-variant="invert">
-    <h2 class="text-primary text-step-1">Your subscription for {{ current_term }}</h2>
-    <div class="flow flow--small">
-      <p class="text-small">Please pay by bank transfer (BACS).</p>
-      <p class="text-small">£{{ choir_settings.subscription_amount }} for {{ current_term }}{% if choir_settings.subscription_deadline %} by {{ choir_settings.subscription_deadline|date:"j F Y" }}{% endif %}, please.</p>
-    </div>
-
-    {% if choir_settings.bank_account_number %}
-    <div class="subs-card__bank flow flow--small">
-      <p class="text-small"><strong>Account Name:</strong> {{ choir_settings.bank_account_name }}</p>
-      <p class="text-small"><strong>Sort Code:</strong> {{ choir_settings.bank_sort_code }}</p>
-      <p class="text-small"><strong>Account No:</strong> {{ choir_settings.bank_account_number }}</p>
-      <p class="text-small text-muted"><em>Reference: {{ user.last_name|upper }} SUBS</em></p>
-    </div>
-    {% endif %}
-  </div>
+{% if show_own and not has_paid_current_term %}
+  {% include 'choir/_subs_card.html' %}
 {% endif %}
 
+    {% if show_own %}
     <section class="card flow" data-variant="invert">
       <h2 class="text-primary text-step-1">Upcoming Schedule</h2>
 
@@ -87,6 +73,44 @@
 
       {% endif %}
     </section>
+    {% endif %}
+
+    {% comment %}
+      A card per child the member is a parent or guardian of (Build Order
+      Phase 15b): their events with RSVPs, their subscription and their
+      learning hubs. No project tabs here: the tabs switch every project
+      panel on the page, so each project's events sit under its name.
+    {% endcomment %}
+    {% for child in children %}
+    {% if not child.has_paid %}
+      {% include 'choir/_subs_card.html' with payer=child.user %}
+    {% endif %}
+    <section class="card flow" data-variant="invert" id="child-{{ child.user.id }}" aria-labelledby="child-{{ child.user.id }}-title">
+      <h2 class="text-primary text-step-1" id="child-{{ child.user.id }}-title">Singing: {{ child.user.get_full_name }}{% if child.profile.voice_part %} ({{ child.profile.get_voice_part_display }}){% endif %}</h2>
+      <p class="text-small settings-hint">You're their parent or guardian, so you answer for them here.</p>
+      {% for item in child.projects_data %}
+        {% if active_projects|length > 1 %}<h3 class="text-step-0">{{ item.project.name }}</h3>{% endif %}
+        {% if item.user_attendances %}
+        <div class="flow flow--small">
+          {% for attendance in item.user_attendances %}
+            {% include 'choir/_event_card.html' with show_rsvp=True rsvp_for=child.user.first_name %}
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-small">No upcoming events{% if active_projects|length > 1 %} for {{ item.project.name }}{% endif %}.</p>
+        {% endif %}
+      {% empty %}
+      <p class="text-small">There's no active project right now.</p>
+      {% endfor %}
+      {% if child.hubs %}
+      <ul class="list-unstyled flow flow--small" role="list">
+        {% for project, url in child.hubs %}
+        <li class="text-small"><a href="{{ url }}" class="text-link">{{ child.profile.get_voice_part_display }} learning hub{% if active_projects|length > 1 %} for {{ project.name }}{% endif %}</a></li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </section>
+    {% endfor %}
 
 <input type="hidden" id="csrf_token_input" value="{{ csrf_token }}">
 
