@@ -210,6 +210,11 @@ class MemberProfile(models.Model):
         help_text="Exempts member from the termly financial ledger (e.g., scholars, bursaries, staff).",
     )
 
+    # Parents or guardians of an under-18 singer (Build Order Phase 15):
+    # the people the choir contacts about them. Many-to-many, as a parent
+    # can have two children in the choir and a child two parents.
+    guardians = models.ManyToManyField(User, blank=True, related_name="guarded_profiles")
+
     def __str__(self):
         return f"{self.user.get_full_name()} ({self.get_voice_part_display()})"
 
@@ -228,6 +233,11 @@ class InvitationProfile(models.Model):
     first_name = models.CharField(max_length=150, blank=True)
     last_name = models.CharField(max_length=150, blank=True)
     voice_part = models.CharField(max_length=1, choices=MemberProfile.VOICE_CHOICES, blank=True)
+    # An invited parent, linked to their child as they sign up (Build
+    # Order Phase 15)
+    guardian_of = models.ForeignKey(
+        MemberProfile, null=True, blank=True, on_delete=models.SET_NULL, related_name="guardian_invitations"
+    )
 
     def __str__(self):
         return f"Invitation details for {self.invitation.email}"

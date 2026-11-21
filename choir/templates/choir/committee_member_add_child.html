@@ -1,0 +1,68 @@
+{% extends 'choir/_members_base.html' %}
+{% load static %}
+
+{% block title %}Add an Under-18 Singer - Clent Consort{% endblock title %}
+
+{% block page_title %}Add an Under-18 Singer{% endblock page_title %}
+{% block page_lede %}The singer gets their own record, without a login, and the choir contacts their parent or guardian about them.{% endblock page_lede %}
+
+{% block members_content %}
+  <section class="card flow" data-variant="invert">
+    <form method="POST" class="flow">
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="form-error">{{ form.non_field_errors }}</div>{% endif %}
+
+      <fieldset class="form-fieldset flow flow--small">
+        <legend><h2 class="text-primary text-step-1 card-heading">The singer</h2></legend>
+        <div class="switcher field-row">
+          <div class="form-group flow flow--small">
+            <label for="{{ form.first_name.id_for_label }}" class="form-label text-small">First name</label>
+            {{ form.first_name }}
+            <div class="form-error">{{ form.first_name.errors }}</div>
+          </div>
+          <div class="form-group flow flow--small">
+            <label for="{{ form.last_name.id_for_label }}" class="form-label text-small">Last name</label>
+            {{ form.last_name }}
+            <div class="form-error">{{ form.last_name.errors }}</div>
+          </div>
+        </div>
+        <div class="form-group flow flow--small">
+          <label for="{{ form.voice_part.id_for_label }}" class="form-label text-small">Voice part</label>
+          {{ form.voice_part }}
+          <div class="form-error">{{ form.voice_part.errors }}</div>
+        </div>
+      </fieldset>
+
+      <fieldset class="form-fieldset flow flow--small">
+        <legend><h2 class="text-primary text-step-1 card-heading">Their parent or guardian</h2></legend>
+        <div class="form-group flow flow--small">
+          <label for="{{ form.parent.id_for_label }}" class="form-label text-small">A member already</label>
+          {{ form.parent }}
+          <div class="form-error">{{ form.parent.errors }}</div>
+        </div>
+        <p class="text-small settings-hint">Or, if they aren't a member yet, invite them. They'll be linked to the singer as they sign up, and won't be counted as a singer themselves.</p>
+        <div class="form-group flow flow--small">
+          <label for="{{ form.parent_email.id_for_label }}" class="form-label text-small">Their email address</label>
+          {{ form.parent_email }}
+          <div class="form-error">{{ form.parent_email.errors }}</div>
+        </div>
+        <div class="switcher field-row">
+          <div class="form-group flow flow--small">
+            <label for="{{ form.parent_first_name.id_for_label }}" class="form-label text-small">Their first name (optional)</label>
+            {{ form.parent_first_name }}
+          </div>
+          <div class="form-group flow flow--small">
+            <label for="{{ form.parent_last_name.id_for_label }}" class="form-label text-small">Their last name (optional)</label>
+            {{ form.parent_last_name }}
+          </div>
+        </div>
+        <p class="text-small settings-hint">A second parent can be linked afterwards from the singer's page.</p>
+      </fieldset>
+
+      <div class="cluster">
+        <button type="submit" class="button" data-variant="primary">Add Singer</button>
+        <a href="{% url 'committee_members' %}" class="button" data-variant="outline">Cancel</a>
+      </div>
+    </form>
+  </section>
+{% endblock members_content %}

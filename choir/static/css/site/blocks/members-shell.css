@@ -310,3 +310,14 @@
     border-radius: 6px;
   }
 }
+
+/* Parents or guardians on a member's page (Build Order Phase 15): hidden
+   for someone not under 18 with none linked, and shown as soon as
+   "Under 18" is ticked. Without :has() it shows once that's saved. */
+.member-guardians[data-guardians-hidden] {
+  display: none;
+}
+
+form:has(#id_is_under_18:checked) .member-guardians[data-guardians-hidden] {
+  display: block;
+}

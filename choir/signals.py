@@ -65,7 +65,8 @@ def apply_invitation_profile(sender, email, invitation=None, **kwargs):
     INVITATIONS_ACCEPT_INVITE_AFTER_SIGNUP that's as they finish signing up,
     so their User and MemberProfile already exist), copy the name and voice
     part the committee entered when inviting them. Never overwrites anything
-    the new member has already filled in themselves.
+    the new member has already filled in themselves. An invited parent is
+    linked to their child as guardian and made a non-singer.
     """
     details = getattr(invitation, "choir_profile", None) if invitation else None
     user = User.objects.filter(email__iexact=email).select_related("profile").first()
@@ -83,3 +84,13 @@ def apply_invitation_profile(sender, email, invitation=None, **kwargs):
     if details.voice_part and not user.profile.voice_part:
         user.profile.voice_part = details.voice_part
         user.profile.save(update_fields=["voice_part"])
+
+    # A parent invited for their child (Build Order Phase 15): linked to
+    # the child, and not a singer themselves, so the PENDING RSVPs they
+    # were given on signing up go
+    if details.guardian_of_id:
+        details.guardian_of.guardians.add(user)
+        if user.profile.is_singer:
+            user.profile.is_singer = False
+            user.profile.save(update_fields=["is_singer"])
+            Attendance.objects.filter(user=user, status="PENDING", event__date_time__gte=timezone.now()).delete()

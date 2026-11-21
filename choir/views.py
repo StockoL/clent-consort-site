@@ -9,6 +9,7 @@ from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
+from django.db import transaction
 from django.db.models import Count, Q
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -1889,11 +1890,19 @@ def committee_toggle_exempt_view(request, profile_id):
 @user_passes_test(is_committee)
 def committee_members_view(request):
     """Everyone with an account (filterable by ?part= and ?status=), the
-    invite form, and invitations not yet accepted, each with Resend."""
+    invite form, and invitations not yet accepted, each with Resend.
+
+    Under-18 singers show their parents or guardians, and parents the
+    children they're linked to (Build Order Phase 15). Filtering by a
+    voice part also brings in the parents of that part's under-18
+    singers, as the people the committee would contact about them;
+    ?status=parents lists only parents and guardians. ?guardian_of=
+    (a profile id, from an under-18 singer's page) makes the invitation
+    one for their parent."""
     from invitations.utils import get_invitation_model
 
     from .forms import InviteMemberForm
-    from .models import InvitationProfile
+    from .models import InvitationProfile, MemberProfile
 
     Invitation = get_invitation_model()
 
@@ -1906,38 +1915,70 @@ def committee_members_view(request):
                 invitation=invitation,
                 first_name=data["first_name"],
                 last_name=data["last_name"],
-                voice_part=data["voice_part"],
+                voice_part="" if data["guardian_of"] else data["voice_part"],
+                guardian_of=data["guardian_of"],
             )
             invitation.send_invitation(request)
-            messages.success(request, f"Invitation sent to {invitation.email}.")
+            child = data["guardian_of"]
+            messages.success(
+                request,
+                f"Invitation sent to {invitation.email}"
+                + (f", as parent or guardian of {child.user.get_full_name()}." if child else "."),
+            )
             return redirect("committee_members")
     else:
-        form = InviteMemberForm()
+        form = InviteMemberForm(initial={"guardian_of": request.GET.get("guardian_of")} if request.GET.get("guardian_of") else None)
+
+    inviting_for = None
+    if form["guardian_of"].value():
+        inviting_for = MemberProfile.objects.filter(pk=form["guardian_of"].value(), is_under_18=True).select_related("user").first()
 
     part = request.GET.get("part", "")
     status = request.GET.get("status", "active")
-    members = User.objects.select_related("profile").prefetch_related("groups").order_by(
-        "-is_active", "first_name", "last_name", "username"
+    members = (
+        User.objects.select_related("profile")
+        .prefetch_related("groups", "profile__guardians", "guarded_profiles__user")
+        .order_by("-is_active", "first_name", "last_name", "username")
     )
     if status == "active":
         members = members.filter(is_active=True)
     elif status == "inactive":
         members = members.filter(is_active=False)
+    elif status == "parents":
+        members = members.filter(is_active=True, guarded_profiles__isnull=False)
     if part == "none":
         members = members.filter(Q(profile__voice_part__isnull=True) | Q(profile__voice_part=""))
     elif part:
-        members = members.filter(profile__voice_part=part)
+        members = members.filter(
+            Q(profile__voice_part=part)
+            | Q(guarded_profiles__voice_part=part, guarded_profiles__is_under_18=True, guarded_profiles__is_singer=True)
+        )
+    members = members.distinct()
 
-    rows = [{"user": member, "committee": is_committee(member)} for member in members if hasattr(member, "profile")]
+    rows = []
+    for member in members:
+        if not hasattr(member, "profile"):
+            continue
+        profile = member.profile
+        guardians = list(profile.guardians.all())
+        rows.append(
+            {
+                "user": member,
+                "committee": is_committee(member),
+                "guardians": guardians,
+                "children": [child.user for child in member.guarded_profiles.all()],
+                "no_parent": profile.is_under_18 and profile.is_singer and not guardians,
+                "has_login": member.has_usable_password(),
+            }
+        )
 
-    pending = Invitation.objects.filter(accepted=False).select_related("choir_profile").order_by("-sent")
+    pending = Invitation.objects.filter(accepted=False).select_related("choir_profile__guardian_of__user").order_by("-sent")
     expired_ids = set(Invitation.objects.all_expired().values_list("id", flat=True))
     invitations = [{"invitation": inv, "expired": inv.id in expired_ids} for inv in pending]
 
-    from .models import MemberProfile
-
     context = {
         "form": form,
+        "inviting_for": inviting_for,
         "rows": rows,
         "invitations": invitations,
         "part": part,
@@ -1965,21 +2006,133 @@ def committee_invitation_resend_view(request, invitation_id):
 def committee_member_edit_view(request, user_id):
     """Edit one member's details, singer/committee flags and active state.
     Deactivating is how someone leaves: their attendance history stays,
-    and they're signed out on their next request."""
+    and they're signed out on their next request.
+
+    An under-18 singer's page also links their parents or guardians, and
+    offers to invite one; a parent's page lists their children (Build
+    Order Phase 15). A singer's page links to splitting the record when
+    it's a parent signed up for their child."""
     from .forms import MemberEditForm
+    from .guardians import can_split
 
     member = get_object_or_404(User.objects.select_related("profile"), id=user_id)
+    profile = member.profile
 
     if request.method == "POST":
+        was_under_18 = profile.is_under_18
         form = MemberEditForm(request.POST, member=member, editor=request.user)
         if form.is_valid():
             form.save()
-            messages.success(request, f"{member.get_full_name() or member.username} updated.")
+            name = member.get_full_name() or member.username
+            guardians = list(profile.guardians.all())
+            if was_under_18 and not profile.is_under_18 and guardians:
+                still = " and ".join(g.get_full_name() or g.username for g in guardians)
+                messages.success(
+                    request,
+                    format_html(
+                        '{} is no longer marked as under 18. {} {} still linked as their parent. '
+                        '<a href="{}#guardians">Remove the link</a>',
+                        member.first_name or name,
+                        still,
+                        "are" if len(guardians) > 1 else "is",
+                        reverse("committee_member_edit", args=[member.id]),
+                    ),
+                )
+            else:
+                messages.success(request, f"{name} updated.")
             return redirect("committee_members")
     else:
         form = MemberEditForm(member=member, editor=request.user)
 
-    return render(request, "choir/committee_member_edit.html", {"form": form, "member": member})
+    context = {
+        "form": form,
+        "member": member,
+        "children": [child.user for child in member.guarded_profiles.select_related("user")],
+        "show_guardians": profile.is_under_18 or profile.guardians.exists(),
+        "can_split": can_split(member) is None,
+        "has_login": member.has_usable_password(),
+    }
+    return render(request, "choir/committee_member_edit.html", context)
+
+
+@login_required
+@user_passes_test(is_committee)
+def committee_member_add_child_view(request):
+    """Adds an under-18 singer with no login, and links their parent or
+    guardian: a member already, or someone invited by email, linked as
+    they sign up (Build Order Phase 15)."""
+    from invitations.utils import get_invitation_model
+
+    from .forms import AddUnder18Form
+    from .guardians import create_child, make_guardian
+    from .models import InvitationProfile
+
+    form = AddUnder18Form(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        data = form.cleaned_data
+        with transaction.atomic():
+            child = create_child(data["first_name"], data["last_name"], data["voice_part"])
+            invitation = None
+            if data["parent"]:
+                make_guardian(data["parent"], child.profile)
+            else:
+                invitation = get_invitation_model().create(data["parent_email"], inviter=request.user)
+                InvitationProfile.objects.create(
+                    invitation=invitation,
+                    first_name=data["parent_first_name"],
+                    last_name=data["parent_last_name"],
+                    guardian_of=child.profile,
+                )
+        part = child.profile.get_voice_part_display().lower()
+        if invitation:
+            invitation.send_invitation(request)
+            messages.success(
+                request,
+                f"{child.get_full_name()} added as an under-18 {part}. An invitation has gone to "
+                f"{invitation.email}, who will be linked as their parent or guardian on signing up.",
+            )
+        else:
+            parent = data["parent"].get_full_name() or data["parent"].username
+            messages.success(
+                request, f"{child.get_full_name()} added as an under-18 {part}, with {parent} as their parent or guardian."
+            )
+        return redirect("committee_members")
+
+    return render(request, "choir/committee_member_add_child.html", {"form": form})
+
+
+@login_required
+@user_passes_test(is_committee)
+def committee_member_split_view(request, user_id):
+    """Splits a record where a parent signed up for their child into the
+    parent's and the child's, after saying what will happen (Build Order
+    Phase 15, choir.guardians.split_parent_record)."""
+    from .forms import SplitMemberForm
+    from .guardians import can_split, split_parent_record
+
+    member = get_object_or_404(User.objects.select_related("profile"), id=user_id)
+    reason = can_split(member)
+    form = SplitMemberForm(request.POST or None, initial={"last_name": member.last_name})
+    if request.method == "POST" and reason is None and form.is_valid():
+        child = split_parent_record(member, form.cleaned_data["first_name"], form.cleaned_data["last_name"])
+        messages.success(
+            request,
+            f"Split: {child.get_full_name()} is now an under-18 {child.profile.get_voice_part_display().lower()} "
+            f"with their own record, and {member.get_full_name() or member.username} is linked as their parent.",
+        )
+        return redirect("committee_member_edit", user_id=child.id)
+
+    context = {
+        "form": form,
+        "member": member,
+        "reason": reason,
+        "counts": {
+            "rsvps": Attendance.objects.filter(user=member).count(),
+            "answers": AvailabilityResponse.objects.filter(user=member).count(),
+            "payments": SubscriptionPayment.objects.filter(member=member.profile).count(),
+        },
+    }
+    return render(request, "choir/committee_member_split.html", context)
 
 
 # ==============================================================================

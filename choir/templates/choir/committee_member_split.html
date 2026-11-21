@@ -1,0 +1,51 @@
+{% extends 'choir/_members_base.html' %}
+{% load static %}
+
+{% block title %}Split a Parent's Record - Clent Consort{% endblock title %}
+
+{% block page_title %}Split a Parent's Record{% endblock page_title %}
+{% block page_lede %}For {{ member.get_full_name|default:member.username }}'s account, used for a child who sings.{% endblock page_lede %}
+
+{% block members_content %}
+  <section class="card flow" data-variant="invert">
+    {% if reason %}
+    <p>{{ reason }}</p>
+    <p><a href="{% url 'committee_member_edit' member.id %}" class="text-link">Back to {{ member.get_full_name|default:member.username }}</a></p>
+    {% else %}
+    <form method="POST" class="flow">
+      {% csrf_token %}
+      <div class="switcher field-row">
+        <div class="form-group flow flow--small">
+          <label for="{{ form.first_name.id_for_label }}" class="form-label text-small">{{ form.first_name.label }}</label>
+          {{ form.first_name }}
+          <div class="form-error">{{ form.first_name.errors }}</div>
+        </div>
+        <div class="form-group flow flow--small">
+          <label for="{{ form.last_name.id_for_label }}" class="form-label text-small">{{ form.last_name.label }}</label>
+          {{ form.last_name }}
+          <div class="form-error">{{ form.last_name.errors }}</div>
+        </div>
+      </div>
+
+      {# The child's name below follows the fields as they're typed (js/confirm-forms.js) #}
+      <h2 class="text-primary text-step-1 card-heading">What will happen</h2>
+      <ul class="flow flow--small text-small">
+        <li>A new record is made for <strong><span data-fill-from="{{ form.first_name.id_for_label }}">the child</span> <span data-fill-from="{{ form.last_name.id_for_label }}"></span></strong>, as an under-18 {{ member.profile.get_voice_part_display|lower|default:"singer" }}, without a login of their own. It takes the voice part, the subscription exemption, the photo and recording consents, the medical and accessibility notes and the emergency contact from this account.</li>
+        <li>The singing history moves to the child: {{ counts.rsvps }} RSVP{{ counts.rsvps|pluralize }}, {{ counts.answers }} availability answer{{ counts.answers|pluralize }} and {{ counts.payments }} subscription payment{{ counts.payments|pluralize }}.</li>
+        <li>{{ member.get_full_name|default:member.username }} keeps their login, email address and broadcast history, stops being counted as a singer, and is linked to the child as their parent.</li>
+        <li>It all happens together, or not at all.</li>
+      </ul>
+
+      <div class="cluster">
+        {# One span inside: the dark card's buttons are flex boxes, which would set each name apart #}
+        <button type="submit" class="button" data-variant="primary"><span>Split into {{ member.get_full_name|default:member.username }} (parent) and <span data-fill-from="{{ form.first_name.id_for_label }}">the child</span> <span data-fill-from="{{ form.last_name.id_for_label }}"></span> (singer)</span></button>
+        <a href="{% url 'committee_member_edit' member.id %}" class="button" data-variant="outline">Cancel</a>
+      </div>
+    </form>
+    {% endif %}
+  </section>
+{% endblock members_content %}
+
+{% block scripts %}
+<script src="{% static 'js/confirm-forms.js' %}" defer></script>
+{% endblock scripts %}

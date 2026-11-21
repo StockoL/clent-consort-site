@@ -3,7 +3,7 @@
 {% block title %}{{ member.get_full_name|default:member.username }} - Members - Clent Consort{% endblock title %}
 
 {% block page_title %}{{ member.get_full_name|default:member.username }}{% endblock page_title %}
-{% block page_lede %}{{ member.email|default:"No email address" }} · last logged in {{ member.last_login|date:"j M Y"|default:"never" }}{% endblock page_lede %}
+{% block page_lede %}{% if has_login %}{{ member.email|default:"No email address" }} · last logged in {{ member.last_login|date:"j M Y"|default:"never" }}{% else %}{% if member.email %}{{ member.email }} · {% endif %}No login of their own{% endif %}{% endblock page_lede %}
 
 {% block members_content %}
   <section class="card flow" data-variant="invert">
@@ -45,10 +45,47 @@
         </p>
       </fieldset>
 
+      {% comment %}
+        Parents or guardians (Build Order Phase 15). Shown for an under-18
+        singer, or anyone who still has one linked; with :has() support,
+        it also appears as soon as "Under 18" is ticked
+        (blocks/members-shell.css).
+      {% endcomment %}
+      <fieldset class="form-fieldset flow flow--small member-guardians" id="guardians" data-guardians{% if not show_guardians %} data-guardians-hidden{% endif %}>
+        <legend><h2 class="text-primary text-step-1 card-heading">Parents or guardians</h2></legend>
+        <p class="text-small settings-hint" id="guardians-hint">The people the choir contacts about this singer. Hold Ctrl (or Cmd on a Mac) to choose more than one, or to take a name off.</p>
+        <div class="form-group flow flow--small">
+          <label for="{{ form.guardians.id_for_label }}" class="form-label text-small">{{ form.guardians.label }}</label>
+          {{ form.guardians }}
+          {% if form.guardians.errors %}<div class="form-error">{{ form.guardians.errors }}</div>{% endif %}
+        </div>
+        <p class="text-small"><a href="{% url 'committee_members' %}?guardian_of={{ member.profile.id }}#invite" class="text-link">Invite a parent who isn't a member yet</a></p>
+      </fieldset>
+
       <div class="cluster">
         <button type="submit" class="button" data-variant="primary">Save Changes</button>
         <a href="{% url 'committee_members' %}" class="button" data-variant="outline">Cancel</a>
       </div>
     </form>
   </section>
+
+  {% if children %}
+  <section class="card flow" data-variant="invert" aria-labelledby="children-title">
+    <h2 class="text-primary text-step-1 card-heading" id="children-title">Parent or guardian of</h2>
+    <ul class="list-unstyled flow flow--small" role="list">
+      {% for child in children %}
+      <li><a href="{% url 'committee_member_edit' child.id %}" class="text-link">{{ child.get_full_name|default:child.username }}</a> <span class="text-small text-muted">({{ child.profile.get_voice_part_display|default:"no voice part" }}{% if child.profile.is_under_18 %}, under 18{% endif %})</span></li>
+      {% endfor %}
+    </ul>
+    <p class="text-small settings-hint">To change this, edit the singer's page.</p>
+  </section>
+  {% endif %}
+
+  {% if can_split %}
+  <section class="card flow" data-variant="invert" aria-labelledby="split-title">
+    <h2 class="text-primary text-step-1 card-heading" id="split-title">A parent signed up for their child?</h2>
+    <p class="text-small settings-hint">If this account is a parent's, used for a child who sings, it can be split into a record for each, with the singing history moving to the child.</p>
+    <p><a href="{% url 'committee_member_split' member.id %}" class="text-link">This is a parent signed up for their child</a></p>
+  </section>
+  {% endif %}
 {% endblock members_content %}

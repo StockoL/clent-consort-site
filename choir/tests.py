@@ -3471,6 +3471,293 @@ class MemberInvitationTests(TestCase):
         self.assertEqual(Invitation.objects.count(), 1)
 
 
+class GuardianTests(TestCase):
+    """Build Order Phase 15a: an under-18 singer is a member in their own
+    right, with their parents or guardians linked to them; and a record
+    where a parent stood in for their child can be split in two."""
+
+    def setUp(self):
+        self.committee = create_committee_user(username="committee", password="pw", email="committee@example.com")
+        self.client.login(username="committee", password="pw")
+        self.project = Project.objects.create(name="Ewelme 2027", status="ACTIVE")
+        self.past = Event.objects.create(project=self.project, date_time=timezone.now() - timedelta(days=7))
+        self.future = Event.objects.create(project=self.project, date_time=timezone.now() + timedelta(days=7))
+
+    def make(self, username, first, last, part="A", singer=True, under_18=False, email=None):
+        user = User.objects.create_user(
+            username=username, password="pw", email=email if email is not None else f"{username}@example.com", first_name=first, last_name=last
+        )
+        MemberProfile.objects.filter(user=user).update(voice_part=part, is_singer=singer, is_under_18=under_18)
+        user.profile.refresh_from_db()
+        return user
+
+    def child_of(self, parent, first="Alex", last="Smith", part="A"):
+        from .guardians import create_child
+
+        child = create_child(first, last, part)
+        child.profile.guardians.add(parent)
+        return child
+
+    # ---------------------------------------------------------------- model
+
+    def test_a_child_has_no_login_and_can_have_two_parents(self):
+        from .guardians import create_child
+
+        child = create_child("Alex", "Smith", "A")
+        self.assertFalse(child.has_usable_password())
+        self.assertEqual(child.email, "")
+        self.assertTrue(child.profile.is_singer and child.profile.is_under_18)
+        self.assertEqual(child.profile.voice_part, "A")
+        # As a singer, they get RSVPs for what's coming up
+        self.assertTrue(Attendance.objects.filter(user=child, event=self.future).exists())
+        mum = self.make("mum", "Jane", "Smith", part=None, singer=False)
+        dad = self.make("dad", "John", "Smith", part=None, singer=False)
+        child.profile.guardians.add(mum, dad)
+        self.assertEqual(set(child.profile.guardians.all()), {mum, dad})
+        self.assertEqual([p.user for p in mum.guarded_profiles.all()], [child])
+        self.assertFalse(self.client.login(username=child.username, password=""))
+
+    # ---------------------------------------------------------- members list
+
+    def test_members_list_names_parents_and_children(self):
+        mum = self.make("mum", "Jane", "Smith", part=None, singer=False)
+        child = self.child_of(mum)
+        page = self.client.get(reverse("committee_members")).content.decode()
+        child_edit = reverse("committee_member_edit", args=[child.id])
+        mum_edit = reverse("committee_member_edit", args=[mum.id])
+        self.assertIn(f'Parent: <a href="{mum_edit}" class="text-link">Jane Smith</a>', page)
+        self.assertIn(f'Parent of <a href="{child_edit}" class="text-link">Alex Smith</a>', page)
+        self.assertIn("no login", page)
+        self.assertNotIn("No parent linked", page)
+
+    def test_an_under_18_singer_without_a_parent_is_flagged(self):
+        self.make("teen", "Toby", "Teen", under_18=True)
+        self.assertContains(self.client.get(reverse("committee_members")), "No parent linked")
+
+    def test_parents_and_guardians_filter(self):
+        mum = self.make("mum", "Jane", "Smith", part=None, singer=False)
+        self.child_of(mum)
+        self.make("adult", "Ada", "Adult")
+        rows = self.client.get(reverse("committee_members"), {"status": "parents"}).context["rows"]
+        self.assertEqual([row["user"] for row in rows], [mum])
+
+    def test_a_voice_part_filter_brings_in_that_parts_parents(self):
+        mum = self.make("mum", "Jane", "Smith", part=None, singer=False)
+        child = self.child_of(mum, part="A")
+        dad = self.make("dad", "Bob", "Bass", part=None, singer=False)
+        self.child_of(dad, first="Ben", last="Bass", part="B")
+        alto = self.make("alto", "Ann", "Alto", part="A")
+        users = {row["user"] for row in self.client.get(reverse("committee_members"), {"part": "A"}).context["rows"]}
+        self.assertEqual(users, {mum, child, alto})
+
+    # ------------------------------------------------------------ member edit
+
+    def test_linking_parents_on_the_singers_page(self):
+        mum = self.make("mum", "Jane", "Smith", part=None, singer=False)
+        teen = self.make("teen", "Toby", "Teen", under_18=True)
+        page = self.client.get(reverse("committee_member_edit", args=[teen.id]))
+        self.assertContains(page, f"?guardian_of={teen.profile.id}#invite")
+        self.assertNotContains(page, "data-guardians-hidden")
+        # Children without a login can't be chosen as parents
+        other_child = self.child_of(mum, first="Kim")
+        self.assertNotIn(other_child, page.context["form"].fields["guardians"].queryset)
+
+        self.client.post(
+            reverse("committee_member_edit", args=[teen.id]),
+            {"first_name": "Toby", "last_name": "Teen", "voice_part": "A", "is_singer": "on", "is_under_18": "on", "is_active": "on", "guardians": [mum.id]},
+        )
+        self.assertEqual(list(teen.profile.guardians.all()), [mum])
+        # The parent's page lists them
+        self.assertContains(self.client.get(reverse("committee_member_edit", args=[mum.id])), "Toby Teen")
+
+    def test_an_adult_with_no_parent_has_the_field_hidden(self):
+        adult = self.make("adult", "Ada", "Adult")
+        self.assertContains(self.client.get(reverse("committee_member_edit", args=[adult.id])), "data-guardians-hidden")
+
+    def test_unticking_under_18_keeps_the_link_and_says_so(self):
+        mum = self.make("mum", "Jane", "Smith", part=None, singer=False)
+        teen = self.make("teen", "Toby", "Teen", under_18=True)
+        teen.profile.guardians.add(mum)
+        response = self.client.post(
+            reverse("committee_member_edit", args=[teen.id]),
+            {"first_name": "Toby", "last_name": "Teen", "voice_part": "A", "is_singer": "on", "is_active": "on", "guardians": [mum.id]},
+            follow=True,
+        )
+        self.assertContains(response, "Toby is no longer marked as under 18. Jane Smith is still linked as their parent.")
+        self.assertContains(response, f'href="{reverse("committee_member_edit", args=[teen.id])}#guardians"')
+        self.assertEqual(list(teen.profile.guardians.all()), [mum])
+
+    # ---------------------------------------------------- adding an under-18
+
+    def add_child(self, **data):
+        payload = {"first_name": "Alex", "last_name": "Smith", "voice_part": "A", "parent": "", "parent_email": "", "parent_first_name": "", "parent_last_name": ""}
+        payload.update(data)
+        return self.client.post(reverse("committee_member_add_child"), payload)
+
+    def test_adding_an_under_18_with_an_existing_parent(self):
+        mum = self.make("mum", "Jane", "Smith", part=None, singer=False)
+        response = self.add_child(parent=mum.id)
+        self.assertRedirects(response, reverse("committee_members"))
+        child = User.objects.get(first_name="Alex")
+        self.assertEqual(list(child.profile.guardians.all()), [mum])
+        self.assertTrue(child.profile.is_under_18)
+        self.assertFalse(child.has_usable_password())
+
+    def test_adding_an_under_18_needs_exactly_one_parent(self):
+        mum = self.make("mum", "Jane", "Smith", part=None, singer=False)
+        self.assertContains(self.add_child(), "Choose their parent or guardian")
+        self.assertContains(self.add_child(parent=mum.id, parent_email="x@example.com"), "not both")
+        self.assertContains(self.add_child(parent_email="mum@example.com"), "already has an account")
+        self.assertFalse(User.objects.filter(first_name="Alex").exists())
+
+    def test_adding_an_under_18_with_an_invited_parent_who_signs_up(self):
+        self.add_child(parent_email="new.parent@example.com", parent_first_name="Jane", parent_last_name="Smith")
+        child = User.objects.get(first_name="Alex")
+        invitation = Invitation.objects.get(email="new.parent@example.com")
+        self.assertEqual(invitation.choir_profile.guardian_of, child.profile)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertContains(self.client.get(reverse("committee_members")), "parent of Alex Smith")
+
+        self.client.logout()
+        self.client.get(reverse("invitations:accept-invite", args=[invitation.key]))
+        self.client.post(
+            reverse("account_signup"),
+            {"email": "new.parent@example.com", "password1": "a-Long-pass-phrase-9", "password2": "a-Long-pass-phrase-9"},
+        )
+        parent = User.objects.get(email="new.parent@example.com")
+        self.assertEqual(list(child.profile.guardians.all()), [parent])
+        self.assertFalse(parent.profile.is_singer)
+        self.assertEqual(parent.first_name, "Jane")
+        self.assertFalse(Attendance.objects.filter(user=parent).exists())
+
+    def test_inviting_a_parent_from_the_singers_page(self):
+        teen = self.make("teen", "Toby", "Teen", under_18=True)
+        page = self.client.get(reverse("committee_members"), {"guardian_of": teen.profile.id})
+        self.assertContains(page, "Inviting a parent or guardian for Toby Teen")
+        self.client.post(
+            reverse("committee_members"),
+            {"email": "toby.mum@example.com", "first_name": "", "last_name": "", "voice_part": "S", "guardian_of": teen.profile.id},
+        )
+        details = Invitation.objects.get().choir_profile
+        self.assertEqual(details.guardian_of, teen.profile)
+        # A parent's invitation never carries a voice part
+        self.assertEqual(details.voice_part, "")
+
+    # ------------------------------------------------------------- the split
+
+    def standing_in(self):
+        """Jane's account, used for her child: an alto with RSVPs, a poll
+        answer and a payment."""
+        jane = self.make("jane", "Jane", "Smith", part="A")
+        profile = jane.profile
+        profile.is_exempt_from_subs = False
+        profile.consent_photography = True
+        profile.medical_accessibility_notes = "Asthma"
+        profile.emergency_contact_name = "Jane Smith"
+        profile.save()
+        Attendance.objects.filter(user=jane, event=self.past).update(status="ATTENDING")
+        Attendance.objects.get_or_create(user=jane, event=self.past, defaults={"status": "ATTENDING"})
+        Attendance.objects.filter(user=jane, event=self.future).update(status="ABSENT")
+        poll = AvailabilityPoll.objects.create(project=self.project, question="Extra rehearsal?")
+        AvailabilityResponse.objects.create(poll=poll, user=jane, response="YES")
+        settings_row = ChoirSettings.load()
+        SubscriptionPayment.objects.create(member=profile, amount=40, date_paid=timezone.now().date(), term_reference=settings_row.current_term)
+        return jane
+
+    def split(self, user, first="Alex", last="Smith"):
+        return self.client.post(reverse("committee_member_split", args=[user.id]), {"first_name": first, "last_name": last})
+
+    def test_the_split_page_says_what_will_happen(self):
+        jane = self.standing_in()
+        self.assertContains(self.client.get(reverse("committee_member_edit", args=[jane.id])), "This is a parent signed up for their child")
+        page = self.client.get(reverse("committee_member_split", args=[jane.id]))
+        self.assertContains(page, "2 RSVPs, 1 availability answer and 1 subscription payment")
+        self.assertContains(page, "Split into Jane Smith (parent) and")
+
+    def test_the_split_moves_exactly_the_singing_history(self):
+        jane = self.standing_in()
+        other = self.make("other", "Olive", "Other")
+        before_other = Attendance.objects.filter(user=other).count()
+        response = self.split(jane)
+        child = User.objects.get(first_name="Alex")
+        self.assertRedirects(response, reverse("committee_member_edit", args=[child.id]))
+
+        self.assertEqual(dict(Attendance.objects.filter(user=child).values_list("event", "status")), {self.past.id: "ATTENDING", self.future.id: "ABSENT"})
+        self.assertFalse(Attendance.objects.filter(user=jane).exists())
+        self.assertEqual(AvailabilityResponse.objects.get().user, child)
+        self.assertEqual(SubscriptionPayment.objects.get().member, child.profile)
+        self.assertEqual(Attendance.objects.filter(user=other).count(), before_other)
+
+        profile = child.profile
+        self.assertEqual((profile.voice_part, profile.is_singer, profile.is_under_18), ("A", True, True))
+        self.assertEqual((profile.consent_photography, profile.medical_accessibility_notes, profile.emergency_contact_name), (True, "Asthma", "Jane Smith"))
+        self.assertEqual(list(profile.guardians.all()), [jane])
+
+        jane.refresh_from_db()
+        jane.profile.refresh_from_db()
+        self.assertTrue(jane.has_usable_password())
+        self.assertEqual(jane.email, "jane@example.com")
+        self.assertEqual((jane.profile.is_singer, jane.profile.voice_part, jane.profile.medical_accessibility_notes), (False, None, ""))
+
+    def test_after_the_split_the_child_is_in_the_ledger_and_rsvps_not_the_parent(self):
+        jane = self.standing_in()
+        self.split(jane)
+        roster = self.client.get(reverse("committee_financials")).context["roster"]
+        by_name = {row["user"].get_full_name(): row for row in roster}
+        self.assertNotIn("Jane Smith", by_name)
+        self.assertIsNotNone(by_name["Alex Smith"]["payment"])
+        report = self.client.get(reverse("committee_rsvps"), {"event": self.future.id}).content.decode()
+        self.assertIn("Alex Smith", report)
+        self.assertNotIn("Jane Smith", report)
+
+    def test_the_split_is_refused_for_a_parent_already_linked(self):
+        jane = self.standing_in()
+        self.child_of(jane, first="Kim")
+        page = self.client.get(reverse("committee_member_split", args=[jane.id]))
+        self.assertContains(page, "already linked as a parent")
+        self.split(jane)
+        self.assertFalse(User.objects.filter(first_name="Alex").exists())
+        self.assertNotContains(self.client.get(reverse("committee_member_edit", args=[jane.id])), "signed up for their child")
+
+    def test_the_split_rolls_back_if_any_step_fails(self):
+        from .guardians import split_parent_record
+
+        jane = self.standing_in()
+        users_before = User.objects.count()
+        with mock.patch("choir.guardians.SubscriptionPayment.objects.filter", side_effect=RuntimeError("boom")):
+            with self.assertRaises(RuntimeError):
+                split_parent_record(jane, "Alex", "Smith")
+        self.assertEqual(User.objects.count(), users_before)
+        self.assertEqual(Attendance.objects.filter(user=jane).count(), 2)
+        self.assertEqual(AvailabilityResponse.objects.get().user, jane)
+        jane.profile.refresh_from_db()
+        self.assertTrue(jane.profile.is_singer)
+
+    # ------------------------------------------------------------ permissions
+
+    def test_new_pages_are_committee_only(self):
+        jane = self.standing_in()
+        pages = [
+            ("get", reverse("committee_member_add_child")),
+            ("post", reverse("committee_member_add_child")),
+            ("get", reverse("committee_member_split", args=[jane.id])),
+            ("post", reverse("committee_member_split", args=[jane.id])),
+        ]
+        member = self.make("member", "Mo", "Member")
+        for who in (None, member):
+            self.client.logout()
+            if who:
+                self.client.login(username=who.username, password="pw")
+            for method, url in pages:
+                with self.subTest(who=who, method=method, url=url):
+                    response = getattr(self.client, method)(url, {"first_name": "Alex", "last_name": "Smith", "voice_part": "A", "parent": member.id})
+                    self.assertEqual(response.status_code, 302)
+                    self.assertTrue(response["Location"].startswith(reverse("account_login")))
+        self.assertFalse(User.objects.filter(first_name="Alex").exists())
+        jane.profile.refresh_from_db()
+        self.assertTrue(jane.profile.is_singer)
+
+
 class MemberManagementTests(TestCase):
     """Build Order Phase 8: editing members, roles and leavers."""
 
@@ -4247,6 +4534,8 @@ class FormLabelTests(TestCase):
         committee_pages = [
             reverse("committee_members"),
             reverse("committee_member_edit", args=[committee.id]),
+            reverse("committee_member_add_child"),
+            reverse("committee_member_split", args=[committee.id]),
             reverse("committee_projects"),
             reverse("committee_project_edit", args=[project.id]),
             reverse("committee_schedule"),

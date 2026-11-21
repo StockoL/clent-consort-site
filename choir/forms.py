@@ -785,19 +785,55 @@ class InviteMemberForm(forms.Form):
         required=False,
         widget=forms.Select(attrs={"class": "form-control"}),
     )
+    # Inviting a parent for an under-18 singer (Build Order Phase 15): set
+    # from the singer's page, and linked as they sign up
+    guardian_of = forms.ModelChoiceField(
+        queryset=MemberProfile.objects.filter(is_under_18=True), required=False, widget=forms.HiddenInput
+    )
 
     def clean_email(self):
-        from allauth.account.models import EmailAddress
-        from invitations.utils import get_invitation_model
+        return check_new_email(self.cleaned_data["email"])
 
-        email = self.cleaned_data["email"].strip()
-        if User.objects.filter(email__iexact=email).exists() or EmailAddress.objects.filter(email__iexact=email).exists():
-            raise forms.ValidationError("Someone with this email address already has an account.")
-        if get_invitation_model().objects.filter(email__iexact=email).exists():
-            raise forms.ValidationError(
-                "This address has already been invited. Use Resend in the invitations list instead."
-            )
-        return email
+
+def check_new_email(email):
+    """An address that can be invited: nobody has it, and it hasn't
+    been invited already."""
+    from allauth.account.models import EmailAddress
+    from invitations.utils import get_invitation_model
+
+    email = email.strip()
+    if User.objects.filter(email__iexact=email).exists() or EmailAddress.objects.filter(email__iexact=email).exists():
+        raise forms.ValidationError("Someone with this email address already has an account.")
+    if get_invitation_model().objects.filter(email__iexact=email).exists():
+        raise forms.ValidationError(
+            "This address has already been invited. Use Resend in the invitations list instead."
+        )
+    return email
+
+
+def possible_guardians(exclude=None):
+    """Members who can be linked as a parent or guardian: active, with a
+    login of their own (so not another child without one), by name."""
+    users = User.objects.filter(is_active=True).exclude(password__startswith="!")
+    if exclude is not None:
+        users = users.exclude(pk=exclude.pk)
+    return users.order_by("first_name", "last_name", "username")
+
+
+class _MemberLabels:
+    """Members listed by name, with their email to tell two apart."""
+
+    def label_from_instance(self, user):
+        name = user.get_full_name() or user.username
+        return f"{name} ({user.email})" if user.email else name
+
+
+class MemberChoiceField(_MemberLabels, forms.ModelChoiceField):
+    pass
+
+
+class MembersChoiceField(_MemberLabels, forms.ModelMultipleChoiceField):
+    pass
 
 
 class MemberEditForm(forms.Form):
@@ -822,6 +858,14 @@ class MemberEditForm(forms.Form):
     is_exempt_from_subs = forms.BooleanField(required=False, label="Exempt from subscriptions")
     committee = forms.BooleanField(required=False, label="Committee member")
     is_active = forms.BooleanField(required=False, label="Active (can log in)")
+    # Build Order Phase 15: shown for an under-18 singer, or anyone who
+    # still has a parent linked
+    guardians = MembersChoiceField(
+        queryset=User.objects.none(),
+        required=False,
+        label="Parents or guardians",
+        widget=forms.SelectMultiple(attrs={"class": "form-control", "size": 6, "aria-describedby": "guardians-hint"}),
+    )
 
     def __init__(self, *args, member, editor, **kwargs):
         self.member = member
@@ -838,9 +882,11 @@ class MemberEditForm(forms.Form):
                 "is_exempt_from_subs": profile.is_exempt_from_subs,
                 "committee": member.groups.filter(name=COMMITTEE_GROUP).exists(),
                 "is_active": member.is_active,
+                "guardians": list(profile.guardians.all()),
             },
         )
         super().__init__(*args, **kwargs)
+        self.fields["guardians"].queryset = possible_guardians(exclude=member)
 
     @property
     def editing_self(self):
@@ -869,6 +915,7 @@ class MemberEditForm(forms.Form):
         profile.is_under_18 = data["is_under_18"]
         profile.is_exempt_from_subs = data["is_exempt_from_subs"]
         profile.save(update_fields=["voice_part", "is_singer", "is_under_18", "is_exempt_from_subs"])
+        profile.guardians.set(data["guardians"])
 
         group, _ = Group.objects.get_or_create(name=COMMITTEE_GROUP)
         if data["committee"]:
@@ -876,6 +923,60 @@ class MemberEditForm(forms.Form):
         else:
             member.groups.remove(group)
         return member
+
+
+class AddUnder18Form(forms.Form):
+    """Adds an under-18 singer (Build Order Phase 15): their name and
+    voice part, and their parent or guardian, either a member already or
+    someone to invite by email. The child gets no login of their own."""
+
+    first_name = forms.CharField(max_length=150, widget=forms.TextInput(attrs={"class": "form-control"}))
+    last_name = forms.CharField(max_length=150, widget=forms.TextInput(attrs={"class": "form-control"}))
+    voice_part = forms.ChoiceField(choices=MemberProfile.VOICE_CHOICES, widget=forms.Select(attrs={"class": "form-control"}))
+    parent = MemberChoiceField(
+        queryset=User.objects.none(),
+        required=False,
+        empty_label="Not a member yet: invite them below",
+        widget=forms.Select(attrs={"class": "form-control"}),
+    )
+    parent_email = forms.EmailField(
+        required=False, widget=forms.EmailInput(attrs={"class": "form-control", "placeholder": "name@example.com"})
+    )
+    parent_first_name = forms.CharField(max_length=150, required=False, widget=forms.TextInput(attrs={"class": "form-control"}))
+    parent_last_name = forms.CharField(max_length=150, required=False, widget=forms.TextInput(attrs={"class": "form-control"}))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["parent"].queryset = possible_guardians()
+
+    def clean_parent_email(self):
+        email = self.cleaned_data["parent_email"]
+        return check_new_email(email) if email else ""
+
+    def clean(self):
+        cleaned = super().clean()
+        if self.errors:
+            return cleaned
+        if cleaned.get("parent") and cleaned.get("parent_email"):
+            raise forms.ValidationError("Choose the parent from the members list or give an email address to invite, not both.")
+        if not cleaned.get("parent") and not cleaned.get("parent_email"):
+            raise forms.ValidationError(
+                "Choose their parent or guardian, or give an email address to invite them. "
+                "The choir contacts them, not the singer."
+            )
+        return cleaned
+
+
+class SplitMemberForm(forms.Form):
+    """The child's name, when splitting a parent's account that stood in
+    for them (Build Order Phase 15, choir.guardians.split_parent_record)."""
+
+    first_name = forms.CharField(
+        max_length=150, label="Child's first name", widget=forms.TextInput(attrs={"class": "form-control"})
+    )
+    last_name = forms.CharField(
+        max_length=150, label="Child's last name", widget=forms.TextInput(attrs={"class": "form-control"})
+    )
 
 
 class SubscriptionPaymentForm(forms.ModelForm):

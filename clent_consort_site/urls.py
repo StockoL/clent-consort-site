@@ -30,7 +30,9 @@ from choir.views import (
     committee_invitation_resend_view,
     committee_inbox_toggle_view,
     committee_inbox_view,
+    committee_member_add_child_view,
     committee_member_edit_view,
+    committee_member_split_view,
     committee_members_view,
     committee_poll_edit_view,
     committee_poll_manage_view,
@@ -154,6 +156,16 @@ urlpatterns = [
         "members/committee/members/<int:user_id>/",
         committee_member_edit_view,
         name="committee_member_edit",
+    ),
+    path(
+        "members/committee/members/add-under-18/",
+        committee_member_add_child_view,
+        name="committee_member_add_child",
+    ),
+    path(
+        "members/committee/members/<int:user_id>/split/",
+        committee_member_split_view,
+        name="committee_member_split",
     ),
     path(
         "members/committee/members/invitations/<int:invitation_id>/resend/",

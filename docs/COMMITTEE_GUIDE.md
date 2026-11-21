@@ -9,6 +9,7 @@ How to run the choir through the site, task by task. Everything here is done fro
 - [Subscriptions for a new project](#subscriptions-for-a-new-project)
 - [A new singer joins](#a-new-singer-joins)
 - [A singer leaves](#a-singer-leaves)
+- [Under-18 singers and their parents](#under-18-singers-and-their-parents)
 - [Changing someone's role](#changing-someones-role)
 - [Setting up a project](#setting-up-a-project)
 - [Scheduling rehearsals](#scheduling-rehearsals)
@@ -51,6 +52,29 @@ They get an email with a link to set a password, valid for three days. Until the
 
 They can no longer log in, and they drop out of RSVPs, the ledger and broadcasts. Their attendance history is kept. Tick Active again to bring them back. Accounts cannot be deleted from the site, so nothing is lost by mistake.
 
+## Under-18 singers and their parents
+
+An under-18 singer has their own record, under their own name and voice part, usually without a login. Their parent or guardian is linked to them as the person the choir contacts. On the members list a child shows "Parent: Jane Smith", and the parent shows "Parent of Alex Smith" in place of a voice part. Parents aren't counted as singers, so they stay out of the RSVP report and the ledger. An under-18 singer with no parent linked shows "No parent linked", which is worth fixing.
+
+To add an under-18 singer:
+
+1. Open Members and press Add an under-18 singer.
+2. Enter their name and voice part.
+3. Choose their parent if they're a member already. Otherwise give the parent's email address (and name, if you know it) to invite them.
+4. Press Add Singer.
+
+An invited parent is linked to the child when they sign up, and isn't made a singer. A second parent can be linked afterwards: open the singer's page, choose both under Parents or guardians (hold Ctrl, or Cmd on a Mac, to pick more than one), and save. "Invite a parent who isn't a member yet" there opens the invitation form set up for that singer. The Status filter's "Parents and guardians" lists every parent, and choosing a voice part also lists the parents of that part's under-18 singers.
+
+If a singer turns 18, untick Under 18. Their parent stays linked until you remove them from Parents or guardians; the message after saving links straight there.
+
+Some families signed up before this existed, with one account in the parent's name used for the child. To split one:
+
+1. Open that member's page and follow "This is a parent signed up for their child".
+2. Enter the child's name. The page says exactly what will move: the voice part, consents, medical notes, emergency contact, RSVPs, poll answers and subscription payments.
+3. Press the button, which names both people.
+
+The child then has their own record with all their history, and the parent keeps their login and email address, linked as the child's parent. Until the next update, broadcasts and reminders don't reach a parent about their child; that follows shortly.
+
 ## Changing someone's role
 
 Open Members, click their name, and change the ticks:
@@ -58,7 +82,7 @@ Open Members, click their name, and change the ticks:
 | Tick | Means |
 | --- | --- |
 | Singer | Gets RSVPs, appears in the ledger, polls, rosters and broadcasts. Untick for someone who has a login but does not sing. |
-| Under 18 | Flagged on the Duty of Care roster and the members list |
+| Under 18 | Flagged on the Duty of Care roster and the members list, and asks for their parents or guardians (see above) |
 | Exempt from subs | Shown as Exempt in the ledger and never asked to pay |
 | Committee | Can use every committee page |
 | Active | Can log in |

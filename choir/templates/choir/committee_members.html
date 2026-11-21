@@ -3,15 +3,19 @@
 {% block title %}Members - Clent Consort{% endblock title %}
 
 {% block page_title %}Members{% endblock page_title %}
-{% block page_lede %}Everyone with an account, inviting new members, and pending invitations.{% endblock page_lede %}
+{% block page_lede %}Everyone with an account, under-18 singers and their parents, inviting new members, and pending invitations.{% endblock page_lede %}
 
 {% block members_content %}
   <div class="switcher">
-    <section class="card flow" data-variant="invert">
-      <h2 class="text-primary text-step-1 card-heading">Invite a Member</h2>
+    <section class="card flow" data-variant="invert" id="invite" aria-labelledby="invite-title">
+      <h2 class="text-primary text-step-1 card-heading" id="invite-title">{% if inviting_for %}Invite a Parent{% else %}Invite a Member{% endif %}</h2>
+      {% if inviting_for %}
+      <p class="text-small settings-hint">Inviting a parent or guardian for {{ inviting_for.user.get_full_name }} ({{ inviting_for.get_voice_part_display }}, under 18). They'll be linked to {{ inviting_for.user.first_name }} as they sign up, and won't be counted as a singer. <a href="{% url 'committee_members' %}#invite">Invite someone else instead</a></p>
+      {% endif %}
       <p class="text-small settings-hint">They'll get an email with a link to set a password. The link lasts 3 days; you can resend it below.</p>
       <form method="POST" class="flow flow--small">
         {% csrf_token %}
+        {{ form.guardian_of }}
         <div class="form-group flow flow--small">
           <label for="{{ form.email.id_for_label }}" class="form-label text-small">Email address</label>
           {{ form.email }}
@@ -27,10 +31,12 @@
             {{ form.last_name }}
           </div>
         </div>
+        {% if not inviting_for %}
         <div class="form-group flow flow--small">
           <label for="{{ form.voice_part.id_for_label }}" class="form-label text-small">Voice part (optional)</label>
           {{ form.voice_part }}
         </div>
+        {% endif %}
         <button type="submit" class="button align-start" data-variant="primary">Send Invitation</button>
       </form>
     </section>
@@ -47,7 +53,7 @@
             {% if row.expired %}<span class="badge" data-status="warning">Expired</span>{% endif %}
             <br>
             <span class="text-small text-muted">
-              {% with p=inv.choir_profile %}{% if p.first_name or p.last_name %}{{ p.first_name }} {{ p.last_name }} · {% endif %}{% if p.voice_part %}{{ p.get_voice_part_display }} · {% endif %}{% endwith %}
+              {% with p=inv.choir_profile %}{% if p.first_name or p.last_name %}{{ p.first_name }} {{ p.last_name }} · {% endif %}{% if p.voice_part %}{{ p.get_voice_part_display }} · {% endif %}{% if p.guardian_of %}parent of {{ p.guardian_of.user.get_full_name }} · {% endif %}{% endwith %}
               {% if inv.sent %}sent {{ inv.sent|date:"j M Y" }}{% else %}not sent{% endif %}
             </span>
           </div>
@@ -67,6 +73,8 @@
 
   <section class="card flow" data-variant="invert">
     <h2 class="text-primary text-step-1 card-heading">Everyone</h2>
+    <p class="text-small settings-hint">An under-18 singer has their own record, usually without a login, and the choir contacts their parent or guardian about them.</p>
+    <div class="cluster"><a href="{% url 'committee_member_add_child' %}" class="button btn-small" data-variant="outline">Add an under-18 singer</a></div>
 
     <form method="GET" class="cluster ledger-term">
       <label for="members-part" class="text-small">Voice part</label>
@@ -79,6 +87,7 @@
       <select id="members-status" name="status">
         <option value="active"{% if status == 'active' %} selected{% endif %}>Active</option>
         <option value="inactive"{% if status == 'inactive' %} selected{% endif %}>Inactive</option>
+        <option value="parents"{% if status == 'parents' %} selected{% endif %}>Parents and guardians</option>
         <option value="all"{% if status == 'all' %} selected{% endif %}>All</option>
       </select>
       <button type="submit" class="button btn-small" data-variant="outline">Show</button>
@@ -103,18 +112,25 @@
           <td data-label="Name">
             <div>
               <a href="{% url 'committee_member_edit' u.id %}" class="text-link"><strong>{{ u.get_full_name|default:u.username }}</strong></a><br>
-              <span class="text-small text-muted">{{ u.email|default:"no email" }}</span>
+              <span class="text-small text-muted">{% if u.email %}{{ u.email }}{% elif not row.has_login %}no login{% else %}no email{% endif %}</span>
+              {% if row.guardians %}<br><span class="text-small">{{ row.guardians|length|pluralize:"Parent,Parents" }}: {% for g in row.guardians %}<a href="{% url 'committee_member_edit' g.id %}" class="text-link">{{ g.get_full_name|default:g.username }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</span>{% endif %}
             </div>
           </td>
-          <td data-label="Voice">{{ u.profile.get_voice_part_display|default:"-" }}</td>
+          <td data-label="Voice">
+            <div>
+              {% if u.profile.voice_part %}{{ u.profile.get_voice_part_display }}{% elif not row.children %}-{% endif %}
+              {% if row.children %}{% if u.profile.voice_part %}<br>{% endif %}<span class="text-small">Parent of {% for c in row.children %}<a href="{% url 'committee_member_edit' c.id %}" class="text-link">{{ c.get_full_name|default:c.username }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</span>{% endif %}
+            </div>
+          </td>
           <td data-label="Roles" class="text-small">
             <div>
               {% if u.profile.is_singer %}<span class="badge">Singer</span>{% endif %}
               {% if row.committee %}<span class="badge" data-status="success">Committee</span>{% endif %}
               {% if u.profile.is_under_18 %}<span class="data-table__flag">Under 18</span>{% endif %}
+              {% if row.no_parent %}<span class="badge" data-status="warning">No parent linked</span>{% endif %}
             </div>
           </td>
-          <td data-label="Last login" class="text-small">{{ u.last_login|date:"j M Y"|default:"Never" }}</td>
+          <td data-label="Last login" class="text-small">{% if row.has_login %}{{ u.last_login|date:"j M Y"|default:"Never" }}{% else %}No login{% endif %}</td>
           <td data-label="Status">{% if u.is_active %}<span class="badge" data-status="success">Active</span>{% else %}<span class="badge">Inactive</span>{% endif %}</td>
         </tr>
         {% endwith %}
