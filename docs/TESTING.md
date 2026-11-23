@@ -73,8 +73,10 @@ Headless Chrome will not make a window narrower than 500 pixels, so for true 375
 After every deploy I check the live site by hand.
 
 1. As a singer, on my phone: dashboard, change an RSVP, Repertoire, a voice-part hub, open a PDF, Looking Ahead.
-2. As a committee member: Committee Hub, Financials, RSVPs, Events.
-3. Check Render's log for errors.
+2. In the hub's practice player, on my phone: play a track, tap a section so it loops, nudge a marker with its minus or plus button, then switch the loop off and hear the track play on past the marker.
+3. As a parent of an under-18 singer, on my phone: the child's card on the dashboard, change their RSVP, and their details under Settings.
+4. As a committee member: Committee Hub, Financials, RSVPs, Events.
+5. Check Render's log for errors.
 
 Only then do I start the next piece of work. Changes that add features get their own check too, such as inviting a test address and signing up with it on the live site.
 
