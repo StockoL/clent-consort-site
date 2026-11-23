@@ -19,9 +19,7 @@ from django.utils.html import format_html, strip_tags
 from django.views.decorators.http import require_POST
 
 from .forms import (
-    AuditionForm,
     CommitteeDocumentForm,
-    EnquiryForm,
     ProfileUpdateForm,
     UserUpdateForm,
 )
@@ -97,23 +95,30 @@ def events_view(request):
 
 def contact_view(request):
     """
-    Traffic controller handling both public contact enquiries and
-    audition applications from a unified frontend view.
+    The contact page's one form (Build Order Phase 16, forms.ContactForm):
+    a general enquiry or booking is saved as an Enquiry, a request to join
+    as an AuditionApplication, and the committee is emailed either way.
+    ?subject=join (or booking) opens the form on that subject.
     """
+    from .forms import ContactForm
+
     if request.method == "POST":
-        # Route the POST data to the correct form based on the presence of 'voice_part'
-        if "voice_part" in request.POST:
-            form = AuditionForm(request.POST)
-            is_audition = True
-        else:
-            form = EnquiryForm(request.POST)
-            is_audition = False
+        data = request.POST.copy()
+        # Pages opened before the one-form page went live (November 2026)
+        # still send the old forms' fields: the joining form had no
+        # subject. This can go after a few weeks.
+        if "subject" not in data:
+            if "voice_part" in data:
+                data["subject"] = "join"
+            elif "message" in data:
+                data["subject"] = "general"
+        form = ContactForm(data)
 
         if form.is_valid():
             submission = form.save()
 
-            # Construct the appropriate email payload based on the form type
-            if is_audition:
+            # The email depends on which kind was saved
+            if isinstance(submission, AuditionApplication):
                 email_subject = f"New Audition Request: {submission.name} ({submission.get_voice_part_display()})"
                 email_body = f"Name: {submission.name}\nEmail: {submission.email}\nVoice Part: {submission.get_voice_part_display()}\n\nExperience:\n{submission.experience}"
             else:
@@ -134,38 +139,23 @@ def contact_view(request):
             )
             return redirect("contact")
 
+        # Re-render with the bound form rather than redirecting, so nothing
+        # typed is lost and the faulty field is marked; it shows in the
+        # state of the subject sent. A whole-form problem (the spam checks'
+        # timing, forms.SpamChecks) highlights no field, so the banner
+        # gives its reason instead.
+        visible_errors = [name for name in form.errors if name not in ("__all__", "website")]
+        if form.non_field_errors() and not visible_errors:
+            messages.error(request, form.non_field_errors()[0])
         else:
-            # Re-render with the bound (invalid) form instead of redirecting -
-            # a redirect starts a fresh GET, which meant the user lost every
-            # field they'd typed and never saw *which* field was wrong, only
-            # a generic banner. The other form on the page still gets a
-            # clean, empty instance since it wasn't the one submitted.
-            # A whole-form problem (the spam checks' timing, forms.SpamChecks)
-            # highlights no field, so the banner gives its reason instead
-            visible_errors = [name for name in form.errors if name not in ("__all__", "website")]
-            if form.non_field_errors() and not visible_errors:
-                messages.error(request, form.non_field_errors()[0])
-            else:
-                messages.error(
-                    request, "There was an error with your submission. Please check the highlighted fields."
-                )
-            if is_audition:
-                enquiry_form = EnquiryForm()
-                audition_form = form
-            else:
-                enquiry_form = form
-                audition_form = AuditionForm()
-
+            messages.error(
+                request, "There was an error with your submission. Please check the highlighted fields."
+            )
     else:
-        # GET Request: Initialize fresh, empty forms to send to the template
-        enquiry_form = EnquiryForm()
-        audition_form = AuditionForm()
+        subject = request.GET.get("subject")
+        form = ContactForm(initial={"subject": subject} if subject in dict(ContactForm.SUBJECTS) else None)
 
-    context = {
-        "enquiry_form": enquiry_form,
-        "audition_form": audition_form,
-    }
-    return render(request, "choir/contact.html", context)
+    return render(request, "choir/contact.html", {"form": form})
 
 
 # ==============================================================================

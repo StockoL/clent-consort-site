@@ -173,6 +173,81 @@ class AuditionForm(SpamChecks, forms.ModelForm):
         return bot_catcher
 
 
+class ContactForm(SpamChecks, forms.Form):
+    """
+    The contact page's one form (Build Order Phase 16). Its Subject decides
+    what it is: General Enquiry or Concert Booking (saved as an Enquiry,
+    and needing a message), or Join the Consort (saved as an
+    AuditionApplication, needing a voice type, with experience optional).
+    clean() holds those rules, so they apply with or without the page's
+    script (js/contact-form.js), which only hides the fields that don't
+    apply. The subject choices live here, not on Enquiry.SUBJECT_CHOICES,
+    as changing a model's choices would need a migration.
+
+    EnquiryForm and AuditionForm above are no longer used by the page, and
+    can go in a later clean-up.
+    """
+
+    SUBJECTS = [("general", "General Enquiry"), ("booking", "Concert Booking"), ("join", "Join the Consort")]
+
+    subject = forms.ChoiceField(choices=SUBJECTS, initial="general")
+    name = forms.CharField(max_length=100, widget=forms.TextInput(attrs={"placeholder": "Jane Doe", "autocomplete": "name"}))
+    email = forms.EmailField(widget=forms.EmailInput(attrs={"placeholder": "jane@example.com", "autocomplete": "email"}))
+    message = forms.CharField(
+        required=False, widget=forms.Textarea(attrs={"rows": 5, "placeholder": "Type your message here..."})
+    )
+    voice_part = forms.ChoiceField(
+        required=False,
+        choices=[("", "Choose your voice type")] + AuditionApplication.VOICE_CHOICES,
+        label="Voice Type",
+    )
+    experience = forms.CharField(
+        required=False,
+        label="Choral Experience",
+        widget=forms.Textarea(attrs={"rows": 4, "placeholder": "Tell us a bit about your choral experience..."}),
+    )
+    # THE HONEYPOT: hidden from people (and screen readers) by .honeypot;
+    # bots fill it in
+    website = forms.CharField(
+        required=False,
+        label="Leave this field empty",
+        widget=forms.TextInput(
+            attrs={"class": "honeypot", "id": "contact-website", "tabindex": "-1", "autocomplete": "off"}
+        ),
+    )
+
+    @property
+    def joining(self):
+        """Whether the form is (or was sent as) the joining form."""
+        value = self.data.get("subject") if self.is_bound else self.initial.get("subject", self.fields["subject"].initial)
+        return value == "join"
+
+    def clean_website(self):
+        if self.cleaned_data.get("website"):
+            raise forms.ValidationError("Automated submission detected.")
+        return ""
+
+    def clean(self):
+        joining = self.data.get("subject") == "join"
+        # SpamChecks counts the links in whichever free text applies
+        self.free_text_field = "experience" if joining else "message"
+        if joining and not self.data.get("voice_part"):
+            self.add_error("voice_part", "Please choose your voice type.")
+        if not joining and not (self.data.get("message") or "").strip():
+            self.add_error("message", "Please write a message.")
+        return super().clean()
+
+    def save(self):
+        """Saves an AuditionApplication for Join the Consort, otherwise an
+        Enquiry, and returns it."""
+        data = self.cleaned_data
+        if data["subject"] == "join":
+            return AuditionApplication.objects.create(
+                name=data["name"], email=data["email"], voice_part=data["voice_part"], experience=data["experience"]
+            )
+        return Enquiry.objects.create(name=data["name"], email=data["email"], subject=data["subject"], message=data["message"])
+
+
 class UserUpdateForm(forms.ModelForm):
     """
     Allows members to update their core account details.

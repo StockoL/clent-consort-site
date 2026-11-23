@@ -60,15 +60,15 @@ The Events page shows the next public performance, recent performances with thei
 
 ### Sending a booking enquiry
 
-A precentor fills in the enquiry form and sends it. The page confirms it was received. The same enquiry appears in the committee's inbox further down this page.
+A precentor chooses Concert Booking on the contact form, fills it in and sends it. The page confirms it was received. The same enquiry appears in the committee's inbox further down this page.
 
 | Form filled in | Sent |
 | --- | --- |
 | ![Enquiry form filled in](images/journeys/public/contact-enquiry-filled-phone.jpg) | ![Enquiry confirmation](images/journeys/public/contact-enquiry-sent-phone.jpg) |
 
-The audition form sits beside it on the same page.
+A singer chooses Join the Consort instead, and the form asks for their voice type and choral experience in place of a message. A link to `/contact/?subject=join` opens it this way, as on a desktop here.
 
-![Contact page on a desktop](images/journeys/public/contact-desktop.jpg)
+![Contact page on a desktop, as the joining form](images/journeys/public/contact-desktop.jpg)
 
 ### A page that does not exist
 

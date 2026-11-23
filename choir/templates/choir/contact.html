@@ -1,100 +1,84 @@
-{% extends 'choir/base.html' %} 
-{% load static %} 
+{% extends 'choir/base.html' %}
+{% load static %}
 
-{% block title %}Contact - Clent Consort{% endblock %} 
+{% block title %}Contact - Clent Consort{% endblock %}
 
 {% block content %}
 <div class="wrapper flow flow--large section-padding">
   <section class="contact-hero flow flow--small">
     <h1 class="text-step-3">Connect With Us</h1>
     <p>
-      Whether you are looking to bring our music to your next event or you are a
-      singer interested in joining our ranks, we would love to hear from you.
-      Simply scroll to the relevant section below to get started.
+      Whether you'd like to book us for an event or you're a singer interested
+      in joining, we'd love to hear from you. Choose a subject below to get
+      started.
     </p>
   </section>
 
-  <div id="form-section" class="flow">
-    <div class="switcher contact-forms-layout">
-      
-      <section class="card contact-form-container flow" data-variant="invert">
-        <h2 class="text-step-1">General Enquiry</h2>
-        <form action="{% url 'contact' %}" method="POST" class="flow">
-          {% csrf_token %}
-          {# Spam trap: hidden from people, filled in by bots (see clean_website). Labelled in case the stylesheet doesn't load. #}
-          <label for="{{ enquiry_form.website.id_for_label }}" class="honeypot">{{ enquiry_form.website.label }}</label>
-          {{ enquiry_form.website }}
-          {# When the form was shown, signed; a form sent too soon after is refused (forms.SpamChecks) #}
-          {{ enquiry_form.started }}
-          {% if enquiry_form.non_field_errors %}<div class="form-error" role="alert">{{ enquiry_form.non_field_errors }}</div>{% endif %}
+  {% comment %}
+    One form (Build Order Phase 16, forms.ContactForm). Its Subject decides
+    which group applies: the message, or joining's voice type and
+    experience. js/contact-form.js hides and disables the group that
+    doesn't apply; without it both show, with notes saying which is for
+    what, and the server's rules decide what's required.
+  {% endcomment %}
+  <section id="form-section" class="card contact-form-container contact-form-card flow" data-variant="invert" aria-labelledby="contact-title">
+    <h2 class="text-step-1" id="contact-title">Get in Touch</h2>
+    <form action="{% url 'contact' %}" method="POST" class="flow" data-contact-form>
+      {% csrf_token %}
+      {# Spam trap: hidden from people, filled in by bots (see clean_website). Labelled in case the stylesheet doesn't load. #}
+      <label for="{{ form.website.id_for_label }}" class="honeypot">{{ form.website.label }}</label>
+      {{ form.website }}
+      {# When the form was shown, signed; a form sent too soon after is refused (forms.SpamChecks) #}
+      {{ form.started }}
+      {% if form.non_field_errors %}<div class="form-error" role="alert">{{ form.non_field_errors }}</div>{% endif %}
 
-          <div class="form-group flow flow--small">
-            <label for="{{ enquiry_form.subject.id_for_label }}">Subject</label>
-            {{ enquiry_form.subject }}
-            <div class="form-error">{{ enquiry_form.subject.errors }}</div>
-          </div>
+      <div class="form-group flow flow--small">
+        <label for="{{ form.subject.id_for_label }}">Subject</label>
+        {{ form.subject }}
+        <div class="form-error">{{ form.subject.errors }}</div>
+      </div>
 
-          <div class="form-group flow flow--small">
-            <label for="{{ enquiry_form.name.id_for_label }}">Name</label>
-            {{ enquiry_form.name }}
-            <div class="form-error">{{ enquiry_form.name.errors }}</div>
-          </div>
+      <div class="form-group flow flow--small">
+        <label for="{{ form.name.id_for_label }}">Name</label>
+        {{ form.name }}
+        <div class="form-error">{{ form.name.errors }}</div>
+      </div>
 
-          <div class="form-group flow flow--small">
-            <label for="{{ enquiry_form.email.id_for_label }}">Email</label>
-            {{ enquiry_form.email }}
-            <div class="form-error">{{ enquiry_form.email.errors }}</div>
-          </div>
+      <div class="form-group flow flow--small">
+        <label for="{{ form.email.id_for_label }}">Email</label>
+        {{ form.email }}
+        <div class="form-error">{{ form.email.errors }}</div>
+      </div>
 
-          <div class="form-group flow flow--small">
-            <label for="{{ enquiry_form.message.id_for_label }}">Message</label>
-            {{ enquiry_form.message }}
-            <div class="form-error">{{ enquiry_form.message.errors }}</div>
-          </div>
+      <div class="form-group flow flow--small" data-contact-group="enquiry">
+        <label for="{{ form.message.id_for_label }}">Message<span data-contact-note> (not needed if you're joining)</span></label>
+        {{ form.message }}
+        <div class="form-error">{{ form.message.errors }}</div>
+      </div>
 
-          <button type="submit" class="button" data-variant="primary">Send Message</button>
-        </form>
-      </section>
+      <fieldset class="contact-join flow" data-contact-group="join">
+        <legend>Joining the Consort<span data-contact-note> (only if you chose Join the Consort)</span></legend>
+        <p class="text-small">We'll be in touch about coming to a rehearsal.</p>
 
-      <section class="card contact-form-container flow" data-variant="invert">
-        <h2 class="text-step-1">Join the Consort</h2>
-        <form action="{% url 'contact' %}" method="POST" class="flow">
-          {% csrf_token %}
-          {# Spam trap: hidden from people, filled in by bots (see clean_website). Labelled in case the stylesheet doesn't load. #}
-          <label for="{{ audition_form.website.id_for_label }}" class="honeypot">{{ audition_form.website.label }}</label>
-          {{ audition_form.website }}
-          {{ audition_form.started }}
-          {% if audition_form.non_field_errors %}<div class="form-error" role="alert">{{ audition_form.non_field_errors }}</div>{% endif %}
+        <div class="form-group flow flow--small">
+          <label for="{{ form.voice_part.id_for_label }}">{{ form.voice_part.label }}</label>
+          {{ form.voice_part }}
+          <div class="form-error">{{ form.voice_part.errors }}</div>
+        </div>
 
-          <div class="form-group flow flow--small">
-            <label for="{{ audition_form.name.id_for_label }}">Name</label>
-            {{ audition_form.name }}
-            <div class="form-error">{{ audition_form.name.errors }}</div>
-          </div>
+        <div class="form-group flow flow--small">
+          <label for="{{ form.experience.id_for_label }}">{{ form.experience.label }}</label>
+          {{ form.experience }}
+          <div class="form-error">{{ form.experience.errors }}</div>
+        </div>
+      </fieldset>
 
-          <div class="form-group flow flow--small">
-            <label for="{{ audition_form.email.id_for_label }}">Email</label>
-            {{ audition_form.email }}
-            <div class="form-error">{{ audition_form.email.errors }}</div>
-          </div>
-
-          <div class="form-group flow flow--small">
-            <label for="{{ audition_form.voice_part.id_for_label }}">Voice Type</label>
-            {{ audition_form.voice_part }}
-            <div class="form-error">{{ audition_form.voice_part.errors }}</div>
-          </div>
-
-          <div class="form-group flow flow--small">
-            <label for="{{ audition_form.experience.id_for_label }}">Choral Experience</label>
-            {{ audition_form.experience }}
-            <div class="form-error">{{ audition_form.experience.errors }}</div>
-          </div>
-
-          <button type="submit" class="button" data-variant="primary">Register Your Interest</button>
-        </form>
-      </section>
-
-    </div>
-  </div>
+      <button type="submit" class="button" data-variant="primary" data-contact-submit>{% if form.joining %}Register Your Interest{% else %}Send Message{% endif %}</button>
+    </form>
+  </section>
 </div>
 {% endblock content %}
+
+{% block scripts %}
+<script src="{% static 'js/contact-form.js' %}" defer></script>
+{% endblock scripts %}

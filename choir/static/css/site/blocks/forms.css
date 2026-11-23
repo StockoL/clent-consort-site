@@ -15,17 +15,34 @@
   margin-inline: auto;
 }
 
-.contact-forms-layout {
-  --switcher-threshold: 60rem;
-  max-width: 75rem;
+/* The contact page's one form (Build Order Phase 16), centred at a
+   comfortable reading width */
+.contact-form-card {
+  width: 100%;
+  max-width: 38rem;
   margin-inline: auto;
-  gap: var(--space-m);
-  align-items: flex-start;
 }
 
-.contact-form-container {
-  flex: 1 1 25rem;
-  max-width: 35rem;
+/* The joining group: its own fieldset, so without JavaScript its legend
+   says when it applies */
+.contact-join {
+  margin-inline: 0;
+  padding: 0;
+  border: 0;
+}
+
+.contact-join > legend {
+  padding: 0;
+  margin-bottom: var(--space-2xs);
+  color: #c9a45e;
+  font-family: var(--fonts-heading);
+  font-size: var(--step-0);
+  font-weight: 700;
+}
+
+/* The legend's own margin is the gap; the flow's would double it */
+.contact-join > legend + * {
+  margin-top: 0;
 }
 
 .contact-form-container h2 {

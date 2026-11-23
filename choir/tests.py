@@ -450,69 +450,118 @@ def started_ago(seconds):
 
 
 class ContactFormTests(TestCase):
-    """Guards against contact_view redirecting (losing the user's input and
-    field-specific errors) instead of re-rendering the bound form on a
-    validation failure."""
+    """Build Order Phase 16: the contact page has one form, whose Subject
+    (General Enquiry, Concert Booking, Join the Consort) decides whether
+    it's an Enquiry or an AuditionApplication. Re-renders the bound form on
+    a mistake, rather than redirecting and losing what was typed."""
 
-    def test_invalid_enquiry_rerenders_with_errors_and_preserves_input(self):
-        response = self.client.post(
-            reverse("contact"),
-            {
-                "name": "Jane Doe",
-                "email": "not-an-email",
-                "subject": "general",
-                "message": "Hello there",
-            },
-        )
+    def post(self, **data):
+        payload = {"subject": "general", "name": "Jane Doe", "email": "jane@example.com", "message": "", "voice_part": "", "experience": "", "started": started_ago(10)}
+        payload.update(data)
+        return self.client.post(reverse("contact"), payload)
+
+    def test_one_form_with_three_subjects(self):
+        response = self.client.get(reverse("contact"))
+        html = response.content.decode()
+        self.assertEqual(html.count(f'action="{reverse("contact")}"'), 1)
+        self.assertEqual(html.count('name="subject"'), 1)
+        for value, label in [("general", "General Enquiry"), ("booking", "Concert Booking"), ("join", "Join the Consort")]:
+            self.assertIn(f'<option value="{value}"', html)
+            self.assertIn(label, html)
+        self.assertContains(response, "Send Message")
+        self.assertContains(response, "Joining the Consort<span data-contact-note> (only if you chose Join the Consort)</span>")
+        self.assertContains(response, "js/contact-form")
+
+    def test_subject_join_preselects_joining_and_unknown_is_ignored(self):
+        response = self.client.get(reverse("contact"), {"subject": "join"})
+        self.assertContains(response, '<option value="join" selected>')
+        self.assertContains(response, "Register Your Interest")
+        response = self.client.get(reverse("contact"), {"subject": "booking"})
+        self.assertContains(response, '<option value="booking" selected>')
+        response = self.client.get(reverse("contact"), {"subject": "nonsense"})
+        self.assertContains(response, '<option value="general" selected>')
+
+    def test_joining_creates_an_audition_application_and_emails_the_committee(self):
+        response = self.post(subject="join", voice_part="tenor", experience="Ten years in a chamber choir")
+        self.assertRedirects(response, reverse("contact"))
+        application = AuditionApplication.objects.get()
+        self.assertEqual((application.voice_part, application.experience), ("tenor", "Ten years in a chamber choir"))
+        self.assertFalse(Enquiry.objects.exists())
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject, "New Audition Request: Jane Doe (Tenor)")
+
+    def test_joining_needs_a_voice_part_but_no_message(self):
+        response = self.post(subject="join")
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(response.context["enquiry_form"].is_valid())
-        self.assertEqual(
-            response.context["enquiry_form"]["name"].value(), "Jane Doe"
-        )
+        form = response.context["form"]
+        self.assertEqual(list(form.errors), ["voice_part"])
+        self.assertTrue(form.joining)
+        self.assertContains(response, "Please choose your voice type.")
+        self.assertContains(response, "Register Your Interest")
+        self.assertEqual(form["name"].value(), "Jane Doe")
+        self.assertRedirects(self.post(subject="join", voice_part="alto"), reverse("contact"))
+
+    def test_a_general_enquiry_needs_a_message(self):
+        response = self.post()
+        self.assertEqual(list(response.context["form"].errors), ["message"])
+        self.assertContains(response, "Please write a message.")
+        self.assertFalse(Enquiry.objects.exists())
+        self.assertRedirects(self.post(message="Hello there", voice_part="bass"), reverse("contact"))
+        enquiry = Enquiry.objects.get()
+        self.assertEqual((enquiry.subject, enquiry.message), ("general", "Hello there"))
+        self.assertFalse(AuditionApplication.objects.exists())
+        self.assertEqual(mail.outbox[0].subject, "Website Enquiry: General Enquiry - Jane Doe")
+
+    def test_a_booking_is_recorded_as_one(self):
+        self.post(subject="booking", message="A wedding in June")
+        self.assertEqual(Enquiry.objects.get().subject, "booking")
+
+    def test_invalid_input_is_kept(self):
+        response = self.post(email="not-an-email", message="Hello there")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["form"]["message"].value(), "Hello there")
         self.assertFalse(Enquiry.objects.exists())
 
-    def test_valid_enquiry_still_redirects(self):
-        response = self.client.post(
-            reverse("contact"),
-            {
-                "name": "Jane Doe",
-                "email": "jane@example.com",
-                "subject": "general",
-                "message": "Hello there",
-                "started": started_ago(10),
-            },
-        )
-        self.assertRedirects(response, reverse("contact"))
-        self.assertTrue(Enquiry.objects.filter(email="jane@example.com").exists())
+    def test_pages_opened_before_the_change_still_send(self):
+        old_join = {"name": "John Smith", "email": "john@example.com", "voice_part": "bass", "experience": "", "started": started_ago(10)}
+        self.assertRedirects(self.client.post(reverse("contact"), old_join), reverse("contact"))
+        self.assertEqual(AuditionApplication.objects.get().voice_part, "bass")
+        old_enquiry = {"name": "Ann", "email": "ann@example.com", "message": "Hello", "started": started_ago(10)}
+        self.assertRedirects(self.client.post(reverse("contact"), old_enquiry), reverse("contact"))
+        self.assertEqual(Enquiry.objects.get().subject, "general")
+
+    def test_the_inbox_shows_both_kinds(self):
+        self.post(subject="join", voice_part="alto")
+        self.post(subject="booking", message="A wedding")
+        create_committee_user(username="committee", password="pw")
+        self.client.login(username="committee", password="pw")
+        response = self.client.get(reverse("committee_inbox"))
+        self.assertContains(response, "Alto")
+        self.assertContains(response, "A wedding")
 
 
 class ContactHoneypotTests(TestCase):
     """The spam-trap field is on the page (it never used to be rendered,
-    so it caught nothing) and a submission that fills it in is dropped."""
+    so it caught nothing) and a submission that fills it in is dropped,
+    whichever kind it is."""
 
-    def test_both_forms_render_the_hidden_trap(self):
+    def test_the_form_renders_one_hidden_trap(self):
         response = self.client.get(reverse("contact"))
-        self.assertContains(response, 'id="enquiry-website"', count=1)
-        self.assertContains(response, 'id="audition-website"', count=1)
-        self.assertContains(response, 'name="website" class="honeypot"', count=2)
-        # Each is labelled too (hidden the same way), in case the stylesheet doesn't load
-        self.assertContains(response, 'class="honeypot">Leave this field empty</label>', count=2)
+        self.assertContains(response, 'id="contact-website"', count=1)
+        self.assertContains(response, 'name="website" class="honeypot"', count=1)
+        # Labelled too (hidden the same way), in case the stylesheet doesn't load
+        self.assertContains(response, 'class="honeypot">Leave this field empty</label>', count=1)
 
-    def test_filled_trap_blocks_the_enquiry(self):
-        self.client.post(
-            reverse("contact"),
-            {
-                "name": "Spam Bot",
-                "email": "bot@example.com",
-                "subject": "general",
-                "message": "Buy now",
-                "website": "http://spam.example.com",
-            },
-        )
-        self.assertFalse(Enquiry.objects.exists())
+    def test_filled_trap_blocks_both_kinds(self):
+        base = {"name": "Spam Bot", "email": "bot@example.com", "website": "http://spam.example.com", "started": started_ago(10)}
+        self.client.post(reverse("contact"), {**base, "subject": "general", "message": "Buy now"})
+        self.client.post(reverse("contact"), {**base, "subject": "join", "voice_part": "tenor"})
+        self.assertFalse(Enquiry.objects.exists() or AuditionApplication.objects.exists())
+        self.assertEqual(mail.outbox, [])
+
 
 class ContactSpamChecksTests(TestCase):
-    """The contact forms refuse what looks automated, beyond the honeypot:
+    """The contact form refuses what looks automated, beyond the honeypot:
     sent too quickly after the page opened, never opened in a browser, or
     stuffed with links. A person caught by mistake is told how to send."""
 
@@ -522,13 +571,13 @@ class ContactSpamChecksTests(TestCase):
         return self.client.post(reverse("contact"), data)
 
     def audition(self, **changes):
-        data = {"name": "John Smith", "email": "john@example.com", "voice_part": "tenor", "experience": "Ten years", "started": started_ago(10)}
+        data = {"name": "John Smith", "email": "john@example.com", "subject": "join", "voice_part": "tenor", "experience": "Ten years", "started": started_ago(10)}
         data.update(changes)
         return self.client.post(reverse("contact"), data)
 
-    def test_the_page_carries_a_signed_start_time_for_each_form(self):
+    def test_the_page_carries_a_signed_start_time(self):
         html = self.client.get(reverse("contact")).content.decode()
-        self.assertEqual(len(re.findall(r'<input type="hidden" name="started" value="[^"]+:[^"]+"', html)), 2)
+        self.assertEqual(len(re.findall(r'<input type="hidden" name="started" value="[^"]+:[^"]+"', html)), 1)
 
     def test_a_normal_enquiry_and_audition_go_through(self):
         self.assertRedirects(self.enquiry(message="Our website is https://example.org"), reverse("contact"))
@@ -545,7 +594,7 @@ class ContactSpamChecksTests(TestCase):
         self.assertIn("press the button again", banner[0])
         self.assertFalse(Enquiry.objects.exists())
         # The redisplayed form keeps the original start time, so pressing again works
-        token = response.context["enquiry_form"]["started"].value()
+        token = response.context["form"]["started"].value()
         self.assertEqual(token, response.wsgi_request.POST["started"])
 
     def test_a_page_left_open_a_long_time_still_sends(self):
