@@ -22,7 +22,7 @@ The choir's photograph fills the first screen, with the strapline "Ancient Spire
 
 ### About
 
-How the choir works: its approach, a note from the conductor, and how a project runs from first rehearsal to residency, told over three slides with still photographs behind them, which load as the visitor scrolls near (they were looping videos until November 2026). A Spotify embed gives a sample of the choir's sound, and also loads only as the visitor reaches it.
+How the choir works: its approach, a note from the conductor, and how a project runs from first rehearsal to residency, told over three slides with still photographs behind them, which load as the visitor scrolls near (they were looping videos until November 2026). A Spotify embed gives a sample of the choir's sound, and also loads only as the visitor reaches it. The page ends with Sing with Us, whose Register Your Interest button opens the contact form as the joining form (`/contact/?subject=join`).
 
 ### Events
 

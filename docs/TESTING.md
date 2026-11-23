@@ -17,7 +17,7 @@ How I test the site: an automated suite that runs before every change ships, bro
 
 ## Automated tests
 
-The suite has 331 tests in 65 classes, in `choir/tests.py`. On 23 November 2026 all 331 pass.
+The suite has 332 tests in 65 classes, in `choir/tests.py`. On 23 November 2026 all 332 pass.
 
 ```bash
 python scripts/dev.py test     # build the CSS bundle, collectstatic, then the whole suite

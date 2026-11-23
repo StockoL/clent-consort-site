@@ -149,6 +149,17 @@
     </div>
   </div>
 </section>
+
+{# Opens the contact form as the joining form (Build Order Phase 16) #}
+<section class="wrapper flow section-padding text-center" aria-labelledby="sing-with-us-title">
+  <h2 id="sing-with-us-title">Sing with Us</h2>
+  <p class="u-measure mx-auto">
+    We bring singers together for each project. Tell us your voice type and a
+    little about your choral experience, and we'll be in touch about coming
+    to a rehearsal.
+  </p>
+  <p><a href="{% url 'contact' %}?subject=join" class="button" data-variant="primary">Register Your Interest</a></p>
+</section>
 {% endblock %}
 {% block scripts %}
 <script src="{% static 'js/project-carousel.js' %}" defer></script>

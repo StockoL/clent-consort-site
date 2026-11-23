@@ -4414,6 +4414,11 @@ class PublicMobilePassTests(TestCase):
         self.assertContains(response, '<h1 class="visually-hidden">About Clent Consort</h1>', html=True)
         self.assertContains(response, 'title="Clent Consort repertoire playlist on Spotify"')
 
+    def test_about_invites_singers_to_the_joining_form(self):
+        join = reverse("contact") + "?subject=join"
+        self.assertContains(self.client.get(reverse("about")), f'<a href="{join}" class="button" data-variant="primary">Register Your Interest</a>', html=True)
+        self.assertContains(self.client.get(join), '<option value="join" selected>')
+
     def test_about_media_below_the_banner_waits_until_its_near(self):
         # The carousel's images and the Spotify embed held up the banner on phones
         content = self.client.get(reverse("about")).content.decode()
