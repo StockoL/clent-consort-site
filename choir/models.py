@@ -7,7 +7,7 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
-from django.utils.html import strip_tags
+from django.utils.html import format_html, strip_tags
 from tinymce.models import HTMLField
 
 # ==============================================================================
@@ -745,22 +745,42 @@ class ChoirCommunication(models.Model):
     def is_sent(self):
         return self.status == "SENT"
 
-    def recipients(self):
-        """Active singers (MemberProfile.is_singer) in the audience, with an
-        email address."""
-        users = User.objects.filter(is_active=True, profile__is_singer=True).exclude(email="")
+    def singers(self):
+        """Active singers (MemberProfile.is_singer) in the audience, with
+        their parents or guardians loaded. Parents are never counted in a
+        voice part: they aren't singers."""
+        users = User.objects.filter(is_active=True, profile__is_singer=True)
         if self.audience != "ALL":
             users = users.filter(profile__voice_part=self.audience[0])
-        return users.order_by("first_name", "last_name")
+        return users.select_related("profile").prefetch_related("profile__guardians").order_by("first_name", "last_name")
 
-    def _email(self, to, subject=None):
+    def contacts(self):
+        """Who gets a copy (Build Order Phase 15c, choir.guardians.contacts_for):
+        (contacts, unreachable). Adults themselves; an under-18's parents
+        or guardians, and the singer if they have an address; nobody
+        twice."""
+        from .guardians import contacts_for
+
+        return contacts_for(self.singers())
+
+    def recipients(self):
+        """The Users who get a copy."""
+        return [contact.user for contact in self.contacts()[0]]
+
+    def _email(self, to, subject=None, opening=""):
+        """The email; opening, when given, is a line before the message
+        (a parent's copy says whose parent they're receiving it as)."""
+        html, text = self.message, strip_tags(self.message)
+        if opening:
+            html = format_html("<p><em>{}</em></p>", opening) + html
+            text = f"{opening}\n\n{text}"
         message = EmailMultiAlternatives(
             subject=subject or self.subject,
-            body=strip_tags(self.message),  # plain-text fallback
+            body=text,  # plain-text fallback
             from_email=settings.DEFAULT_FROM_EMAIL,
             to=to,
         )
-        message.attach_alternative(self.message, "text/html")
+        message.attach_alternative(html, "text/html")
         return message
 
     def send_test(self, user):
@@ -770,47 +790,63 @@ class ChoirCommunication(models.Model):
 
     def send(self):
         """
-        Send to every recipient, once. One API call: with merge_data set,
-        Anymail's Brevo backend sends a separate copy to each address
-        (batch sending), so members never see each other's addresses.
+        Send to every recipient, once. With merge_data set, Anymail's Brevo
+        backend sends a separate copy to each address (batch sending), so
+        members never see each other's addresses. Singers' own copies go
+        in one API call; parents' copies, which open with a line naming
+        their children (Build Order Phase 15c), go in one call per
+        distinct line, as a batch gives everyone the same body.
 
         Marked SENT before sending, so a failure part-way can never lead to
         a second send. Any error is recorded per recipient in
-        BroadcastDelivery rather than raised. Returns (sent_ok, failed).
+        BroadcastDelivery (with who the copy was about) rather than
+        raised. Returns (sent_ok, failed).
         """
         if self.is_sent:
             raise ValueError("This broadcast has already been sent.")
 
-        users = list(self.recipients())
+        contacts, _unreachable = self.contacts()
         self.status = "SENT"
         self.sent_at = timezone.now()
         self.save(update_fields=["status", "sent_at"])
 
-        if not users:
+        if not contacts:
             return 0, 0
 
-        message = self._email([user.email for user in users])
-        message.merge_data = {}  # batch send: one private copy per recipient
-        try:
-            message.send()
-            statuses = getattr(getattr(message, "anymail_status", None), "recipients", {}) or {}
-            deliveries = []
-            for user in users:
-                status = statuses.get(user.email)
-                ok = status is None or status.status in ("sent", "queued", "scheduled")
-                deliveries.append(
+        groups = {}
+        for contact in contacts:
+            groups.setdefault(contact.parent_line(), []).append(contact)
+
+        deliveries = []
+        for opening, group in groups.items():
+            message = self._email([contact.email for contact in group], opening=opening)
+            message.merge_data = {}  # batch send: one private copy per recipient
+            try:
+                message.send()
+                statuses = getattr(getattr(message, "anymail_status", None), "recipients", {}) or {}
+                for contact in group:
+                    status = statuses.get(contact.email)
+                    ok = status is None or status.status in ("sent", "queued", "scheduled")
+                    deliveries.append(
+                        BroadcastDelivery(
+                            communication=self,
+                            user=contact.user,
+                            regarding=contact.regarding(),
+                            sent_ok=ok,
+                            error="" if ok else f"Brevo status: {status.status}",
+                        )
+                    )
+            except Exception as error:  # never raise after the row is saved
+                deliveries += [
                     BroadcastDelivery(
                         communication=self,
-                        user=user,
-                        sent_ok=ok,
-                        error="" if ok else f"Brevo status: {status.status}",
+                        user=contact.user,
+                        regarding=contact.regarding(),
+                        sent_ok=False,
+                        error=str(error)[:500],
                     )
-                )
-        except Exception as error:  # never raise after the row is saved
-            deliveries = [
-                BroadcastDelivery(communication=self, user=user, sent_ok=False, error=str(error)[:500])
-                for user in users
-            ]
+                    for contact in group
+                ]
 
         BroadcastDelivery.objects.bulk_create(deliveries)
         sent_ok = sum(1 for delivery in deliveries if delivery.sent_ok)
@@ -823,6 +859,10 @@ class BroadcastDelivery(models.Model):
 
     communication = models.ForeignKey(ChoirCommunication, on_delete=models.CASCADE, related_name="deliveries")
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="+")
+    # Who the copy was about, as it stood when sent (Build Order Phase
+    # 15c): "Alex Smith (Alto, under 18)" for a parent's copy, so the
+    # history stays right if links change later
+    regarding = models.CharField(max_length=300, blank=True)
     sent_ok = models.BooleanField(default=False)
     error = models.TextField(blank=True)
 

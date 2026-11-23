@@ -3706,9 +3706,12 @@ class GuardianTests(TestCase):
         by_name = {row["user"].get_full_name(): row for row in roster}
         self.assertNotIn("Jane Smith", by_name)
         self.assertIsNotNone(by_name["Alex Smith"]["payment"])
-        report = self.client.get(reverse("committee_rsvps"), {"event": self.future.id}).content.decode()
-        self.assertIn("Alex Smith", report)
-        self.assertNotIn("Jane Smith", report)
+        response = self.client.get(reverse("committee_rsvps"), {"event": self.future.id})
+        listed = {rsvp.user for data in response.context["report_data"] for key in ("attending", "absent", "pending") for rsvp in data[key]}
+        self.assertIn(User.objects.get(first_name="Alex"), listed)
+        self.assertNotIn(jane, listed)
+        # Jane appears only as Alex's contact (Phase 15c)
+        self.assertContains(response, "Contact: Jane Smith (parent)")
 
     def test_the_split_is_refused_for_a_parent_already_linked(self):
         jane = self.standing_in()
@@ -3913,6 +3916,133 @@ class ParentActingTests(TestCase):
         self.assertContains(page, reverse("hub", args=["alto", self.project.id]))
         self.assertNotContains(page, "You sing")
         self.assertEqual(self.client.get(reverse("hub", args=["alto", self.project.id])).status_code, 200)
+
+
+class ContactingTests(TestCase):
+    """Build Order Phase 15c: email about an under-18 singer goes to their
+    parents or guardians; nobody gets two copies; and the committee sees
+    who each copy went to and why."""
+
+    def setUp(self):
+        from .guardians import create_child
+
+        self.committee = create_committee_user(username="committee", password="pw", email="committee@example.com")
+        self.client.login(username="committee", password="pw")
+        self.project = Project.objects.create(name="Ewelme 2027", status="ACTIVE")
+        self.event = Event.objects.create(project=self.project, date_time=timezone.now() + timedelta(days=5))
+        self.adult = self.make("adult", "Ann", "Alto", part="A")
+        self.mum = self.make("mum", "Jane", "Smith", part=None, singer=False, phone="07700 900123")
+        self.dad = self.make("dad", "John", "Smith", part=None, singer=False)
+        self.alex = create_child("Alex", "Smith", "A")
+        self.kim = create_child("Kim", "Smith", "S")
+        self.alex.profile.guardians.add(self.mum, self.dad)
+        self.kim.profile.guardians.add(self.mum)
+        self.lone = create_child("Lee", "Lone", "A")  # no parent, no address
+
+    def make(self, username, first, last, part="A", singer=True, phone=""):
+        user = User.objects.create_user(username, f"{username}@example.com", "pw", first_name=first, last_name=last)
+        MemberProfile.objects.filter(user=user).update(voice_part=part, is_singer=singer, phone_number=phone)
+        if not singer:
+            Attendance.objects.filter(user=user).delete()
+        return User.objects.select_related("profile").get(pk=user.pk)
+
+    def contacts(self, *singers):
+        from .guardians import contacts_for
+
+        contacts, unreachable = contacts_for(User.objects.filter(pk__in=[s.pk for s in singers]).select_related("profile"))
+        return {c.user.username: [s.first_name for s in c.singers] for c in contacts}, [s.first_name for s in unreachable]
+
+    def test_contacts_for(self):
+        from .guardians import create_child
+
+        self.assertEqual(self.contacts(self.adult), ({"adult": ["Ann"]}, []))
+        # An under-18 with two parents: both, not the child (no address)
+        self.assertEqual(self.contacts(self.alex), ({"mum": ["Alex"], "dad": ["Alex"]}, []))
+        # A parent of two gets one copy, about both
+        self.assertEqual(self.contacts(self.alex, self.kim)[0]["mum"], ["Alex", "Kim"])
+        # Nobody to contact: listed, not dropped
+        self.assertEqual(self.contacts(self.lone), ({}, ["Lee"]))
+        # A teenager with their own address gets a copy as well
+        teen = create_child("Tia", "Teen", "T", email="tia@example.com")
+        teen.profile.guardians.add(self.dad)
+        self.assertEqual(self.contacts(teen), ({"dad": ["Tia"], teen.username: ["Tia"]}, []))
+        # An inactive parent isn't emailed
+        User.objects.filter(pk=self.dad.pk).update(is_active=False)
+        self.assertEqual(self.contacts(self.alex), ({"mum": ["Alex"]}, []))
+
+    def test_a_parent_line_names_the_children(self):
+        from .guardians import contacts_for
+
+        contacts, _ = contacts_for([self.alex, self.kim, self.adult])
+        lines = {c.user.username: c.parent_line() for c in contacts}
+        self.assertEqual(lines["mum"], "You're receiving this as parent or guardian of Alex Smith (Alto, under 18) and Kim Smith (Soprano, under 18).")
+        self.assertEqual(lines["dad"], "You're receiving this as parent or guardian of Alex Smith (Alto, under 18).")
+        self.assertEqual(lines["adult"], "")
+
+    def draft(self, audience="ALT"):
+        return ChoirCommunication.objects.create(audience=audience, subject="Rehearsal moved", message="<p>Tuesday.</p>", author=self.committee)
+
+    def test_altos_reach_altos_and_the_parents_of_under_18_altos(self):
+        draft = self.draft("ALT")
+        self.assertEqual(sorted(u.username for u in draft.recipients()), ["adult", "dad", "mum"])
+        # Parents aren't singers, so never counted in a part
+        self.assertNotIn(self.mum, draft.singers())
+        response = self.client.get(reverse("committee_broadcast_preview", args=[draft.id]))
+        self.assertEqual((response.context["singer_count"], response.context["recipient_count"]), (2, 3))
+        self.assertContains(response, "goes to\n      <strong>2</strong> singers by <strong>3</strong> emails")
+        self.assertContains(response, "Alex Smith (Alto, under 18) · to Jane Smith, parent; John Smith, parent")
+        self.assertContains(response, "Can't be contacted:</strong> Lee Lone (Alto, under 18)")
+        self.assertContains(response, "Send 3 Emails")
+
+    @override_settings(EMAIL_BACKEND="anymail.backends.test.EmailBackend")
+    def test_parents_copies_open_with_whose_parent_they_are(self):
+        draft = self.draft("ALL")
+        sent_ok, failed = draft.send()
+        self.assertEqual((sent_ok, failed), (4, 0))  # Ann, the committee member, Jane and John
+        by_line = {}
+        for message in mail.outbox:
+            self.assertTrue(message.anymail_test_params["is_batch_send"])
+            by_line[message.body.split("\n\n")[0]] = sorted(message.to)
+        self.assertEqual(
+            by_line,
+            {
+                "Tuesday.": ["adult@example.com", "committee@example.com"],
+                "You're receiving this as parent or guardian of Alex Smith (Alto, under 18) and Kim Smith (Soprano, under 18).": ["mum@example.com"],
+                "You're receiving this as parent or guardian of Alex Smith (Alto, under 18).": ["dad@example.com"],
+            },
+        )
+        parents_copy = next(m for m in mail.outbox if m.to == ["dad@example.com"])
+        self.assertIn("<p><em>You&#x27;re receiving this as parent or guardian of Alex Smith", parents_copy.alternatives[0][0])
+        singers_copy = next(m for m in mail.outbox if "adult@example.com" in m.to)
+        self.assertNotIn("receiving this as parent", singers_copy.alternatives[0][0])
+
+        regarding = dict(draft.deliveries.values_list("user__username", "regarding"))
+        self.assertEqual(regarding["mum"], "Alex Smith (Alto, under 18); Kim Smith (Soprano, under 18)")
+        self.assertEqual(regarding["adult"], "Ann Alto (Alto)")
+        page = self.client.get(reverse("committee_broadcast_preview", args=[draft.id]))
+        self.assertContains(page, "Jane Smith, about Alex Smith (Alto, under 18); Kim Smith (Soprano, under 18)")
+        self.assertNotContains(page, "Ann Alto, about")
+
+    def test_rsvp_report_and_reminders_reach_parents(self):
+        response = self.client.get(reverse("committee_rsvps"))
+        data = next(d for d in response.context["report_data"] if d["event"] == self.event)
+        emails = set(data["pending_emails"].split(","))
+        self.assertTrue({"mum@example.com", "dad@example.com", "adult@example.com"} <= emails)
+        self.assertNotIn("", emails)
+        self.assertContains(response, 'Contact: Jane Smith (parent), <a href="tel:07700900123" class="text-link">07700 900123</a>')
+        self.assertContains(response, "No parent linked")
+
+    def test_poll_reminders_reach_parents(self):
+        planning = Project.objects.create(name="Easter 2028", status="PLANNING")
+        AvailabilityPoll.objects.create(project=planning, question="Free?", is_open=True)
+        row = self.client.get(reverse("committee_polling")).context["poll_data"][0]
+        self.assertIn("mum@example.com", row["non_responder_emails"])
+        self.assertEqual(row["non_responder_emails"].count("mum@example.com"), 1)
+
+    def test_the_emergency_roster_names_the_parents(self):
+        response = self.client.get(reverse("committee_emergency"))
+        self.assertContains(response, "Contact: Jane Smith (parent)")
+        self.assertContains(response, "mailto:mum@example.com")
 
 
 class MemberManagementTests(TestCase):
@@ -4292,7 +4422,7 @@ class BroadcastWorkflowTests(TestCase):
         response = self.client.get(reverse("committee_broadcast_preview", args=[draft.id]))
         self.assertEqual(response.context["recipient_count"], 2)  # the two altos
         self.assertContains(response, "<p>Tuesday this week.</p>", html=True)
-        self.assertContains(response, "Send to 2 Singers")
+        self.assertContains(response, "Send 2 Emails")
 
     def test_send_a_test_to_me(self):
         draft = self.draft()

@@ -126,3 +126,85 @@ def children_of(user):
         .select_related("user")
         .order_by("user__first_name", "user__last_name")
     )
+
+
+def singer_label(singer):
+    """A singer as the committee sees them: "Alex Smith (Alto, under 18)",
+    "Ann Alto (Alto)"."""
+    profile = getattr(singer, "profile", None)
+    details = [profile.get_voice_part_display()] if profile and profile.voice_part else []
+    if profile and profile.is_under_18:
+        details.append("under 18")
+    name = singer.get_full_name() or singer.username
+    return f"{name} ({', '.join(details)})" if details else name
+
+
+class Contact:
+    """One email recipient (user) and the singers they're emailed about:
+    themselves, and any children they're a parent or guardian of."""
+
+    def __init__(self, user):
+        self.user = user
+        self.singers = []
+
+    @property
+    def email(self):
+        return self.user.email
+
+    @property
+    def children(self):
+        """The singers this person is contacted about as parent or guardian."""
+        return [singer for singer in self.singers if singer.pk != self.user.pk]
+
+    def parent_line(self):
+        """The line that opens a parent's copy, or "" for a singer's own."""
+        children = self.children
+        if not children:
+            return ""
+        names = [singer_label(child) for child in children]
+        joined = names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
+        return f"You're receiving this as parent or guardian of {joined}."
+
+    def regarding(self):
+        """Who the email was about, for the delivery record (300 characters)."""
+        return "; ".join(singer_label(singer) for singer in self.singers)[:300]
+
+
+def contacts_for(singers):
+    """
+    Who to email about these singers (Build Order Phase 15c): an adult
+    singer themselves; an under-18 singer's active parents or guardians
+    with an email address, and the singer too if they have one. Nobody is
+    emailed twice: a parent of two children gets one copy, about both.
+
+    Returns (contacts, unreachable): Contacts in name order, and the
+    singers nobody can be emailed about, rather than dropping them
+    silently. Prefetch profile__guardians on the singers for speed.
+    """
+    contacts = {}
+    unreachable = []
+    for singer in singers:
+        profile = singer.profile
+        targets = []
+        if profile.is_under_18:
+            targets = [g for g in profile.guardians.all() if g.is_active and g.email]
+        if singer.email:
+            targets.append(singer)
+        if not targets:
+            unreachable.append(singer)
+            continue
+        for user in targets:
+            contact = contacts.setdefault(user.email.lower(), Contact(user))
+            if singer not in contact.singers:
+                contact.singers.append(singer)
+    ordered = sorted(contacts.values(), key=lambda c: ((c.user.first_name or "").lower(), (c.user.last_name or "").lower(), c.email))
+    return ordered, unreachable
+
+
+def guardian_contacts(singer):
+    """An under-18 singer's parents or guardians, for the committee's
+    reports: [(User, phone)], active ones only. Empty for an adult."""
+    profile = singer.profile
+    if not profile.is_under_18:
+        return []
+    return [(g, getattr(getattr(g, "profile", None), "phone_number", "")) for g in profile.guardians.all() if g.is_active]

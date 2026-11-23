@@ -75,7 +75,7 @@ Some families signed up before this existed, with one account in the parent's na
 
 The child then has their own record with all their history, and the parent keeps their login and email address, linked as the child's parent.
 
-A linked parent signs in as themselves and sees a card for each child on their dashboard, where they reply to rehearsals for them. They also answer Looking Ahead polls for them, and keep their medical notes, consents and emergency contact up to date under Settings. Until the next update, broadcasts and reminders don't reach a parent about their child; that follows shortly.
+A linked parent signs in as themselves and sees a card for each child on their dashboard, where they reply to rehearsals for them. They also answer Looking Ahead polls for them, and keep their medical notes, consents and emergency contact up to date under Settings.
 
 ## Changing someone's role
 
@@ -196,7 +196,7 @@ Logging a payment while viewing an earlier period records it against that period
 5. Click "Send a test to me" and check the test in your own inbox. Tests are marked `[Test]` and go to nobody else.
 6. Tick the confirmation box and click Send. Confirm when asked.
 
-A broadcast can only be sent once, and cannot be edited afterwards. Each member gets their own copy, so nobody sees anyone else's address. The Broadcasts list shows drafts and everything sent, with how many were delivered and whether any failed.
+A broadcast can only be sent once, and cannot be edited afterwards. Each member gets their own copy, so nobody sees anyone else's address. An under-18 singer's copy goes to their parents or guardians instead, starting with a line saying whose parent they're receiving it as; a parent with two children in the choir gets one copy naming both. The preview says how many singers it reaches by how many emails, lists who each copy goes to under "Who it goes to", and warns about anyone who can't be contacted: an under-18 with no parent linked and no address of their own. The reminder links on RSVPs and Polling reach parents in the same way, and the RSVP report and Duty of Care roster show each under-18's parent with their phone and email. The Broadcasts list shows drafts and everything sent, with how many were delivered and whether any failed.
 
 ## The inbox
 

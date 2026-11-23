@@ -2,7 +2,8 @@
     One singer in a committee RSVP list, with an override select.
     status: attending | absent | pending (also sets the row colour)
     icon: the decorative marker for that status; rsvp-dashboard.js swaps
-    it when the singer is moved to another list.
+    it when the singer is moved to another list. An under-18 singer's
+    parents or guardians show underneath (Build Order Phase 15c).
 {% endcomment %}
 <li class="rsvp-list__item" data-rsvp="{{ status }}">
     <span class="rsvp-list__name" title="{{ rsvp.user.get_full_name }}">
@@ -14,4 +15,5 @@
         <option value="ABSENT"{% if status == 'absent' %} selected{% endif %}>Absent</option>
         <option value="PENDING"{% if status == 'pending' %} selected{% endif %}>Pending</option>
     </select>
+    {% include 'choir/_guardian_contact.html' with contacts=rsvp.user.guardian_contacts under_18=rsvp.user.profile.is_under_18 %}
 </li>

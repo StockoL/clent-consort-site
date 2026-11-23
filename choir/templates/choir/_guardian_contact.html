@@ -1,0 +1,11 @@
+{% comment %}
+    Who to contact about an under-18 singer (Build Order Phase 15c): their
+    parents or guardians, with phone and email. contacts: [(User, phone)]
+    from choir.guardians.guardian_contacts; empty for an adult, so this
+    shows nothing. under_18: whether to warn that nobody is linked.
+{% endcomment %}
+{% if contacts %}
+<span class="guardian-contact text-small">Contact: {% for parent, phone in contacts %}{{ parent.get_full_name|default:parent.username }} (parent){% if phone %}, <a href="tel:{{ phone|cut:' ' }}" class="text-link">{{ phone }}</a>{% endif %}{% if parent.email %}, <a href="mailto:{{ parent.email }}" class="text-link">{{ parent.email }}</a>{% endif %}{% if not forloop.last %}; {% endif %}{% endfor %}</span>
+{% elif under_18 %}
+<span class="guardian-contact text-small">No parent linked</span>
+{% endif %}

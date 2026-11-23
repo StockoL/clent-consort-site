@@ -25,6 +25,7 @@
                 <strong>{{ member.get_full_name }}</strong>
                 {% if member.profile.is_under_18 %}
                   <span class="data-table__flag">Under 18</span>
+                  <br>{% include 'choir/_guardian_contact.html' with contacts=member.guardian_contacts under_18=True %}
                 {% endif %}
               </div>
             </td>

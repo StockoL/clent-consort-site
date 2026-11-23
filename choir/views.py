@@ -1323,15 +1323,19 @@ def committee_poll_manage_view(request):
     else:
         form = AvailabilityPollForm()
 
-    active_users = User.objects.filter(is_active=True, profile__is_singer=True)
+    from .guardians import contacts_for
+
+    active_users = User.objects.filter(is_active=True, profile__is_singer=True).select_related("profile").prefetch_related(
+        "profile__guardians"
+    )
     poll_data = []
     for poll in AvailabilityPoll.objects.select_related("project"):
         responses = poll.responses.select_related("user")
         responded_user_ids = responses.values_list("user_id", flat=True)
         non_responders = active_users.exclude(id__in=responded_user_ids)
-        non_responder_emails = ",".join(
-            [user.email for user in non_responders if user.email]
-        )
+        # The reminder goes to whoever is contacted about each singer: an
+        # under-18's parents (Build Order Phase 15c)
+        non_responder_emails = ",".join(contact.email for contact in contacts_for(non_responders)[0])
 
         poll_data.append(
             {
@@ -1440,13 +1444,19 @@ def committee_rsvp_report(request):
     rsvps_by_event = {
         event.id: {"ATTENDING": [], "ABSENT": [], "PENDING": []} for event in events
     }
+    # An under-18's parents are shown beside them, and get the reminder
+    # (Build Order Phase 15c)
+    from .guardians import contacts_for, guardian_contacts
+
     for rsvp in (
         Attendance.objects.filter(
             event__in=events, user__is_active=True, user__profile__is_singer=True
         )
-        .select_related("user")
+        .select_related("user__profile")
+        .prefetch_related("user__profile__guardians__profile")
         .order_by("user__first_name")
     ):
+        rsvp.user.guardian_contacts = guardian_contacts(rsvp.user)
         rsvps_by_event[rsvp.event_id][rsvp.status].append(rsvp)
 
     report_data = []
@@ -1459,7 +1469,7 @@ def committee_rsvp_report(request):
                 "absent": by_status["ABSENT"],
                 "pending": by_status["PENDING"],
                 "pending_emails": ",".join(
-                    rsvp.user.email for rsvp in by_status["PENDING"] if rsvp.user.email
+                    contact.email for contact in contacts_for([rsvp.user for rsvp in by_status["PENDING"]])[0]
                 ),
             }
         )
@@ -1612,14 +1622,20 @@ def committee_emergency_roster(request):
     information for active choir members only.
     """
     # The database now exclusively fetches active users who actually have a profile mapped to them
-    roster = (
+    from .guardians import guardian_contacts
+
+    roster = list(
         User.objects.filter(
             is_active=True,
             profile__is_singer=True,  # also guarantees a profile exists
         )
         .select_related("profile")
+        .prefetch_related("profile__guardians__profile")
         .order_by("first_name")
     )
+    # An under-18's parents or guardians, beside them (Build Order Phase 15c)
+    for member in roster:
+        member.guardian_contacts = guardian_contacts(member)
 
     return render(request, "choir/committee_emergency.html", {"roster": roster})
 
@@ -2359,10 +2375,37 @@ def committee_broadcasts_view(request):
 def committee_broadcast_preview_view(request, broadcast_id):
     """The email as members will see it, who it goes to, and (once sent)
     how its delivery went. Drafts can be tested, sent or deleted here."""
+    from .guardians import singer_label
+
     broadcast = get_object_or_404(ChoirCommunication.objects.select_related("author"), id=broadcast_id)
+    contacts, unreachable = broadcast.contacts()
+    # Who each singer's copy goes to (Build Order Phase 15c): themselves,
+    # or an under-18's parents or guardians
+    to = {}
+    for contact in contacts:
+        for singer in contact.singers:
+            to.setdefault(singer.pk, []).append(contact.user)
+    singers = sorted({s.pk: s for c in contacts for s in c.singers}.values(), key=lambda s: (s.first_name.lower(), s.last_name.lower()))
     context = {
         "broadcast": broadcast,
-        "recipient_count": broadcast.recipients().count(),
+        "recipient_count": len(contacts),
+        "singer_count": len(singers),
+        "singer_rows": [
+            {
+                "label": singer_label(singer),
+                "to": [user for user in to[singer.pk] if user.pk != singer.pk],
+                "own": any(user.pk == singer.pk for user in to[singer.pk]),
+            }
+            for singer in singers
+        ],
+        "unreachable": [singer_label(singer) for singer in unreachable],
+        # Sent copies that went to a parent: about someone other than the
+        # recipient, as recorded when sent
+        "parent_deliveries": [
+            d
+            for d in broadcast.deliveries.filter(sent_ok=True).exclude(regarding="").select_related("user")
+            if d.user is None or d.regarding != singer_label(d.user)
+        ],
         "failed_deliveries": broadcast.deliveries.filter(sent_ok=False).select_related("user"),
         "delivered_count": broadcast.deliveries.filter(sent_ok=True).count(),
     }
@@ -2400,9 +2443,9 @@ def committee_broadcast_send_view(request, broadcast_id):
     else:
         sent_ok, failed = broadcast.send()
         if failed:
-            messages.warning(request, f"Sent to {sent_ok}; {failed} couldn't be delivered (listed below).")
+            messages.warning(request, f"Sent {sent_ok} email{'s' if sent_ok != 1 else ''}; {failed} couldn't be delivered (listed below).")
         else:
-            messages.success(request, f"Sent to {sent_ok} member{'s' if sent_ok != 1 else ''}.")
+            messages.success(request, f"Sent {sent_ok} email{'s' if sent_ok != 1 else ''}.")
     return redirect("committee_broadcast_preview", broadcast_id=broadcast.id)
 
 

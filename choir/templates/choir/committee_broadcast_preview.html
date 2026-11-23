@@ -18,10 +18,25 @@
   <section class="card flow" data-variant="invert">
     <h2 class="text-primary text-step-1 card-heading">Send</h2>
     <p>
-      To <strong>{{ broadcast.get_audience_display }}</strong>:
-      <strong>{{ recipient_count }}</strong> singer{{ recipient_count|pluralize }} with an email address.
-      Each gets their own copy; nobody sees anyone else's address.
+      To <strong>{{ broadcast.get_audience_display }}</strong>: goes to
+      <strong>{{ singer_count }}</strong> singer{{ singer_count|pluralize }} by <strong>{{ recipient_count }}</strong> email{{ recipient_count|pluralize }}.
+      Each gets their own copy; nobody sees anyone else's address. Under-18 singers' copies go to their parents or guardians, opening with a line saying whose parent they're receiving it as.
     </p>
+    {% if unreachable %}
+    <div class="alert text-small" data-status="warning" role="note">
+      <p><strong>Can't be contacted:</strong> {{ unreachable|join:"; " }}. No email address, and no parent or guardian with one. Add one from Members.</p>
+    </div>
+    {% endif %}
+    {% if singer_rows %}
+    <details class="text-small">
+      <summary>Who it goes to</summary>
+      <ul class="list-unstyled flow flow--small" role="list">
+        {% for row in singer_rows %}
+        <li>{{ row.label }}{% if row.to %} · to {% for parent in row.to %}{{ parent.get_full_name|default:parent.email }}, parent{% if not forloop.last %}; {% endif %}{% endfor %}{% if row.own %}, and themselves{% endif %}{% endif %}</li>
+        {% endfor %}
+      </ul>
+    </details>
+    {% endif %}
 
     <div class="cluster">
       <a href="{% url 'committee_broadcast_edit' broadcast.id %}" class="button btn-small" data-variant="outline">Edit</a>
@@ -35,13 +50,13 @@
       </form>
     </div>
 
-    <form method="POST" action="{% url 'committee_broadcast_send' broadcast.id %}" class="flow flow--small broadcast-send" data-confirm="Send this email to {{ recipient_count }} singer{{ recipient_count|pluralize }} now? It can't be unsent.">
+    <form method="POST" action="{% url 'committee_broadcast_send' broadcast.id %}" class="flow flow--small broadcast-send" data-confirm="Send {{ recipient_count }} email{{ recipient_count|pluralize }}, to {{ singer_count }} singer{{ singer_count|pluralize }} or their parents, now? It can't be unsent.">
       {% csrf_token %}
       <div class="consent-row">
         <input type="checkbox" name="confirm" value="yes" id="broadcast-confirm" required>
-        <label for="broadcast-confirm">I've checked the preview and want to send this to {{ recipient_count }} singer{{ recipient_count|pluralize }}.</label>
+        <label for="broadcast-confirm">I've checked the preview and want to send this to {{ singer_count }} singer{{ singer_count|pluralize }} by {{ recipient_count }} email{{ recipient_count|pluralize }}.</label>
       </div>
-      <button type="submit" class="button align-start" data-variant="primary">Send to {{ recipient_count }} Singer{{ recipient_count|pluralize }}</button>
+      <button type="submit" class="button align-start" data-variant="primary">Send {{ recipient_count }} Email{{ recipient_count|pluralize }}</button>
     </form>
   </section>
   {% else %}
@@ -52,9 +67,19 @@
       {% if failed_deliveries %}
       <ul class="list-unstyled flow flow--small text-small" role="list">
         {% for d in failed_deliveries %}
-        <li><strong>{{ d.user.get_full_name|default:d.user.email|default:"A removed member" }}</strong> ({{ d.user.email }}): {{ d.error|default:"not delivered" }}</li>
+        <li><strong>{{ d.user.get_full_name|default:d.user.email|default:"A removed member" }}</strong> ({{ d.user.email }}){% if d.regarding %}, about {{ d.regarding }}{% endif %}: {{ d.error|default:"not delivered" }}</li>
         {% endfor %}
       </ul>
+      {% endif %}
+      {% if parent_deliveries %}
+      <details class="text-small">
+        <summary>Parents' copies</summary>
+        <ul class="list-unstyled flow flow--small" role="list">
+          {% for d in parent_deliveries %}
+          <li>{{ d.user.get_full_name|default:d.user.email|default:"A removed member" }}, about {{ d.regarding }}</li>
+          {% endfor %}
+        </ul>
+      </details>
       {% endif %}
     {% else %}
       <p class="text-muted text-small">Sent before delivery records were kept, or to nobody.</p>
