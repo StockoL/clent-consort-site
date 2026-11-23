@@ -196,7 +196,7 @@ When a project is active but subscriptions are still for an older period, the le
 
 ### Adding music
 
-The Music Library lists every piece with its tracks per voice part. On a piece's page Clara uploads an alto practice track, leaving the voice part as "From each file's name": the file is called `tallis-if-ye-love-me-alto.wav`, so it goes to the altos. It appears in the list straight away, and on the alto hub.
+The Music Library lists every piece with its tracks per voice part. On a piece's page Clara uploads an alto practice track, leaving the voice part as "From each file's name": the file is called `tallis-if-ye-love-me-alto.wav`, so it goes to the altos. Its suggested track title is left empty, as the name names no movement, which means it's the whole piece. It appears in the list straight away, with its Sections link, and on the alto hub.
 
 | Music Library | Track uploaded |
 | --- | --- |
@@ -204,9 +204,9 @@ The Music Library lists every piece with its tracks per voice part. On a piece's
 
 ### Marking sections
 
-A piece's page also holds its sections, with the practice player above them. Clara is editing "Esse immolatum": bars 5 to 8, from 0:08 to 0:16, with starting notes for the two alto lines. Play loops a section in the player; "Set from player" copies the playhead's time into Start or End, so times can be taken by ear. "Draft: Miserere" is hidden, so singers don't see it yet.
+A piece's page also holds its sections, with the practice player above them, the same player singers use. Lotti's Crucifixus has its score data uploaded, so its sections are marked "From score data": Clara entered only the bars, and the times and each part's starting note came from the score. She is editing "Passus et sepultus est", bars 20 to 27, from 0:51.818 to 1:13.636. Play loops a section in the player; "Set from player" copies the playhead's time into Start or End, so times can also be taken by ear, and anything typed is kept when the score data is imported again. "Draft: Crucifixus" is hidden, so singers don't see it yet. These two screenshots are from the smaller sample site used for the practice player.
 
-![Sections on a piece's page](images/journeys/committee/piece-sections-desktop.jpg)
+![Sections on a piece's page, with the practice player above](images/journeys/committee/piece-sections-desktop.jpg)
 
 ### Polling availability
 

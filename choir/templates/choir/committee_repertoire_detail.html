@@ -216,7 +216,6 @@
 
         <div class="item-row__actions">
           {% if asset.id in playable_ids %}
-          <button type="button" class="button btn-small" data-variant="outline" data-player-load="{{ asset.id }}" aria-pressed="false" hidden>Practise<span class="visually-hidden"> {{ asset.asset_name }}</span></button>
           <a href="{% url 'committee_repertoire_detail' piece.id %}?track={{ asset.id }}#sections" class="button btn-small" data-variant="outline">Sections<span class="visually-hidden"> of {{ asset.asset_name }}</span></a>
           {% endif %}
           <form method="POST" action="{% url 'committee_asset_delete' asset.id %}" class="inline-form" data-confirm="Delete '{{ asset.asset_name }}'? Members will no longer see it, and the file is removed.">
