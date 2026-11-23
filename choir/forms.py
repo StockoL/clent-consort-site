@@ -36,8 +36,8 @@ LINK = re.compile(r"https?://|www\.", re.IGNORECASE)
 
 class SpamChecks(forms.Form):
     """
-    Spam checks for the public contact forms, alongside each form's
-    honeypot, still without a CAPTCHA. A form is refused if:
+    Spam checks for the public contact form, alongside its honeypot,
+    still without a CAPTCHA. A form is refused if:
 
     - it was sent within FASTEST_HUMAN_SECONDS of the page opening. A
       hidden, signed record of when the form was shown (started) gives the
@@ -84,95 +84,6 @@ class SpamChecks(forms.Form):
         return cleaned
 
 
-class EnquiryForm(SpamChecks, forms.ModelForm):
-    """Form for processing public contact and booking enquiries."""
-
-    free_text_field = "message"
-
-    # THE HONEYPOT: Visually hidden from humans using CSS, but bots will fill it out.
-    website = forms.CharField(
-        required=False,
-        label="Leave this field empty",
-        widget=forms.TextInput(
-            attrs={
-                # Hidden from everyone, screen readers included (see
-                # .honeypot in utilities/project-utilities.css)
-                "class": "honeypot",
-                "id": "enquiry-website",  # both contact forms share one page
-                "tabindex": "-1",  # Prevents humans from accidentally tabbing into it
-                "autocomplete": "off",
-            }
-        ),
-    )
-
-    class Meta:
-        model = Enquiry
-        fields = ["name", "email", "subject", "message"]
-        widgets = {
-            "message": forms.Textarea(
-                attrs={"rows": 5, "placeholder": "Type your message here..."}
-            ),
-            "name": forms.TextInput(attrs={"placeholder": "Jane Doe"}),
-            "email": forms.EmailInput(attrs={"placeholder": "jane@example.com"}),
-        }
-
-    # Custom Django validation to check the honeypot
-    def clean_website(self):
-        bot_catcher = self.cleaned_data.get("website")
-        if bot_catcher:
-            # If there is ANY text in this field, it's a bot.
-            # Raising a ValidationError stops the form from saving or sending an email.
-            raise forms.ValidationError("Automated submission detected.")
-        return bot_catcher
-
-
-class AuditionForm(SpamChecks, forms.ModelForm):
-    """Form for prospective singers applying to audition."""
-
-    free_text_field = "experience"
-
-    def __init__(self, *args, **kwargs):
-        # It shares the contact page with EnquiryForm, which has name and
-        # email fields too, so its ids get a prefix to stay unique.
-        kwargs.setdefault("auto_id", "audition_%s")
-        super().__init__(*args, **kwargs)
-
-    # THE HONEYPOT: Protecting the audition endpoint from automated spam as well.
-    website = forms.CharField(
-        required=False,
-        label="Leave this field empty",
-        widget=forms.TextInput(
-            attrs={
-                "class": "honeypot",
-                "id": "audition-website",  # both contact forms share one page
-                "tabindex": "-1",
-                "autocomplete": "off",
-            }
-        ),
-    )
-
-    class Meta:
-        model = AuditionApplication
-        fields = ["name", "email", "voice_part", "experience"]
-        widgets = {
-            "experience": forms.Textarea(
-                attrs={
-                    "rows": 4,
-                    "placeholder": "Tell us a bit about your choral experience...",
-                }
-            ),
-            "name": forms.TextInput(attrs={"placeholder": "John Smith"}),
-            "email": forms.EmailInput(attrs={"placeholder": "john@example.com"}),
-        }
-
-    # Custom Django validation to check the honeypot
-    def clean_website(self):
-        bot_catcher = self.cleaned_data.get("website")
-        if bot_catcher:
-            raise forms.ValidationError("Automated submission detected.")
-        return bot_catcher
-
-
 class ContactForm(SpamChecks, forms.Form):
     """
     The contact page's one form (Build Order Phase 16). Its Subject decides
@@ -183,9 +94,6 @@ class ContactForm(SpamChecks, forms.Form):
     script (js/contact-form.js), which only hides the fields that don't
     apply. The subject choices live here, not on Enquiry.SUBJECT_CHOICES,
     as changing a model's choices would need a migration.
-
-    EnquiryForm and AuditionForm above are no longer used by the page, and
-    can go in a later clean-up.
     """
 
     SUBJECTS = [("general", "General Enquiry"), ("booking", "Concert Booking"), ("join", "Join the Consort")]
